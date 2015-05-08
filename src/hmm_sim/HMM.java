@@ -16,22 +16,30 @@ public class HMM {
 	public Random random;
 	
 	public static void main(String[] args){
+		
+		
 		double[][] t = { {0.6,0.3,0.1}, {0.3,0.3,0.4}, {0.1,0.7,0.2} }; 
-		double[][] o = { {0.6,0.3,0.1}, {0.3,0.3,0.4}, {0.1,0.7,0.2} };  
+		double[][] o = { {0.2,0.3,0.5}, {0.3,0.3,0.4}, {0.1,0.7,0.2} };  
+		
 		double[][] p = { {0.3}, {0.4}, {0.4} };
 		
 		Matrix T = new Matrix( t );
 		Matrix O = new Matrix( o );
+		double i = O.getArrayCopy()[1][1];
+		
 		Matrix P = new Matrix( p );
 		HMM h = new HMM(T,O,P);
 		
 		double[] sequence = h.generateSequence(100);
 		System.out.println( Arrays.toString(sequence) );
-		Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 5);
+		Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
 		System.out.println( s.toString() );
+		
+		
+		//testHankel();
 	}
 
-	public HMM(Matrix T, Matrix P, Matrix O){
+	public HMM(Matrix T, Matrix O, Matrix P){
 		this.T = T;
 		this.O = O;
 		this.P = P;
@@ -42,11 +50,11 @@ public class HMM {
 	public double[] generateSequence(int duration){
 		double[] oSeq = new double[duration];
 		
-		int hiddenState = generateState( P.getArray()[0] );		
+		int hiddenState = generateState( P.getArrayCopy()[0] );		
 		
 		for(int t=0;t<duration;t++){
-			hiddenState = generateState( T.getArray()[hiddenState] );
-			oSeq[t] = generateState( O.getArray()[hiddenState] );
+			hiddenState = generateState( T.getArrayCopy()[hiddenState] );
+			oSeq[t] = generateState( O.getArrayCopy()[hiddenState] );
 		} 
 		
 		return oSeq;
@@ -93,7 +101,8 @@ public class HMM {
 		
 		for(int iteration=0;iteration<numIterations;iteration++){
 			expect(emData, observationSequence);
-			maximize(emData);
+			emData = maximize(emData);
+			System.out.println( emData.keySet() );
 		}
 		
 		return emData.keySet();
@@ -117,12 +126,15 @@ public class HMM {
 			}
 			currentData = emData.get(maxKey);
 			currentData.add(datapoint);
+			
+			emData.put(maxKey, currentData);
+			
 			maxProbability = 0;
 			maxKey = null;
 		}
 	}
 	
-	public void maximize(HashMap<String, ArrayList<Double>> emData){
+	public HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
 		
 		//Reason for copy is to avoid overwriting 
 		HashMap<String, ArrayList<Double>> revisedEmData = new HashMap<String, ArrayList<Double>>();
@@ -136,6 +148,7 @@ public class HMM {
 			revisedEmData.put(newkey, new ArrayList<Double>());
 		}
 		emData = revisedEmData;
+		return emData;
 	}
 	
 	public double getLikelyhood(double modelMean, double modelSd, double obs){
@@ -169,4 +182,46 @@ public class HMM {
 		}
 		return Math.sqrt(m/da.length);
 	}
+	
+	
+	public HashMap<String, Matrix> hankelSVD(HashMap<String, Double> fvals){
+		//CREATE HANKEL CODE HERE: 
+		//SingularValueDecomposition svd = hankelMatrix.svd();
+		//Matrix p = svd.getU().times( svd.getS() );
+		//Matrix s = svd.getV();
+		return null;
+	}
+	
+	public static void testHankel(){
+		Matrix Hbar = new Matrix( new double[][]{ {0,0.2,0.14}, {0.2,0.22,0.15}, {0.14,0.45,0.31} }).transpose();
+		
+		Matrix Ha = new Matrix(new double[][]{ {0.2,0.22,0.15},{0.22,0.19,0.13},{0.45,0.45,0.32} }).transpose();
+		Matrix Hb = new Matrix(new double[][]{ {0.14,0.45,0.31}, {0.15,0.29,0.13}, {0.31,0.85,0.58} } ).transpose();
+		Matrix hls = new Matrix(new double[][]{ {0, 0.2, 0.14} } );
+		Matrix hpl = new Matrix(new double[][]{ {0, 0.2, 0.14} } ).transpose();
+		
+		//hls.print(5,5);
+		
+		SingularValueDecomposition svd = Hbar.svd();
+		Matrix p = svd.getU().times( svd.getS() );
+		Matrix s = svd.getV();
+		Matrix pinv = p.inverse();
+		Matrix sinv = s.inverse();
+		
+		Matrix Aa = pinv.times(Ha).times(sinv); 
+		Matrix Ab = pinv.times(Hb).times(sinv); 
+		
+		Matrix alpha0 = hls.times(sinv);	//alpha0 row
+		Matrix alphainf = pinv.times(hpl);	//alphainf column
+		
+		Aa.print(5,5);
+		Ab.print(5,5);
+		alpha0.print(5,5);
+		alphainf.print(5,5);
+		
+		Matrix r = alpha0.times(Ab).times(alphainf);
+		r.print(5,5);
+	}
+	
+	
 }
