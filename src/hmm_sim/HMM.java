@@ -13,28 +13,35 @@ public class HMM {
 	private Matrix O;
 	private Matrix P;
 	
-	public Random random;
+	public static Random random = new Random();
 	
 	public static void main(String[] args){
 		
 		
-		double[][] t = { {0.6,0.3,0.1}, {0.3,0.3,0.4}, {0.1,0.7,0.2} }; 
-		double[][] o = { {0.2,0.3,0.5}, {0.3,0.3,0.4}, {0.1,0.7,0.2} };  
+		double c1 = random.nextDouble();
+		double c2 = random.nextDouble();
+		double c3 = random.nextDouble();
+		
+		System.out.println(c1);
+		System.out.println(c2);
+		System.out.println(c3);
+		
+		double[][] t = { {0.3,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
+		double[][] o = { generateProbabilityVector(10,c1), 
+						generateProbabilityVector(10,c2), 
+						generateProbabilityVector(10,c3) };  
 		
 		double[][] p = { {0.3}, {0.4}, {0.4} };
 		
 		Matrix T = new Matrix( t );
 		Matrix O = new Matrix( o );
-		double i = O.getArrayCopy()[1][1];
-		
 		Matrix P = new Matrix( p );
+		
 		HMM h = new HMM(T,O,P);
 		
 		double[] sequence = h.generateSequence(100);
-		System.out.println( Arrays.toString(sequence) );
 		Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
-		System.out.println( s.toString() );
-		
+		System.out.println(s);
 		
 		//testHankel();
 	}
@@ -43,8 +50,35 @@ public class HMM {
 		this.T = T;
 		this.O = O;
 		this.P = P;
-		
-		random = new Random();
+	}
+	
+	public static double[] generateProbabilityVector(int length, double p){	
+		double[] result = new double[length]; 
+		for(int i=0;i<length;i++){
+			result[i] = nChooseI(length-1, i)*Math.pow(p,i)*Math.pow(1-p, length-1-i);
+		} 
+	
+		return result;
+	}
+	
+	public static double sumArray(double[] da){
+		double s = 0;
+		for(double d: da){
+			s += d;
+		}
+		return s;
+	}
+	
+	public static int nChooseI(int n, int i){
+		return factorial(n)/ ( factorial(i)*factorial(n-i) );
+	}
+	public static int factorial(int n){
+		if (n == 0){
+			return 1;
+		}
+		else{
+			return n*factorial(n-1);
+		}
 	}
 	
 	public double[] generateSequence(int duration){
@@ -61,7 +95,7 @@ public class HMM {
 	}
 
 	//[0.4, 0.5, 0.1] --> returns index in {0,1,2}
-	public int generateState(double[] stateProbabilities){ 						
+	public static int generateState(double[] stateProbabilities){ 						
 		int l = stateProbabilities.length; 
 		double[] cumulativeSum = new double[l];
 		
@@ -92,27 +126,32 @@ public class HMM {
 		
 		double meanGuess, sdGuess;
 		for(int count = 0;count < clusters;count++){
-		    meanGuess = overallMean - overallSD + random.nextDouble()*2*overallSD;
-			sdGuess = overallSD/clusters;
+		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;
+			sdGuess = overallSD;
 			
 			String key = Double.toString(meanGuess) + "," + Double.toString(sdGuess);
 			emData.put(key, new ArrayList<Double>() ); 
 		}
 		
 		for(int iteration=0;iteration<numIterations;iteration++){
+			
 			expect(emData, observationSequence);
+			System.out.println(emData.values());
+			//WHY is emData not mutable under maximize?
 			emData = maximize(emData);
-			System.out.println( emData.keySet() );
+			System.out.println(emData.keySet());
 		}
 		
 		return emData.keySet();
 	}
 	
-	public void expect(HashMap<String, ArrayList<Double>> emData, double[] observationSequence){
-		String maxKey = null;
-		double maxProbability = 0;
+	public HashMap<String, ArrayList<Double>> expect(HashMap<String, ArrayList<Double>> emData, double[] observationSequence){
+		for (String k: emData.keySet()){
+			emData.put(k, new ArrayList<Double>());
+		}
 		
-		double mean, sd, likelyhood;
+		String maxKey = null;
+		double mean, sd, likelyhood, maxProbability = 0;
 		ArrayList<Double> currentData;
 		for(double datapoint: observationSequence){
 			for(String key: emData.keySet()){
@@ -132,6 +171,9 @@ public class HMM {
 			maxProbability = 0;
 			maxKey = null;
 		}
+		
+		return emData;
+
 	}
 	
 	public HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
@@ -147,8 +189,7 @@ public class HMM {
 			String newkey = Double.toString(mean) + "," + Double.toString(sd);
 			revisedEmData.put(newkey, new ArrayList<Double>());
 		}
-		emData = revisedEmData;
-		return emData;
+		return revisedEmData;
 	}
 	
 	public double getLikelyhood(double modelMean, double modelSd, double obs){
@@ -167,20 +208,32 @@ public class HMM {
 	}
 	
 	
+	//FIX ELSE STATEMENT to generalize
 	public double getMean(double[] da){
 		double m = 0;
 		for (double d: da){
 			m += d;
 		}
-		return m/da.length;
+		if (da.length != 0){
+			return m/da.length;
+		}
+		else{
+			return random.nextDouble()*2;
+		}
 	}
 	
+	//FIX ELSE STATEMENT to generalize
 	public double getSd(double[] da, double mean){
-		double m = 0;
+		double sd = 0;
 		for (double d: da){
-			m += Math.pow(d-mean, 2);
+			sd += Math.pow(d-mean, 2);
 		}
-		return Math.sqrt(m/da.length);
+		if (sd!=0){
+			return Math.sqrt(sd/da.length);
+		}
+		else{	//Quickfix to avoid 0 sd
+			return 0.01; 
+		}
 	}
 	
 	
