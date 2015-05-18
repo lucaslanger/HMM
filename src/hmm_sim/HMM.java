@@ -338,7 +338,7 @@ public class HMM {
 	
 	public static ArrayList<Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
 	
-		//Testing low rank approximation
+		/*Testing low rank approximation
 		int s = counts.length/2;
 		Matrix bigH = buildHankel(counts, 0, s);
 		bigH.print(5, 5);
@@ -349,11 +349,14 @@ public class HMM {
 		svd.getS().print(5,5);
 		
 		bigH.print(5,5);
-		//
+		*/
 		
 		Matrix H = buildHankel(counts, 0, basisSize);
-		
+		H.svd().getS().print(5,5);
 		H.print(5,5);
+		truncateSVD(H.svd(), basisSize).print(5,5);
+		
+		// DO WE TAKE LOW RANK APPROXIMATIONS FOR ALL HXSIGMAS ?
 		
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		ArrayList<Matrix> A_Matrices  = new ArrayList<Matrix>();
