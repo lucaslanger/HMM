@@ -17,16 +17,10 @@ public class HMM {
 	
 	public static void main(String[] args){
 		
-		
+		/*
 		double c1 = random.nextDouble();
 		double c2 = random.nextDouble();
 		double c3 = random.nextDouble();
-		
-		/*
-		System.out.println(c1);
-		System.out.println(c2);
-		System.out.println(c3);
-		*/
 		
 		double[][] t = { {0.3,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
 		double[][] o = { generateBinomialVector(10,c1), 
@@ -45,6 +39,15 @@ public class HMM {
 		Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
 		
 		testHankel();
+		*/
+		
+		int[] observations = new int[100];
+		for (int i = 0; i < observations.length; i++) {
+			observations[i] = random.nextInt(2);
+		}
+		
+		//System.out.println(Arrays.toString(observations)); 
+		baumWelch(5,observations);
 	}
 
 	public HMM(Matrix T, Matrix O, Matrix P){
@@ -143,7 +146,7 @@ public class HMM {
 		return null;
 	}
 	
-	public Matrix[] baumWelch(int numStates, int[] counts){
+	public static void baumWelch(int numStates, int[] observations){
 		//Seem's like a completely different algorithm because here we have no knowledge of model
 		double[][] prior = new double[1][numStates];
 		prior[0] = randomVector(numStates);
@@ -156,58 +159,137 @@ public class HMM {
 			transition[i] = randomVector(numStates);
 			
 		}
-		Matrix pi = new Matrix(prior);
-		Matrix T = new Matrix(transition); 
-		Matrix O = new Matrix(observ);
 		
-		int duration = counts[0];
-		double[][] forwardData = new double[ duration ][numStates];
-		for (int i = 0; i < forwardData.length; i++) {
-			forwardData[0][i] = observ[0][i] * prior[0][i];	
-		}
-		
-		double tmp = 0;
-		for (int i = 1; i < duration; i++) {
-			for (int j = 0; j < numStates; j++) {
-				for (int p = 0; p < numStates; p++) {
-					tmp += forwardData[i-1][p]*transition[p][j];
-				}	
-				forwardData[i][j] = tmp*observ[0][j];
-				tmp = 0;
-			}
-		}
-		
-		double[][] backwardData = new double[duration][numStates];
-		for (int i = 0; i < numStates; i++) {
-			backwardData[duration-1][i] = 1;
-		}
-		
-		//Improvement: Turn the code below into matrix operations, numStates, obs low it doesn't matter
-		int j;
-		for (int i = 1; i < duration; i++) {
-			for (int k = 0; k < numStates; k++) {
-				j = backwardData.length - i;
-				for (int p = 0; p < numStates; p++) {
-					tmp += transition[k][p] * backwardData[j+1][p] * observ[0][p];
+		for (int c = 0; c < 10; c++) {
+			
+			Matrix pi = new Matrix(prior);
+			Matrix T = new Matrix(transition); 
+			Matrix O = new Matrix(observ);
+			
+			System.out.println("Run");
+			pi.print(numStates, numStates);
+			T.print(numStates, numStates);
+			O.print(numStates, numStates);
+			
+			int duration = observations.length;
+			double[][] forwardData = new double[ duration ][numStates];
+			
+			for (int i = 0; i < numStates; i++) {
+				if (observations[0] == 1){								//Redundant computation introduced but cleaner
+					forwardData[0][i] = observ[0][i] * prior[0][i];	
 				}
-				backwardData[j][k] = tmp;
+				else{
+					forwardData[0][i] = (1-observ[0][i]) * prior[0][i];
+				}
+			}
+			
+			double tmp = 0;
+			for (int i = 1; i < duration; i++) {
+				for (int j = 0; j < numStates; j++) {
+					tmp = 0;
+					for (int p = 0; p < numStates; p++) {
+						tmp += forwardData[i-1][p]*transition[p][j];
+					}	
+					if (observations[i] == 1){
+						forwardData[i][j] = tmp*observ[0][j];
+					}
+					else{
+						forwardData[i][j] = tmp*(1-observ[0][j]);
+					}
+				}
+			}
+			
+			double[][] backwardData = new double[duration][numStates];
+			for (int i = 0; i < numStates; i++) {
+				backwardData[duration-1][i] = 1;
+			}
+			
+			//Improvement: Turn the code below into matrix operations, numStates, observ states low so it doesn't matter
+			int j;
+			for (int i = 1; i < duration; i++) {
+				for (int k = 0; k < numStates; k++) {
+					j = backwardData.length-1- i;
+					for (int p = 0; p < numStates; p++) {
+						if (observations[i] == 1){
+							tmp += transition[k][p] * backwardData[j+1][p] * observ[0][p];
+						}
+						else{
+							tmp += transition[k][p] * backwardData[j+1][p] * (1-observ[0][p]);
+						}
+					}
+					backwardData[j][k] = tmp;
+				}
+			}
+			
+			double[][] temp1 = new double[duration][numStates];
+			double sum;
+			for (int i = 0; i < duration; i++) {
+				sum = 0;
+				for (int k = 0; k < numStates; k++) {
+					temp1[i][k] = forwardData[i][k]*backwardData[i][k];
+					sum += temp1[i][k];
+				}
+				for (int k = 0; k < numStates; k++) {
+					temp1[i][k] = temp1[i][k]/sum; 
+				}
+			}
+			
+			double[][][] temp2 = new double[duration-1][numStates][numStates];
+			for (int i = 0; i < duration-1; i++) {
+				sum = 0;
+				for (int k = 0; k < numStates; k++) {
+					for (int p = 0; p < numStates; p++) {
+						if (observations[p] == 1){
+							temp2[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*observ[0][p];
+						}
+						else{
+							temp2[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*(1-observ[0][p]);
+						}
+						sum += temp2[i][k][p];
+					}
+				}
+				
+				for (int k = 0; k < numStates; k++) {
+					for (int p = 0; p < numStates; p++) {
+						temp2[i][k][p] = temp2[i][k][p]/sum;
+					}
+				}
+				
+			}
+			
+			for (int i = 0; i < numStates; i++) {
+				prior[0][i] = temp1[0][i];
+			}
+			
+			double norm;
+			for (int i = 0; i < numStates; i++) {
+				for (int k = 0; k < numStates; k++) {
+					norm = 0;
+					for (int t = 0; t < duration-1; t++) {
+						norm += temp1[t][i];
+					}
+					
+					transition[i][k] = 0;
+					for (int t = 0; t < duration-1; t++) {
+						transition[i][k] += temp2[t][i][k];
+					}
+					transition[i][k] = transition[i][k]/norm;
+				}
+			}
+			
+			double norm2, obscount;
+			for (int i = 0; i < numStates; i++) {
+				norm2 = 0;
+				obscount = 0;
+				for (int t = 0; t < duration; t++) {
+					if( observations[t] == 1 ){
+						obscount += temp1[t][i];
+					}
+					norm2 += temp1[t][i];
+				}
+				observ[0][i] = obscount/norm2;
 			}
 		}
-		
-		double[][] temp1 = new double[duration][numStates];
-		for (int i = 0; i < duration; i++) {
-			double sum = 0;
-			for (int k = 0; k < numStates; k++) {
-				temp1[i][k] = forwardData[i][k]*backwardData[i][k];
-				sum += temp1[i][k];
-			}
-			for (int k = 0; k < numStates; k++) {
-				temp1[i][k] = temp1[i][k]/sum; 
-			}
-		}
-		
-		double[][][] temp2 = new double[duration-1][numStates][numStates];
-		
 		
 		//Computation of P(Si, O1 .. Oi): Forward
 		//Computation of P(Oi+1, ... On|Si) Backward
@@ -216,8 +298,6 @@ public class HMM {
 		//Special for Baum-Welch: since T's are fixed, compute sum over transitions from ij/ all possible transitions- average measure 
 		//To compute O: taking sum t=1 to N #times Si=x*obs_frequency/ sum1toN obs_frequency
 		//Idea above: Weighting observation likelyhood by likelyhood of Si=x there for t=1 to N
-		
-		return null;
 	}
 
 	
