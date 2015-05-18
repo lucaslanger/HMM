@@ -3,6 +3,7 @@
 package hmm_sim;
 
 import Jama.*;
+
 import java.util.*;
 
 public class HMM {
@@ -28,9 +29,9 @@ public class HMM {
 		*/
 		
 		double[][] t = { {0.3,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
-		double[][] o = { generateProbabilityVector(10,c1), 
-						generateProbabilityVector(10,c2), 
-						generateProbabilityVector(10,c3) };  
+		double[][] o = { generateBinomialVector(10,c1), 
+						generateBinomialVector(10,c2), 
+						generateBinomialVector(10,c3) };  
 		
 		double[][] p = { {0.3}, {0.4}, {0.4} };
 		
@@ -73,7 +74,7 @@ public class HMM {
 		
 		double meanGuess, sdGuess;
 		for(int count = 0;count < clusters;count++){
-		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;
+		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;	//4 arbitary here
 			sdGuess = overallSD;
 			
 			String key = Double.toString(meanGuess) + "," + Double.toString(sdGuess);
@@ -137,12 +138,140 @@ public class HMM {
 		return revisedEmData;
 	}
 	
-	public HashMap<String, Matrix> hankelSVD(HashMap<String, Double> fvals){
-		//CREATE HANKEL CODE HERE: 
-		//SingularValueDecomposition svd = hankelMatrix.svd();
-		//Matrix p = svd.getU().times( svd.getS() );
-		//Matrix s = svd.getV();
+	public Matrix[] customEstimate(int numStates, Set<String> hiddenStateModels){
+		//Use knowledge about data to infer on prior and then compute transition's for data manually
 		return null;
+	}
+	
+	public Matrix[] baumWelch(int numStates, int[] counts){
+		//Seem's like a completely different algorithm because here we have no knowledge of model
+		double[][] prior = new double[1][numStates];
+		prior[0] = randomVector(numStates);
+		
+		double[][] transition = new double[numStates][numStates]; 
+		double[][] observ = new double[1][numStates]; //Or continuous distribution
+		observ[0] = randomVector(numStates);
+		
+		for (int i = 0; i < numStates; i++) {
+			transition[i] = randomVector(numStates);
+			
+		}
+		Matrix pi = new Matrix(prior);
+		Matrix T = new Matrix(transition); 
+		Matrix O = new Matrix(observ);
+		
+		int duration = counts[0];
+		double[][] forwardData = new double[ duration ][numStates];
+		for (int i = 0; i < forwardData.length; i++) {
+			forwardData[0][i] = observ[0][i] * prior[0][i];	
+		}
+		
+		double tmp = 0;
+		for (int i = 1; i < duration; i++) {
+			for (int j = 0; j < numStates; j++) {
+				for (int p = 0; p < numStates; p++) {
+					tmp += forwardData[i-1][p]*transition[p][j];
+				}	
+				forwardData[i][j] = tmp*observ[0][j];
+				tmp = 0;
+			}
+		}
+		
+		double[][] backwardData = new double[duration][numStates];
+		for (int i = 0; i < numStates; i++) {
+			backwardData[duration-1][i] = 1;
+		}
+		
+		//Improvement: Turn the code below into matrix operations, numStates, obs low it doesn't matter
+		int j;
+		for (int i = 1; i < duration; i++) {
+			for (int k = 0; k < numStates; k++) {
+				j = backwardData.length - i;
+				for (int p = 0; p < numStates; p++) {
+					tmp += transition[k][p] * backwardData[j+1][p] * observ[0][p];
+				}
+				backwardData[j][k] = tmp;
+			}
+		}
+		
+		double[][] temp1 = new double[duration][numStates];
+		for (int i = 0; i < duration; i++) {
+			double sum = 0;
+			for (int k = 0; k < numStates; k++) {
+				temp1[i][k] = forwardData[i][k]*backwardData[i][k];
+				sum += temp1[i][k];
+			}
+			for (int k = 0; k < numStates; k++) {
+				temp1[i][k] = temp1[i][k]/sum; 
+			}
+		}
+		
+		double[][][] temp2 = new double[duration-1][numStates][numStates];
+		
+		
+		//Computation of P(Si, O1 .. Oi): Forward
+		//Computation of P(Oi+1, ... On|Si) Backward
+		//Now compute P(Si, O1...On) --> condition on Si, then you have a product
+		//Transitions: P(Si,Si+1|O1...On), compute using info above and transitions guess
+		//Special for Baum-Welch: since T's are fixed, compute sum over transitions from ij/ all possible transitions- average measure 
+		//To compute O: taking sum t=1 to N #times Si=x*obs_frequency/ sum1toN obs_frequency
+		//Idea above: Weighting observation likelyhood by likelyhood of Si=x there for t=1 to N
+		
+		return null;
+	}
+
+	
+	public ArrayList<Matrix> singleObservationHankel(int[] counts, int base, int numHiddenStates){
+	
+		Matrix H = buildHankel(counts, 0);
+		
+		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
+		ArrayList<Matrix> A_Matrices  = new ArrayList<Matrix>();
+		
+		int maxDigit = (int) Math.floor( Math.log(counts.length )/Math.log(base) );
+		int freq;
+		for (int l = 1; l < maxDigit; l++) {
+			freq = (int) Math.pow(base,l);
+			H_Matrices.add( buildHankel(counts, freq) );
+		}
+		
+		SingularValueDecomposition SVD = H.svd();
+		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
+		Matrix sinv = SVD.getV().inverse();
+		
+		for (int i = 0; i < H_Matrices.size(); i++) {
+			A_Matrices.add( pinv.times(H_Matrices.get(i)).times( sinv ) );
+		}
+		
+		double[][] h_L = new double[counts.length][1];
+		for (int i = 0; i < counts.length; i++) {
+			h_L[i][0] = (double) counts[i];
+		}
+		Matrix h_LS = new Matrix( h_L );
+		Matrix h_PL = h_LS.transpose();
+		
+		Matrix alpha_0 = h_LS.times(sinv);
+		Matrix alpha_inf = pinv.times(h_PL);
+		
+		A_Matrices.add(alpha_0);
+		A_Matrices.add(alpha_inf);
+	
+		return A_Matrices;
+	}
+
+	public Matrix buildHankel(int[] counts, int startingindex, int endingindex){
+		int size = endingindex - startingindex;
+		double[][] hankel = new double[size][size];
+		
+		int i,j,k;
+		for (i = 0; i < size; i++) {
+			for (j = 0; j < size; j++) {
+				k = size - j;		
+				hankel[k][j] = counts[i];
+			}
+		}
+		
+		return new Matrix(hankel);
 	}
 	
 	public static void testHankel(){
@@ -199,13 +328,30 @@ public class HMM {
 	
 	// HELPER FUNCTIONS BELOW
 	
-	public static double[] generateProbabilityVector(int length, double p){	
+	
+	//Binomial Distribution
+	public static double[] generateBinomialVector(int length, double p){	
 		double[] result = new double[length]; 
 		for(int i=0;i<length;i++){
 			result[i] = nChooseI(length-1, i)*Math.pow(p,i)*Math.pow(1-p, length-1-i);
 		} 
 	
 		return result;
+	}
+	
+	//Uniform Random Probability Vector
+	public static double[] randomVector(int size){	
+		double[] vector = new double[size];
+		double sum = 0;
+		for (int i = 0; i < vector.length; i++) {
+			vector[i] = random.nextDouble();
+			sum += vector[i];
+		}
+		for (int j = 0; j < vector.length; j++) {	//Normalize
+			vector[j] = vector[j]/sum;
+		}
+		return vector;
+		
 	}
 	
 	//[0.4, 0.5, 0.1] --> returns index in {0,1,2}
