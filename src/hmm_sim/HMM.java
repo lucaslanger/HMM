@@ -17,17 +17,21 @@ public class HMM {
 	
 	public static void main(String[] args){
 		
-		/*
+		
 		double c1 = random.nextDouble();
 		double c2 = random.nextDouble();
 		double c3 = random.nextDouble();
 		
-		double[][] t = { {0.3,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
-		double[][] o = { generateBinomialVector(10,c1), 
+		//double[][] t = { {0.9,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
+		/* double[][] o = { generateBinomialVector(10,c1), 
 						generateBinomialVector(10,c2), 
-						generateBinomialVector(10,c3) };  
+						generateBinomialVector(10,c3) };  */
+						
+		double[][] t = { {0.4, 0.3, 0.3}, {0.2, 0.6, 0.2}, {0.3, 0.1, 0.6} };
+						
+		double[][] o = { {0.5, 0.5}, {0.2,0.8}, {0.3,0.7} };
 		
-		double[][] p = { {0.3}, {0.4}, {0.4} };
+		double[][] p = { {1}, {0}, {0} };
 		
 		Matrix T = new Matrix( t );
 		Matrix O = new Matrix( o );
@@ -35,20 +39,35 @@ public class HMM {
 		
 		HMM h = new HMM(T,O,P);
 		
-		double[] sequence = h.generateSequence(100);
-		Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
+		int[] counts = new int[100];
+		double[] probabilities = new double[100];
+		int total = 0;
+		int l;
+		for (int i = 0; i < 1000; i++) {
+			l = h.generateSequenceStreakCount();
+			total += l;
+			counts[l] += 1;
+		}
+		for (int i = 0; i < counts.length; i++) {
+			probabilities[i] = ((double) counts[i] )/total;
+		}
 		
-		testHankel();
-		*/
+		//Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
 		
+		System.out.println( Arrays.toString(probabilities) );	
+		
+		HMM.singleObservationHankel(probabilities,3 , 2, 3);
+	}
+
+	public static void testBaumWelch(){
 		int[] observations = new int[100];
 		for (int i = 0; i < observations.length; i++) {
 			observations[i] = random.nextInt(2);
 		}
 		
-		//System.out.println(Arrays.toString(observations)); 
 		baumWelch(5,observations);
 	}
+	
 
 	public HMM(Matrix T, Matrix O, Matrix P){
 		this.T = T;
@@ -56,8 +75,25 @@ public class HMM {
 		this.P = P;
 	}
 	
-	public double[] generateSequence(int duration){
-		double[] oSeq = new double[duration];
+	private int generateSequenceStreakCount(){
+		
+		int hiddenState = generateState( P.getArrayCopy()[0] );		
+		int c = 0;
+		while(true){
+			hiddenState = generateState( T.getArrayCopy()[hiddenState] );
+			if( generateState( O.getArrayCopy()[hiddenState] ) == 1){
+				c++;
+			}
+			else{
+				break;
+			}
+		} 
+		
+		return c;
+	}
+	
+	public int[] generateSequence(int duration){
+		int[] oSeq = new int[duration];
 		
 		int hiddenState = generateState( P.getArrayCopy()[0] );		
 		
@@ -68,7 +104,7 @@ public class HMM {
 		
 		return oSeq;
 	}
-
+	
 	public Set<String> expectationMaximizationGaussian(double[] observationSequence, int clusters, int numIterations){
 		double overallMean = getMean(observationSequence);
 		double overallSD = getSd(observationSequence, overallMean);
@@ -141,7 +177,7 @@ public class HMM {
 		return revisedEmData;
 	}
 	
-	public Matrix[] customEstimate(int numStates, Set<String> hiddenStateModels){
+	public static Matrix[] customEstimate(int numStates, Set<String> hiddenStateModels){
 		//Use knowledge about data to infer on prior and then compute transition's for data manually
 		return null;
 	}
@@ -157,7 +193,6 @@ public class HMM {
 		
 		for (int i = 0; i < numStates; i++) {
 			transition[i] = randomVector(numStates);
-			
 		}
 		
 		for (int c = 0; c < 10; c++) {
@@ -221,44 +256,44 @@ public class HMM {
 				}
 			}
 			
-			double[][] temp1 = new double[duration][numStates];
+			double[][] stateProbs = new double[duration][numStates];
 			double sum;
 			for (int i = 0; i < duration; i++) {
 				sum = 0;
 				for (int k = 0; k < numStates; k++) {
-					temp1[i][k] = forwardData[i][k]*backwardData[i][k];
-					sum += temp1[i][k];
+					stateProbs[i][k] = forwardData[i][k]*backwardData[i][k];
+					sum += stateProbs[i][k];
 				}
 				for (int k = 0; k < numStates; k++) {
-					temp1[i][k] = temp1[i][k]/sum; 
+					stateProbs[i][k] = stateProbs[i][k]/sum; 
 				}
 			}
 			
-			double[][][] temp2 = new double[duration-1][numStates][numStates];
+			double[][][] transProbs = new double[duration-1][numStates][numStates];
 			for (int i = 0; i < duration-1; i++) {
 				sum = 0;
 				for (int k = 0; k < numStates; k++) {
 					for (int p = 0; p < numStates; p++) {
 						if (observations[p] == 1){
-							temp2[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*observ[0][p];
+							transProbs[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*observ[0][p];
 						}
 						else{
-							temp2[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*(1-observ[0][p]);
+							transProbs[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*(1-observ[0][p]);
 						}
-						sum += temp2[i][k][p];
+						sum += transProbs[i][k][p];
 					}
 				}
 				
 				for (int k = 0; k < numStates; k++) {
 					for (int p = 0; p < numStates; p++) {
-						temp2[i][k][p] = temp2[i][k][p]/sum;
+						transProbs[i][k][p] = transProbs[i][k][p]/sum;
 					}
 				}
 				
 			}
 			
 			for (int i = 0; i < numStates; i++) {
-				prior[0][i] = temp1[0][i];
+				prior[0][i] = stateProbs[0][i];
 			}
 			
 			double norm;
@@ -266,12 +301,12 @@ public class HMM {
 				for (int k = 0; k < numStates; k++) {
 					norm = 0;
 					for (int t = 0; t < duration-1; t++) {
-						norm += temp1[t][i];
+						norm += stateProbs[t][i];
 					}
 					
 					transition[i][k] = 0;
 					for (int t = 0; t < duration-1; t++) {
-						transition[i][k] += temp2[t][i][k];
+						transition[i][k] += transProbs[t][i][k];
 					}
 					transition[i][k] = transition[i][k]/norm;
 				}
@@ -283,9 +318,9 @@ public class HMM {
 				obscount = 0;
 				for (int t = 0; t < duration; t++) {
 					if( observations[t] == 1 ){
-						obscount += temp1[t][i];
+						obscount += stateProbs[t][i];
 					}
-					norm2 += temp1[t][i];
+					norm2 += stateProbs[t][i];
 				}
 				observ[0][i] = obscount/norm2;
 			}
@@ -301,53 +336,107 @@ public class HMM {
 	}
 
 	
-	public ArrayList<Matrix> singleObservationHankel(int[] counts, int base, int numHiddenStates){
+	public static ArrayList<Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
 	
-		Matrix H = buildHankel(counts, 0);
+		//Testing low rank approximation
+		int s = counts.length/2;
+		Matrix bigH = buildHankel(counts, 0, s);
+		bigH.print(5, 5);
+		
+		SingularValueDecomposition svd = bigH.svd();
+		bigH = truncateSVD(svd, 3);
+		
+		svd.getS().print(5,5);
+		
+		bigH.print(5,5);
+		//
+		
+		Matrix H = buildHankel(counts, 0, basisSize);
+		
+		H.print(5,5);
 		
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		ArrayList<Matrix> A_Matrices  = new ArrayList<Matrix>();
 		
-		int maxDigit = (int) Math.floor( Math.log(counts.length )/Math.log(base) );
+		int maxDigit = (int) Math.floor( Math.log(counts.length )/Math.log(base) ) - 1; 
 		int freq;
-		for (int l = 1; l < maxDigit; l++) {
+		for (int l = 0; l < maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
-			H_Matrices.add( buildHankel(counts, freq) );
+			H_Matrices.add( buildHankel(counts, freq, freq+basisSize) );
 		}
 		
 		SingularValueDecomposition SVD = H.svd();
 		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
 		Matrix sinv = SVD.getV().inverse();
 		
+		Matrix m;
 		for (int i = 0; i < H_Matrices.size(); i++) {
-			A_Matrices.add( pinv.times(H_Matrices.get(i)).times( sinv ) );
+			m = pinv.times(H_Matrices.get(i)).times( sinv );
+			A_Matrices.add( m );
 		}
 		
-		double[][] h_L = new double[counts.length][1];
-		for (int i = 0; i < counts.length; i++) {
+		double[][] h_L = new double[basisSize][1];
+		for (int i = 0; i < basisSize; i++) {
 			h_L[i][0] = (double) counts[i];
 		}
-		Matrix h_LS = new Matrix( h_L );
+		Matrix h_LS = new Matrix( h_L ).transpose();
 		Matrix h_PL = h_LS.transpose();
-		
+				
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
 		
+		SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5);
+		
 		A_Matrices.add(alpha_0);
 		A_Matrices.add(alpha_inf);
+		
+		alpha_0.times(A_Matrices.get(1)).times(alpha_inf).print(5, 5);
 	
 		return A_Matrices;
 	}
+	
+	public static Matrix truncateSVD(SingularValueDecomposition svd, int nStates){
+	
+	    Matrix U = svd.getU();
+	    Matrix S = svd.getS();
+	    Matrix V = svd.getV();
+	    
+	    double[][] utemp = U.getArrayCopy();
+	    double[][] utrunc = new double[utemp.length][nStates];
+	    for (int i = 0; i < utrunc.length; i++) {
+			utrunc[i] = utemp[i];
+		}
+	    
+	    Matrix Utrunc = new Matrix(utrunc);
+	    
+	    double[][] stemp = S.getArrayCopy();
+	    double[][] strunc = new double[stemp.length][nStates];
+	    for (int i = 0; i < strunc.length; i++) {
+			strunc[i] = stemp[i];
+		}
+	    
+	    Matrix Strunc = new Matrix(strunc);
+	    
+	    double[][] vtemp = V.transpose().getArrayCopy();
+	    double[][] vtrunc = new double[utemp.length][nStates];
+	    for (int i = 0; i < vtrunc.length; i++) {
+			vtrunc[i] = vtemp[i];
+		}
+	    
+	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
+	    
+	    return Utrunc.times(Strunc).times(Vtrunc);
+	    
+	}
 
-	public Matrix buildHankel(int[] counts, int startingindex, int endingindex){
+	public static Matrix buildHankel(double[] counts, int startingindex, int endingindex){
 		int size = endingindex - startingindex;
 		double[][] hankel = new double[size][size];
 		
-		int i,j,k;
+		int i,j;
 		for (i = 0; i < size; i++) {
 			for (j = 0; j < size; j++) {
-				k = size - j;		
-				hankel[k][j] = counts[i];
+				hankel[i][j] = counts[i+j+startingindex];
 			}
 		}
 		
@@ -403,8 +492,6 @@ public class HMM {
 		test5.print(5,5);
 		test6.print(5,5);
 	}
-	
-	
 	
 	// HELPER FUNCTIONS BELOW
 	
