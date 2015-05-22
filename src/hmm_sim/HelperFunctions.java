@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
+
 public class HelperFunctions {
 	
 	public static Random random = new Random();	
@@ -94,7 +97,7 @@ public class HelperFunctions {
 	}
 	
 	//Uniform Random Probability Vector
-	public static double[] randomVector(int size){	
+	public static double[] randomNormVector(int size){	
 		double[] vector = new double[size];
 		double sum = 0;
 		for (int i = 0; i < vector.length; i++) {
@@ -106,6 +109,14 @@ public class HelperFunctions {
 		}
 		return vector;
 		
+	}
+	
+	public static double[] randomProbVector(int size){
+		double[] r = new double[size];
+		for (int i = 0; i < size; i++) {
+			r[i] = random.nextDouble();
+		}
+		return r;
 	}
 	
 	//[0.4, 0.5, 0.1] --> returns index in {0,1,2}
@@ -194,5 +205,25 @@ public class HelperFunctions {
 		else{
 			return n*factorial(n-1);
 		}
+	}
+	
+	public static Matrix matrixPower(Matrix m, int exp){
+		
+		
+		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
+		Matrix T = I;
+		if (exp == 0){
+			return I;
+		}
+		else{
+			for (int i = 0; i < exp; i++) {
+				T = T.times(m);
+			}
+			return T;
+		}
+		/*
+		else{
+			SingularValueDecomposition s = m.svd();
+		} */
 	}
 }

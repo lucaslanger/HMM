@@ -22,16 +22,21 @@ public class HMM {
 	
 	public static void main(String[] args){
 		
+		/* ONLY FOR TRUEHMM
+		double[][] p = { {0}, {1}};
+		double[][] t = { {0.55,0.45}, {0.35,0.65} };
+		double[][] o = { {0,1}, {0,1} };
+		*/
 		
 		double[][] p = { {0}, {1}};
 		double[][] t = { {0.5,0.45}, {0.3,0.65} };
 		double[][] o = { {0,1}, {0,1} };
+	
 		double[][] e = { {0.05}, {0.05} };
 		
+		
 		Matrix T = new Matrix( t );
-		T.print(5, 5);
 		Matrix O = new Matrix( o );
-		O.print(5,5);
 		Matrix P = new Matrix( p );
 		
 		Matrix E = new Matrix( e );
@@ -41,33 +46,63 @@ public class HMM {
 		//testEMGaussian();
 		//testHankel();
 		//h.testBaumWelch();
-		//h.singleObservationSpectralEmperical(10000);
-		h.singleObservationSpectralTrue(100);
-	}
-	
-	public void singleObservationSpectralEmperical(int samples){
-		int[] counts = new int[samples];
-		double[] probabilities = new double[samples];
-		int total=0, sequenceLength=0, j=0, c=0;
+		//h.testFullBaumWelch();
 		
-		for (int i = 0; i < samples; i++) {
-			sequenceLength = generateSequenceStreakCount();
-			counts[sequenceLength] += 1;
-			total += 1;
+		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(1000,20);
+		HashMap<String, Matrix> tru = h.singledataSpectralTrue(10);
+		//System.out.println( emp.toString() );
+		Matrix H = tru.get("P").times(tru.get("S"));
+		Matrix Hbar = emp.get("H");
+		
+		System.out.println( H.minus(Hbar).normF() ); 
+		
+		System.out.println(emp.toString());
+		
+		Matrix temp1, temp2, temp3, r;
+		for (int i = 0; i < 5; i++) {
+			temp1 = emp.get( Integer.toString( (int) Math.pow(2, i)) );
+			temp2 = HelperFunctions.matrixPower( temp1 , 2);
+			temp3 = emp.get( Integer.toString( (int) Math.pow(2, i+1) ));
+			r = temp2.minus( temp3 ) ;	
+			//temp2.print(5, 5);
+			//temp3.print(5, 5);
+			
+			System.out.println(i);
+			System.out.println(r.normF());
 		}
 		
+	}
+	
+	public HashMap<String, Matrix> singledataSpectralEmperical(int samples, int maxsize){
+		int[] counts = new int[maxsize];
+		int  sequenceLength=0, j=0, c=0, total=0;
+		
 		for (int i = 0; i < samples; i++) {
-			j = samples - i - 1;
+			sequenceLength = generateSequenceStreakCount();	
+			if(sequenceLength < maxsize){
+				counts[sequenceLength]++;
+				total++;
+			}
+			
+		}
+		double[] probabilities = new double[total];
+		
+		for (int i = 0; i < maxsize; i++) {
+			j = maxsize - i - 1;
 			//counts[j] += c;
-			probabilities[j] = counts[j]/total;
+			
+			probabilities[j] = ((double) counts[j])/samples;
+			
 			//c+=counts[j];							
 			// The variable c makes counting occurrences linear instead of quadratic
 		}
 		
-		singleObservationHankel(probabilities, 3, 2, T.getColumnDimension() );
+		//System.out.println( Arrays.toString(probabilities) );
+		
+		return singleObservationHankel(probabilities, 10, 2, states );
 	}
 	
-	public HashMap<String, Matrix> singleObservationSpectralTrue(int size){
+	public HashMap<String, Matrix> singledataSpectralTrue(int size){
 		Matrix P_True, S_True;
 		
 		Matrix Asigma = O.times(T);
@@ -111,9 +146,18 @@ public class HMM {
 	}
 
 	public void testBaumWelch(){
+		int seq[] = new int[5];
+		for (int i = 0; i < seq.length; i++) {
+			seq[i] = generateSequenceStreakCount();
+
+		}
+		baumWelch(2, 10 ,seq );
+	}
+	
+	public void testFullBaumWelch(){
 		int[] seq = generateSequence(20);
-		System.out.println(Arrays.toString(seq));
-		baumWelch(3, 10 ,seq );
+		//System.out.println(Arrays.toString(seq));
+		baumWelchFULLHMM(2, 10, seq);
 	}
 	
 	public static void testEMGaussian(){
@@ -175,7 +219,7 @@ public class HMM {
 		while(true){
 			//System.out.println(hiddenState);
 			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
-			if( HelperFunctions.generateState( O.getArrayCopy()[hiddenState] ) == 1){
+			if( hiddenState <= 1){
 				c++;
 			}
 			else{
@@ -193,206 +237,67 @@ public class HMM {
 		
 		for(int t=0;t<duration;t++){
 			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
+			//System.out.println(hiddenState);
 			oSeq[t] = HelperFunctions.generateState( O.getArrayCopy()[hiddenState] );
 		} 
 		
 		return oSeq;
 	}
-	
-	
-	//Not working properly yet, TODO: Vectorize
-	
-	public static void baumWelch(int numStates, int numIterations, int[] observations){
-		//Seem's like a completely different algorithm because here we have no knowledge of model
-		double[][] prior =  { HelperFunctions.randomVector(numStates) };
+		
+	public static void baumWelch(int numStates, int numIterations, int durations[] ){
+		Matrix P,T,E, Pdiag;
+		
+		double[] prior =  HelperFunctions.randomNormVector(numStates);
 		double[][] transition = new double[numStates][numStates]; 
-		double r1=Math.random(), r2=Math.random(), r3=Math.random();
-		double[][] observ = new double[][]{ {1-r1,r1,} , {1-r2,r2,}, {1-r3,r3,} };
-		double[][] ending = new double[][]{ {Math.random(), Math.random(), Math.random()} };
+		double[] ending = new double[numStates];
 		
-		for (int i = 0; i < numStates; i++) {
-			transition[i] = HelperFunctions.randomVector(numStates);
-		}
-			
-		Matrix P,T,O,E;
-		int duration = observations.length;
-		double[][] forwardData = new double[ duration ][numStates];
-		
-		for (int c = 0; c < numIterations; c++) {
-	
-			P = new Matrix(prior);
-			T = new Matrix(transition).transpose(); 
-			O = new Matrix(observ);
-			E = new Matrix(ending);
-			
-			System.out.println("Run");
-			P.print(numStates, numStates);
-			T.print(numStates, numStates);
-			O.print(numStates, numStates);
-			E.print(numStates, numStates);
-			
-			int obs = 0;
-			for (int i = 0; i < numStates; i++) {
-				obs = observations[i];
-				forwardData[0][i] = observ[obs][i] * prior[0][i];	
-			}
-			
-			double tmp = 0;
-			double tmp2 = 0;
-			Matrix f,t;
-			for (int i = 1; i < duration; i++) {
-				for (int j = 0; j < numStates; j++) {
-					tmp = 0;
-					f = new Matrix(forwardData[i-1],1).transpose();
-					t = new Matrix(transition[j], 1); 
-					tmp = f.times(t).trace();
-					
-					tmp2 = 0;
-					for (int p = 0; p < numStates; p++) {
-						tmp += forwardData[i-1][p]*transition[j][p];	// from p to j
-					
-					forwardData[i][j] = tmp*observ[obs][j];
-				}
-			}
-			
-			//System.out.println("Forward");
-			//new Matrix(forwardData).print(5, 5);
-			
-			double[][] backwardData = new double[duration][numStates];
-			for (int i = 0; i < numStates; i++) {
-				backwardData[duration-1][i] = 1;
-			}
-			
-			//Improvement: Turn the code below into matrix operations, numStates, observ states low so it doesn't matter
-			int j;
-			for (int i = 1; i < duration; i++) {
-				for (int k = 0; k < numStates; k++) {
-					tmp = 0;
-					j = backwardData.length-1-i;
-					for (int p = 0; p < numStates; p++) {
-						if (observations[i] == 1){
-							tmp += transition[p][k] * backwardData[j+1][p] * observ[0][p];
-						}
-						else{
-							tmp += transition[p][k] * backwardData[j+1][p] * (1-observ[0][p]);
-						}
-					}
-					if (tmp > 1) {
-						//System.out.println(tmp);
-					}
-					
-					backwardData[j][k] = tmp;
-				}
-			}
-			
-			//System.out.println("Backward");
-			//new Matrix(backwardData).print(5, 5);
-			
-			double[][] stateProbs = new double[duration][numStates];
-			double sum;
-			for (int i = 0; i < duration; i++) {
-				sum = 0;
-				for (int k = 0; k < numStates; k++) {
-					stateProbs[i][k] = forwardData[i][k]*backwardData[i][k];
-					sum += stateProbs[i][k];
-				}
-				for (int k = 0; k < numStates; k++) {
-					stateProbs[i][k] = stateProbs[i][k]/sum; 
-				}
-			}
-			
-			double[][][] transProbs = new double[duration-1][numStates][numStates];
-			for (int i = 0; i < duration-1; i++) {
-				sum = 0;
-				for (int k = 0; k < numStates; k++) {
-					for (int p = 0; p < numStates; p++) {
-						if (observations[p] == 1){
-							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*observ[0][p];
-						}
-						else{
-							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*(1-observ[0][p]);
-						}
-						sum += transProbs[i][k][p];
-					}
-				}
-				
-				for (int k = 0; k < numStates; k++) {
-					for (int p = 0; p < numStates; p++) {
-						transProbs[i][k][p] = transProbs[i][k][p]/sum;
-						if (transProbs[i][k][p] > 1) {
-							System.out.println("Transprob");
-							System.out.println(transProbs[i][k][p]);
-						}
-					}
-				}
-				
-			}
-			
-			for (int i = 0; i < numStates; i++) {
-				prior[0][i] = stateProbs[0][i];
-			}
-			
-			double norm;
-			for (int i = 0; i < numStates; i++) {
-				for (int k = 0; k < numStates; k++) {
-					norm = 0;
-					for (int t = 0; t < duration-1; t++) {
-						norm += stateProbs[t][i];
-					}
-					
-					transition[i][k] = 0;
-					for (int t = 0; t < duration-1; t++) {
-						transition[i][k] += transProbs[t][i][k];
-					}
-					
-					
-					transition[i][k] = transition[i][k]/norm;
-				}
-			}
-			
-			double norm2, obscount;
-			for (int i = 0; i < numStates; i++) {
-				norm2 = 0;
-				obscount = 0;
-				for (int t = 0; t < duration; t++) {
-					if( observations[t] == 1 ){
-						obscount += stateProbs[t][i];
-					}
-					norm2 += stateProbs[t][i];
-				}
-				observ[0][i] = obscount/norm2;
-			}
+		for (int s = 0; s < numStates; s++) {
+			double[] v = HelperFunctions.randomNormVector(numStates + 1);
+			transition[s] = Arrays.copyOfRange(v, 0, v.length-1);
+			ending[s] = v[v.length-1];
 		}
 		
-		//Computation of P(Si, O1 .. Oi): Forward
-		//Computation of P(Oi+1, ... On|Si) Backward
-		//Now compute P(Si, O1...On) --> condition on Si, then you have a product
-		//Transitions: P(Si,Si+1|O1...On), compute using info above and transitions guess
-		//Special for Baum-Welch: since T's are fixed, compute sum over transitions from ij/ all possible transitions- average measure 
-		//To compute O: taking sum t=1 to N #times Si=x*obs_frequency/ sum1toN obs_frequency
-		//Idea above: Weighting observation likelyhood by likelyhood of Si=x there for t=1 to N
-	}
+		P = new Matrix(prior,1);
+		T = new Matrix(transition);
+		E = new Matrix(ending,1).transpose();
+		
+		double[][] pd = new double[numStates][numStates];
+		for (int i = 0; i < pd.length; i++) {
+			pd[i][i] = prior[i];
+		}
+		
+		Pdiag = new Matrix(pd);
+		
+		//Compute probability of being in state i given a duration sequence
+		double[][] forward;
+		Matrix m,r;
+		for (int d: durations){
+			 forward = new double[d][numStates];
+			 m = HelperFunctions.matrixPower(T,d);	//Inefficient fix later
+			 r = Pdiag.times(m).times(E);
+			 System.out.println(d);
+			 r.print(5,10);	 
+		}
 
+	}
 	
 	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
 		
 		//	Matrix full = buildHankel(counts, 0, 20);
 		//	full.print(5, 5);
-		
+			
 		Matrix H = buildHankel(counts, 0, basisSize);
 
-		H.print(5, 5);
-		H = truncateSVD(H, numHiddenStates);
-		H.print(5, 5);
+		//H.print(5, 5);
+		//H = truncateSVD(H, numHiddenStates);
+		//H.print(5, 5);
 		
 		SingularValueDecomposition SVD = H.svd();
 		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
 		Matrix sinv = (SVD.getV().transpose()).inverse();
-		
-		//SVD.getU().times(SVD.getS()).times(SVD.getV().transpose()).print(5,5);
-				
+						
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
-		ArrayList<Matrix> A_Matrices  = new ArrayList<Matrix>();
+		HashMap<String, Matrix> A_Matrices  = new HashMap<String, Matrix>();
 		
 		int maxDigit = (int) Math.floor( Math.log(counts.length )/Math.log(base) ) - 1; 
 		int freq;
@@ -400,13 +305,14 @@ public class HMM {
 		for (int l = 0; l < maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
 			h = buildHankel(counts, freq, freq+basisSize);
-			H_Matrices.add( truncateSVD(h, numHiddenStates) );
+			//H_Matrices.add( truncateSVD(h, numHiddenStates) );
+			H_Matrices.add(h);
 		}
 		
 		Matrix m;
 		for (int i = 0; i < H_Matrices.size(); i++) {
 			m = pinv.times(H_Matrices.get(i)).times( sinv );
-			A_Matrices.add( m );
+			A_Matrices.put(Integer.toString( (int) Math.pow(2, i) ), m );
 		}
 		
 		double[][] h_L = new double[basisSize][1];
@@ -421,18 +327,12 @@ public class HMM {
 		
 		//SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5); //Tests that you get back h_L
 		
-		//A_Matrices.add(alpha_0);
-		//A_Matrices.add(alpha_inf);
-		
-		
-		//Problem seems to be from not truncating Hsigmas
-		//H_Matrices.get(0).print(5,5);
-		
-		alpha_0.times(A_Matrices.get(0)).times(alpha_inf).print(5, 5);
-		alpha_0.times(A_Matrices.get(1)).times(alpha_inf).print(5, 5);
-		alpha_0.times(A_Matrices.get(2)).times(alpha_inf).print(5, 5);
+		/*alpha_0.times(A_Matrices.get("1")).times(alpha_inf).print(5, 5);
+		alpha_0.times(A_Matrices.get("2")).times(alpha_inf).print(5, 5);
+		alpha_0.times(A_Matrices.get("3")).times(alpha_inf).print(5, 5);
+		*/
+		A_Matrices.put("H", H);
 
-	
 		return A_Matrices;
 	}
 	
@@ -524,4 +424,178 @@ public class HMM {
 		test6.print(5,5);
 	}
 	
-}
+	
+	//Not working and development halted because full HMM not needed for project
+	//Fix: Vectorize and debug non normal transition matrix
+	
+	public static void baumWelchFULLHMM(int numStates, int numIterations, int[] observations){
+		double[][] prior =  { HelperFunctions.randomNormVector(numStates) };
+		double[][] transition = new double[numStates][numStates]; 
+		double[][] observ = new double[][]{ HelperFunctions.randomNormVector(2) , HelperFunctions.randomNormVector(2) };
+		
+		for (int i = 0; i < numStates; i++) {
+			transition[i] = HelperFunctions.randomNormVector(numStates);
+		}
+			
+		Matrix P,T,O,E;
+		int duration = observations.length;
+		double[][] forwardData = new double[ duration ][numStates];
+		
+		double[][][] transProbs = new double[duration-1][numStates][numStates];
+		double[][] stateProbs = new double[duration][numStates];
+		
+		for (int c = 0; c < numIterations; c++) {
+	
+			P = new Matrix(prior);
+			T = new Matrix(transition).transpose(); 
+			O = new Matrix(observ);
+			
+			System.out.println("Run");
+			P.print(numStates, numStates);
+			T.print(numStates, numStates);
+			O.print(numStates, numStates);
+			
+			int obs = 0;
+			for (int i = 0; i < numStates; i++) {
+				obs = observations[i];
+				forwardData[0][i] = observ[obs][i] * prior[0][i];	
+			}
+			
+			double tmp = 0;
+			double tmp2 = 0;
+			Matrix forw,tran;
+			for (int i = 1; i < duration; i++) {
+				for (int j = 0; j < numStates; j++) {
+					tmp = 0;
+					forw = new Matrix(forwardData[i-1],1).transpose();
+					tran = new Matrix(transition[j], 1); 
+					tmp = forw.times(tran).trace();
+					
+					tmp2 = 0;
+					for (int p = 0; p < numStates; p++) {
+						tmp += forwardData[i-1][p]*transition[j][p];	// from p to j
+					}
+					forwardData[i][j] = tmp*observ[obs][j];
+				}
+			}
+			
+			//System.out.println("Forward");
+			//new Matrix(forwardData).print(5, 5);
+			
+			double[][] backwardData = new double[duration][numStates];
+			for (int i = 0; i < numStates; i++) {
+				backwardData[duration-1][i] = 1;
+			}
+			
+			//Improvement: Turn the code below into matrix operations, numStates, observ states low so it doesn't matter
+			int j;
+			for (int i = 1; i < duration; i++) {
+				for (int k = 0; k < numStates; k++) {
+					tmp = 0;
+					j = backwardData.length-1-i;
+					for (int p = 0; p < numStates; p++) {
+						if (observations[i] == 1){
+							tmp += transition[p][k] * backwardData[j+1][p] * observ[0][p];
+						}
+						else{
+							tmp += transition[p][k] * backwardData[j+1][p] * (1-observ[0][p]);
+						}
+					}
+					if (tmp > 1) {
+						//System.out.println(tmp);
+					}
+					
+					backwardData[j][k] = tmp;
+				}
+			}
+			
+			//System.out.println("Backward");
+			//new Matrix(backwardData).print(5, 5);
+			
+			double sum;
+			for (int i = 0; i < duration; i++) {
+				sum = 0;
+				for (int k = 0; k < numStates; k++) {
+					stateProbs[i][k] = forwardData[i][k]*backwardData[i][k];
+					sum += stateProbs[i][k];
+				}
+				for (int k = 0; k < numStates; k++) {
+					stateProbs[i][k] = stateProbs[i][k]/sum; 
+				}
+			}
+			
+			for (int i = 0; i < duration-1; i++) {
+				sum = 0;
+				for (int k = 0; k < numStates; k++) {
+					for (int p = 0; p < numStates; p++) {
+						if (observations[p] == 1){
+							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*observ[0][p];
+						}
+						else{
+							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*(1-observ[0][p]);
+						}
+						sum += transProbs[i][k][p];
+					}
+				}
+				
+				for (int k = 0; k < numStates; k++) {
+					for (int p = 0; p < numStates; p++) {
+						transProbs[i][k][p] = transProbs[i][k][p]/sum;
+						if (transProbs[i][k][p] > 1) {
+							System.out.println("Transprob");
+							System.out.println(transProbs[i][k][p]);
+						}
+					}
+				}
+				
+			}
+			
+			for (int i = 0; i < numStates; i++) {
+				prior[0][i] = stateProbs[0][i];
+			}
+			
+			double norm;
+			for (int i = 0; i < numStates; i++) {
+				for (int k = 0; k < numStates; k++) {
+					norm = 0;
+					for (int t = 0; t < duration-1; t++) {
+						norm += stateProbs[t][i];
+					}
+					
+					transition[i][k] = 0;
+					for (int t= 0; t < duration-1; t++) {
+						transition[i][k] += transProbs[t][i][k];
+					}
+					
+					
+					transition[i][k] = transition[i][k]/norm;
+				}
+			}
+			
+			double norm2, obscount;
+			for (int i = 0; i < numStates; i++) {
+				norm2 = 0;
+				obscount = 0;
+				for (int t = 0; t < duration; t++) {
+					if( observations[t] == 1 ){
+						obscount += stateProbs[t][i];
+					}
+					norm2 += stateProbs[t][i];
+				}
+				observ[0][i] = obscount/norm2;
+			}
+		}
+		
+		//Computation of P(Si, O1 .. Oi): Forward
+		//Computation of P(Oi+1, ... On|Si) Backward
+		//Now compute P(Si, O1...On) --> condition on Si, then you have a product
+		//Transitions: P(Si,Si+1|O1...On), compute using info above and transitions guess
+		//Special for Baum-Welch: since T's are fixed, compute sum over transitions from ij/ all possible transitions- average measure 
+		//To compute O: taking sum t=1 to N #times Si=x*obs_frequency/ sum1toN obs_frequency
+		//Idea above: Weighting observation likelyhood by likelyhood of Si=x there for t=1 to N
+	}
+	
+  }
+
+	
+
