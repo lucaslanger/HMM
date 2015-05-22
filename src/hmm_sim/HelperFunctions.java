@@ -1,21 +1,111 @@
 package hmm_sim;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class HelperFunctions {
 	
-	public static Random random = new Random();
-
+	public static Random random = new Random();	
 	
-	public static double[] generateProbabilityVector(int length, double p){	
+	public static Set<String> expectationMaximizationGaussian(double[] observationSequence, int clusters, int numIterations){
+		double overallMean = HelperFunctions.getMean(observationSequence);
+		double overallSD = HelperFunctions.getSd(observationSequence, overallMean);
+		
+		HashMap<String, ArrayList<Double>> emData = new HashMap<String, ArrayList<Double>>();
+		
+		double meanGuess, sdGuess;
+		for(int count = 0;count < clusters;count++){
+		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;	//4 arbitary here
+			sdGuess = overallSD;
+			
+			String key = Double.toString(meanGuess) + "," + Double.toString(sdGuess);
+			emData.put(key, new ArrayList<Double>() ); 
+		}
+		
+		for(int iteration=0;iteration<numIterations;iteration++){
+			
+			expect(emData, observationSequence);
+			//Investigate: WHY is emData not mutable under maximize?
+			emData = maximize(emData);
+		}
+		
+		return emData.keySet();
+	}
+	
+	public static HashMap<String, ArrayList<Double>> expect(HashMap<String, ArrayList<Double>> emData, double[] observationSequence){
+		for (String k: emData.keySet()){
+			emData.put(k, new ArrayList<Double>());
+		}
+		
+		String maxKey = null;
+		double mean, sd, likelyhood, maxProbability = 0;
+		ArrayList<Double> currentData;
+		for(double datapoint: observationSequence){
+			for(String key: emData.keySet()){
+				mean = Double.parseDouble(key.split(",")[0]);
+				sd = Double.parseDouble(key.split(",")[1]);
+				likelyhood = HelperFunctions.getLikelyhood(mean, sd, datapoint);
+				if (maxKey == null || likelyhood > maxProbability ){
+					maxKey = key;
+					maxProbability = likelyhood;
+				}
+			}
+			currentData = emData.get(maxKey);
+			currentData.add(datapoint);
+			
+			emData.put(maxKey, currentData);
+			
+			maxProbability = 0;
+			maxKey = null;
+		}
+		
+		return emData;
+
+	}
+	
+	public static HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
+		
+		//Reason for copy is to avoid overwriting 
+		HashMap<String, ArrayList<Double>> revisedEmData = new HashMap<String, ArrayList<Double>>();
+		double[] l;
+		double mean, sd;
+		for (String key: emData.keySet()){
+			l = HelperFunctions.doubleListToArray( emData.get(key));
+			mean = HelperFunctions.getMean(l);
+			sd = HelperFunctions.getSd(l, mean);
+			String newkey = Double.toString(mean) + "," + Double.toString(sd);
+			revisedEmData.put(newkey, new ArrayList<Double>());
+		}
+		return revisedEmData;
+	}
+	
+	//From Binomial Distribution
+	public static double[] generateBinomialVector(int length, double p){	
 		double[] result = new double[length]; 
 		for(int i=0;i<length;i++){
 			result[i] = nChooseI(length-1, i)*Math.pow(p,i)*Math.pow(1-p, length-1-i);
 		} 
 	
 		return result;
+	}
+	
+	//Uniform Random Probability Vector
+	public static double[] randomVector(int size){	
+		double[] vector = new double[size];
+		double sum = 0;
+		for (int i = 0; i < vector.length; i++) {
+			vector[i] = random.nextDouble();
+			sum += vector[i];
+		}
+		for (int j = 0; j < vector.length; j++) {	//Normalize
+			vector[j] = vector[j]/sum;
+		}
+		return vector;
+		
 	}
 	
 	//[0.4, 0.5, 0.1] --> returns index in {0,1,2}
@@ -41,7 +131,7 @@ public class HelperFunctions {
 		
 	}	
 	
-	public static double[] listToArray(List<Double> arr){   
+	public static double[] doubleListToArray(List<Double> arr){   
 	    double[] result = new double[arr.size()];
 	    int i = 0;
 	    for(Double d : arr) {
@@ -87,6 +177,7 @@ public class HelperFunctions {
 		}
 	}
 	
+	// Gaussian pdf
 	public static double getLikelyhood(double modelMean, double modelSd, double obs){
 		double num = Math.pow(Math.E, -1*Math.pow(modelMean - obs,2) / (2*Math.pow(modelSd,2)) );
 		double denom = Math.sqrt(2*Math.pow(modelSd,2)*Math.PI);

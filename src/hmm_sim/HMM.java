@@ -1,4 +1,4 @@
-//HMM model written by Lucas Langer to better my intuition about EM
+//HMM model written by Lucas Langer 
 
 package hmm_sim;
 
@@ -6,233 +6,257 @@ import Jama.*;
 
 import java.util.*;
 
+import hmm_sim.HelperFunctions;
+
 public class HMM {
 	
-	// T --> Transition, O --> Observation, P --> Prior 
+	// T --> Transition, O --> Observation, P --> Prior
+	private int states;
+	
 	private Matrix T;
 	private Matrix O;
 	private Matrix P;
-	
+	private Matrix E;
+
 	public static Random random = new Random();
 	
 	public static void main(String[] args){
 		
 		
+		double[][] p = { {0}, {1}};
+		double[][] t = { {0.5,0.45}, {0.3,0.65} };
+		double[][] o = { {0,1}, {0,1} };
+		double[][] e = { {0.05}, {0.05} };
+		
+		Matrix T = new Matrix( t );
+		T.print(5, 5);
+		Matrix O = new Matrix( o );
+		O.print(5,5);
+		Matrix P = new Matrix( p );
+		
+		Matrix E = new Matrix( e );
+		
+		HMM h = new HMM(T,O,P,E,2);	
+		
+		//testEMGaussian();
+		//testHankel();
+		//h.testBaumWelch();
+		//h.singleObservationSpectralEmperical(10000);
+		h.singleObservationSpectralTrue(100);
+	}
+	
+	public void singleObservationSpectralEmperical(int samples){
+		int[] counts = new int[samples];
+		double[] probabilities = new double[samples];
+		int total=0, sequenceLength=0, j=0, c=0;
+		
+		for (int i = 0; i < samples; i++) {
+			sequenceLength = generateSequenceStreakCount();
+			counts[sequenceLength] += 1;
+			total += 1;
+		}
+		
+		for (int i = 0; i < samples; i++) {
+			j = samples - i - 1;
+			//counts[j] += c;
+			probabilities[j] = counts[j]/total;
+			//c+=counts[j];							
+			// The variable c makes counting occurrences linear instead of quadratic
+		}
+		
+		singleObservationHankel(probabilities, 3, 2, T.getColumnDimension() );
+	}
+	
+	public HashMap<String, Matrix> singleObservationSpectralTrue(int size){
+		Matrix P_True, S_True;
+		
+		Matrix Asigma = O.times(T);
+		
+		double[][] p = new double[size][states];
+		double[][] s = new double[size][states];
+		
+		Matrix runningProductPrefixes = P.transpose();
+		Matrix runningProductSuffixes = E;
+
+		for (int i = 0; i < size; i++){
+			p[i] = runningProductPrefixes.getArrayCopy()[0]; 
+			s[i] = runningProductSuffixes.transpose().getArrayCopy()[0];
+			runningProductPrefixes = runningProductPrefixes.times(Asigma);
+			runningProductSuffixes = Asigma.times(runningProductSuffixes);
+		}
+		
+		P_True = new Matrix(p);
+		S_True = new Matrix(s).transpose();
+		//P_True.print(5,5);
+		//S_True.print(5,5);		
+
+		//Test to verify above
+		/*
+		double[] sigmas = new double[size];
+		Matrix running = P.transpose();
+		for (int i = 0; i < size; i++) {
+			sigmas[i] = running.times(E).trace();
+			running = running.times(Asigma);
+		}
+		
+		System.out.println( Arrays.toString(sigmas) );
+		System.out.println( Arrays.toString(P_True.times(S_True).getArrayCopy()[0]) );
+		*/
+		
+		HashMap<String, Matrix>  data= new HashMap<String, Matrix>();
+		data.put("P", P_True);
+		data.put("S", S_True);
+		
+		return data;
+	}
+
+	public void testBaumWelch(){
+		int[] seq = generateSequence(20);
+		System.out.println(Arrays.toString(seq));
+		baumWelch(3, 10 ,seq );
+	}
+	
+	public static void testEMGaussian(){
+		
 		double c1 = random.nextDouble();
 		double c2 = random.nextDouble();
 		double c3 = random.nextDouble();
 		
-		//double[][] t = { {0.9,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
-		/* double[][] o = { generateBinomialVector(10,c1), 
-						generateBinomialVector(10,c2), 
-						generateBinomialVector(10,c3) };  */
-						
-		double[][] t = { {0.4, 0.3, 0.3}, {0.2, 0.6, 0.2}, {0.3, 0.1, 0.6} };
-						
-		double[][] o = { {0.5, 0.5}, {0.2,0.8}, {0.3,0.7} };
+		System.out.println(c1);
+		System.out.println(c2);
+		System.out.println(c3);
 		
-		double[][] p = { {1}, {0}, {0} };
+		int N = 10;
+		
+		double[][] p = { {0}, {1}, {0} };
+		double[][] t = { {0.3,0.3,0.4}, {0.3,0.3,0.4}, {0.3,0.3,0.4} }; 
+		
+		double[][] o = { 	HelperFunctions.generateBinomialVector(N,c1), 
+							HelperFunctions.generateBinomialVector(N,c2), 
+							HelperFunctions.generateBinomialVector(N,c3) 
+						};
 		
 		Matrix T = new Matrix( t );
 		Matrix O = new Matrix( o );
 		Matrix P = new Matrix( p );
 		
-		HMM h = new HMM(T,O,P);
+		HMM h = new HMM(T,O,P,3);
 		
-		int[] counts = new int[100];
-		double[] probabilities = new double[100];
-		int total = 0;
-		int l;
-		for (int i = 0; i < 1000; i++) {
-			l = h.generateSequenceStreakCount();
-			total += l;
-			counts[l] += 1;
+		int[] int_sequence = h.generateSequence(100);
+		double[] sequence = new double[100];
+		for (int i = 0; i < sequence.length; i++) {
+			sequence[i] = (double) int_sequence[i];
 		}
-		for (int i = 0; i < counts.length; i++) {
-			probabilities[i] = ((double) counts[i] )/total;
-		}
+				
+		Set<String> s = HelperFunctions.expectationMaximizationGaussian(sequence, 3 , 50);
 		
-		//Set<String> s = h.expectationMaximizationGaussian(sequence, 3 , 50);
-		
-		System.out.println( Arrays.toString(probabilities) );	
-		
-		HMM.singleObservationHankel(probabilities,3 , 2, 3);
+		System.out.println( s );
 	}
 
-	public static void testBaumWelch(){
-		int[] observations = new int[100];
-		for (int i = 0; i < observations.length; i++) {
-			observations[i] = random.nextInt(2);
-		}
-		
-		baumWelch(5,observations);
-	}
-	
-
-	public HMM(Matrix T, Matrix O, Matrix P){
+	public HMM(Matrix T, Matrix O, Matrix P, Matrix E, int ns){
 		this.T = T;
 		this.O = O;
 		this.P = P;
+		this.E = E;
+		this.states = ns;
+	}
+	
+	public HMM(Matrix T, Matrix O, Matrix P,  int ns){
+		this.T = T;
+		this.O = O;
+		this.P = P;
+		this.states = ns;
 	}
 	
 	private int generateSequenceStreakCount(){
 		
-		int hiddenState = generateState( P.getArrayCopy()[0] );		
+		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
 		int c = 0;
 		while(true){
-			hiddenState = generateState( T.getArrayCopy()[hiddenState] );
-			if( generateState( O.getArrayCopy()[hiddenState] ) == 1){
+			//System.out.println(hiddenState);
+			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
+			if( HelperFunctions.generateState( O.getArrayCopy()[hiddenState] ) == 1){
 				c++;
 			}
 			else{
 				break;
 			}
 		} 
-		
+		//System.out.println(c);
 		return c;
 	}
 	
 	public int[] generateSequence(int duration){
 		int[] oSeq = new int[duration];
 		
-		int hiddenState = generateState( P.getArrayCopy()[0] );		
+		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
 		
 		for(int t=0;t<duration;t++){
-			hiddenState = generateState( T.getArrayCopy()[hiddenState] );
-			oSeq[t] = generateState( O.getArrayCopy()[hiddenState] );
+			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
+			oSeq[t] = HelperFunctions.generateState( O.getArrayCopy()[hiddenState] );
 		} 
 		
 		return oSeq;
 	}
 	
-	public Set<String> expectationMaximizationGaussian(double[] observationSequence, int clusters, int numIterations){
-		double overallMean = getMean(observationSequence);
-		double overallSD = getSd(observationSequence, overallMean);
-		
-		HashMap<String, ArrayList<Double>> emData = new HashMap<String, ArrayList<Double>>();
-		
-		double meanGuess, sdGuess;
-		for(int count = 0;count < clusters;count++){
-		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;	//4 arbitary here
-			sdGuess = overallSD;
-			
-			String key = Double.toString(meanGuess) + "," + Double.toString(sdGuess);
-			emData.put(key, new ArrayList<Double>() ); 
-		}
-		
-		for(int iteration=0;iteration<numIterations;iteration++){
-			
-			expect(emData, observationSequence);
-			//Investigate: WHY is emData not mutable under maximize?
-			emData = maximize(emData);
-		}
-		
-		return emData.keySet();
-	}
 	
-	public HashMap<String, ArrayList<Double>> expect(HashMap<String, ArrayList<Double>> emData, double[] observationSequence){
-		for (String k: emData.keySet()){
-			emData.put(k, new ArrayList<Double>());
-		}
-		
-		String maxKey = null;
-		double mean, sd, likelyhood, maxProbability = 0;
-		ArrayList<Double> currentData;
-		for(double datapoint: observationSequence){
-			for(String key: emData.keySet()){
-				mean = Double.parseDouble(key.split(",")[0]);
-				sd = Double.parseDouble(key.split(",")[1]);
-				likelyhood = getLikelyhood(mean, sd, datapoint);
-				if (maxKey == null || likelyhood > maxProbability ){
-					maxKey = key;
-					maxProbability = likelyhood;
-				}
-			}
-			currentData = emData.get(maxKey);
-			currentData.add(datapoint);
-			
-			emData.put(maxKey, currentData);
-			
-			maxProbability = 0;
-			maxKey = null;
-		}
-		
-		return emData;
-
-	}
+	//Not working properly yet, TODO: Vectorize
 	
-	public HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
-		
-		//Reason for copy is to avoid overwriting 
-		HashMap<String, ArrayList<Double>> revisedEmData = new HashMap<String, ArrayList<Double>>();
-		double[] l;
-		double mean, sd;
-		for (String key: emData.keySet()){
-			l = listToArray( emData.get(key));
-			mean = getMean(l);
-			sd = getSd(l, mean);
-			String newkey = Double.toString(mean) + "," + Double.toString(sd);
-			revisedEmData.put(newkey, new ArrayList<Double>());
-		}
-		return revisedEmData;
-	}
-	
-	public static Matrix[] customEstimate(int numStates, Set<String> hiddenStateModels){
-		//Use knowledge about data to infer on prior and then compute transition's for data manually
-		return null;
-	}
-	
-	public static void baumWelch(int numStates, int[] observations){
+	public static void baumWelch(int numStates, int numIterations, int[] observations){
 		//Seem's like a completely different algorithm because here we have no knowledge of model
-		double[][] prior = new double[1][numStates];
-		prior[0] = randomVector(numStates);
-		
+		double[][] prior =  { HelperFunctions.randomVector(numStates) };
 		double[][] transition = new double[numStates][numStates]; 
-		double[][] observ = new double[1][numStates]; //Or continuous distribution
-		observ[0] = randomVector(numStates);
+		double r1=Math.random(), r2=Math.random(), r3=Math.random();
+		double[][] observ = new double[][]{ {1-r1,r1,} , {1-r2,r2,}, {1-r3,r3,} };
+		double[][] ending = new double[][]{ {Math.random(), Math.random(), Math.random()} };
 		
 		for (int i = 0; i < numStates; i++) {
-			transition[i] = randomVector(numStates);
+			transition[i] = HelperFunctions.randomVector(numStates);
 		}
-		
-		for (int c = 0; c < 10; c++) {
 			
-			Matrix pi = new Matrix(prior);
-			Matrix T = new Matrix(transition); 
-			Matrix O = new Matrix(observ);
+		Matrix P,T,O,E;
+		int duration = observations.length;
+		double[][] forwardData = new double[ duration ][numStates];
+		
+		for (int c = 0; c < numIterations; c++) {
+	
+			P = new Matrix(prior);
+			T = new Matrix(transition).transpose(); 
+			O = new Matrix(observ);
+			E = new Matrix(ending);
 			
 			System.out.println("Run");
-			pi.print(numStates, numStates);
+			P.print(numStates, numStates);
 			T.print(numStates, numStates);
 			O.print(numStates, numStates);
+			E.print(numStates, numStates);
 			
-			int duration = observations.length;
-			double[][] forwardData = new double[ duration ][numStates];
-			
+			int obs = 0;
 			for (int i = 0; i < numStates; i++) {
-				if (observations[0] == 1){								//Redundant computation introduced but cleaner
-					forwardData[0][i] = observ[0][i] * prior[0][i];	
-				}
-				else{
-					forwardData[0][i] = (1-observ[0][i]) * prior[0][i];
-				}
+				obs = observations[i];
+				forwardData[0][i] = observ[obs][i] * prior[0][i];	
 			}
 			
 			double tmp = 0;
+			double tmp2 = 0;
+			Matrix f,t;
 			for (int i = 1; i < duration; i++) {
 				for (int j = 0; j < numStates; j++) {
 					tmp = 0;
+					f = new Matrix(forwardData[i-1],1).transpose();
+					t = new Matrix(transition[j], 1); 
+					tmp = f.times(t).trace();
+					
+					tmp2 = 0;
 					for (int p = 0; p < numStates; p++) {
-						tmp += forwardData[i-1][p]*transition[p][j];
-					}	
-					if (observations[i] == 1){
-						forwardData[i][j] = tmp*observ[0][j];
-					}
-					else{
-						forwardData[i][j] = tmp*(1-observ[0][j]);
-					}
+						tmp += forwardData[i-1][p]*transition[j][p];	// from p to j
+					
+					forwardData[i][j] = tmp*observ[obs][j];
 				}
 			}
+			
+			//System.out.println("Forward");
+			//new Matrix(forwardData).print(5, 5);
 			
 			double[][] backwardData = new double[duration][numStates];
 			for (int i = 0; i < numStates; i++) {
@@ -243,18 +267,26 @@ public class HMM {
 			int j;
 			for (int i = 1; i < duration; i++) {
 				for (int k = 0; k < numStates; k++) {
-					j = backwardData.length-1- i;
+					tmp = 0;
+					j = backwardData.length-1-i;
 					for (int p = 0; p < numStates; p++) {
 						if (observations[i] == 1){
-							tmp += transition[k][p] * backwardData[j+1][p] * observ[0][p];
+							tmp += transition[p][k] * backwardData[j+1][p] * observ[0][p];
 						}
 						else{
-							tmp += transition[k][p] * backwardData[j+1][p] * (1-observ[0][p]);
+							tmp += transition[p][k] * backwardData[j+1][p] * (1-observ[0][p]);
 						}
 					}
+					if (tmp > 1) {
+						//System.out.println(tmp);
+					}
+					
 					backwardData[j][k] = tmp;
 				}
 			}
+			
+			//System.out.println("Backward");
+			//new Matrix(backwardData).print(5, 5);
 			
 			double[][] stateProbs = new double[duration][numStates];
 			double sum;
@@ -275,10 +307,10 @@ public class HMM {
 				for (int k = 0; k < numStates; k++) {
 					for (int p = 0; p < numStates; p++) {
 						if (observations[p] == 1){
-							transProbs[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*observ[0][p];
+							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*observ[0][p];
 						}
 						else{
-							transProbs[i][k][p] = forwardData[i][k]*transition[k][p]*backwardData[i+1][p]*(1-observ[0][p]);
+							transProbs[i][k][p] = forwardData[i][k]*transition[p][k]*backwardData[i+1][p]*(1-observ[0][p]);
 						}
 						sum += transProbs[i][k][p];
 					}
@@ -287,6 +319,10 @@ public class HMM {
 				for (int k = 0; k < numStates; k++) {
 					for (int p = 0; p < numStates; p++) {
 						transProbs[i][k][p] = transProbs[i][k][p]/sum;
+						if (transProbs[i][k][p] > 1) {
+							System.out.println("Transprob");
+							System.out.println(transProbs[i][k][p]);
+						}
 					}
 				}
 				
@@ -308,6 +344,8 @@ public class HMM {
 					for (int t = 0; t < duration-1; t++) {
 						transition[i][k] += transProbs[t][i][k];
 					}
+					
+					
 					transition[i][k] = transition[i][k]/norm;
 				}
 			}
@@ -336,41 +374,34 @@ public class HMM {
 	}
 
 	
-	public static ArrayList<Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
-	
-		/*Testing low rank approximation
-		int s = counts.length/2;
-		Matrix bigH = buildHankel(counts, 0, s);
-		bigH.print(5, 5);
+	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
 		
-		SingularValueDecomposition svd = bigH.svd();
-		bigH = truncateSVD(svd, 3);
-		
-		svd.getS().print(5,5);
-		
-		bigH.print(5,5);
-		*/
+		//	Matrix full = buildHankel(counts, 0, 20);
+		//	full.print(5, 5);
 		
 		Matrix H = buildHankel(counts, 0, basisSize);
-		H.svd().getS().print(5,5);
-		H.print(5,5);
-		truncateSVD(H.svd(), basisSize).print(5,5);
+
+		H.print(5, 5);
+		H = truncateSVD(H, numHiddenStates);
+		H.print(5, 5);
 		
-		// DO WE TAKE LOW RANK APPROXIMATIONS FOR ALL HXSIGMAS ?
+		SingularValueDecomposition SVD = H.svd();
+		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
+		Matrix sinv = (SVD.getV().transpose()).inverse();
 		
+		//SVD.getU().times(SVD.getS()).times(SVD.getV().transpose()).print(5,5);
+				
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		ArrayList<Matrix> A_Matrices  = new ArrayList<Matrix>();
 		
 		int maxDigit = (int) Math.floor( Math.log(counts.length )/Math.log(base) ) - 1; 
 		int freq;
+		Matrix h;
 		for (int l = 0; l < maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
-			H_Matrices.add( buildHankel(counts, freq, freq+basisSize) );
+			h = buildHankel(counts, freq, freq+basisSize);
+			H_Matrices.add( truncateSVD(h, numHiddenStates) );
 		}
-		
-		SingularValueDecomposition SVD = H.svd();
-		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
-		Matrix sinv = SVD.getV().inverse();
 		
 		Matrix m;
 		for (int i = 0; i < H_Matrices.size(); i++) {
@@ -388,18 +419,26 @@ public class HMM {
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
 		
-		SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5);
+		//SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5); //Tests that you get back h_L
 		
-		A_Matrices.add(alpha_0);
-		A_Matrices.add(alpha_inf);
+		//A_Matrices.add(alpha_0);
+		//A_Matrices.add(alpha_inf);
 		
+		
+		//Problem seems to be from not truncating Hsigmas
+		//H_Matrices.get(0).print(5,5);
+		
+		alpha_0.times(A_Matrices.get(0)).times(alpha_inf).print(5, 5);
 		alpha_0.times(A_Matrices.get(1)).times(alpha_inf).print(5, 5);
+		alpha_0.times(A_Matrices.get(2)).times(alpha_inf).print(5, 5);
+
 	
 		return A_Matrices;
 	}
 	
-	public static Matrix truncateSVD(SingularValueDecomposition svd, int nStates){
+	public static Matrix truncateSVD(Matrix H, int nStates){
 	
+		SingularValueDecomposition svd = H.svd();
 	    Matrix U = svd.getU();
 	    Matrix S = svd.getS();
 	    Matrix V = svd.getV();
@@ -453,13 +492,8 @@ public class HMM {
 		Matrix Hb = new Matrix(new double[][]{ {0.14,0.45,0.31}, {0.15,0.29,0.13}, {0.31,0.85,0.58} } ).transpose();
 		Matrix hls = new Matrix(new double[][]{ {0, 0.2, 0.14} } );
 		Matrix hpl = new Matrix(new double[][]{ {0, 0.2, 0.14} } ).transpose();
-		
-		
+			
 		Hbar.print(5,5);
-		/*
-		Ha.print(5,5);
-		Hb.print(5,5);
-		*/
 		
 		SingularValueDecomposition svd = Hbar.svd();
 		Matrix p = svd.getU().times( svd.getS() );
@@ -474,12 +508,6 @@ public class HMM {
 		Matrix alpha0 = hls.times(sinv);	//alpha0 row
 		Matrix alphainf = pinv.times(hpl);	//alphainf column
 		
-		/*
-		Aa.print(5,5);
-		Ab.print(5,5);
-		alpha0.print(5,5);
-		alphainf.print(5,5);
-		*/
 		
 		Matrix test1 = alpha0.times(Aa).times(alphainf);
 		Matrix test2 = alpha0.times(Ab).times(alphainf);
@@ -495,121 +523,5 @@ public class HMM {
 		test5.print(5,5);
 		test6.print(5,5);
 	}
-	
-	// HELPER FUNCTIONS BELOW
-	
-	
-	//Binomial Distribution
-	public static double[] generateBinomialVector(int length, double p){	
-		double[] result = new double[length]; 
-		for(int i=0;i<length;i++){
-			result[i] = nChooseI(length-1, i)*Math.pow(p,i)*Math.pow(1-p, length-1-i);
-		} 
-	
-		return result;
-	}
-	
-	//Uniform Random Probability Vector
-	public static double[] randomVector(int size){	
-		double[] vector = new double[size];
-		double sum = 0;
-		for (int i = 0; i < vector.length; i++) {
-			vector[i] = random.nextDouble();
-			sum += vector[i];
-		}
-		for (int j = 0; j < vector.length; j++) {	//Normalize
-			vector[j] = vector[j]/sum;
-		}
-		return vector;
-		
-	}
-	
-	//[0.4, 0.5, 0.1] --> returns index in {0,1,2}
-	public static int generateState(double[] stateProbabilities){ 						
-		int l = stateProbabilities.length; 
-		double[] cumulativeSum = new double[l];
-		
-		cumulativeSum[0] = stateProbabilities[0];
-		for (int i = 1; i<l;i++){
-			cumulativeSum[i] = cumulativeSum[i-1] + stateProbabilities[i];
-		}
-
-		double r = random.nextDouble();
-		
-		int index = Arrays.binarySearch(cumulativeSum, r);
-
-		if (index >= 0){
-			return index;
-		}
-		else{
-			return -1*(index + 1);
-		}
-		
-	}	
-	
-	public static double[] listToArray(List<Double> arr){   
-	    double[] result = new double[arr.size()];
-	    int i = 0;
-	    for(Double d : arr) {
-	        result[i++] = d.doubleValue();
-	    }
-	    return result;
-	}
-	
-	public static double sumArray(double[] da){
-		double s = 0;
-		for(double d: da){
-			s += d;
-		}
-		return s;
-	}
-	
-	
-	//FIX ELSE STATEMENT to generalize
-	public static double getMean(double[] da){
-		double m = 0;
-		for (double d: da){
-			m += d;
-		}
-		if (da.length != 0){
-			return m/da.length;
-		}
-		else{
-			return random.nextDouble()*2;
-		}
-	}
-	
-	//FIX ELSE STATEMENT to generalize
-	public static double getSd(double[] da, double mean){
-		double sd = 0;
-		for (double d: da){
-			sd += Math.pow(d-mean, 2);
-		}
-		if (sd!=0){
-			return Math.sqrt(sd/da.length);
-		}
-		else{	//Quickfix to avoid 0 sd
-			return 0.01; 
-		}
-	}
-	
-	public static double getLikelyhood(double modelMean, double modelSd, double obs){
-		double num = Math.pow(Math.E, -1*Math.pow(modelMean - obs,2) / (2*Math.pow(modelSd,2)) );
-		double denom = Math.sqrt(2*Math.pow(modelSd,2)*Math.PI);
-		return num/denom;
-	}
-	
-	public static int nChooseI(int n, int i){
-		return factorial(n)/ ( factorial(i)*factorial(n-i) );
-	}
-	public static int factorial(int n){
-		if (n == 0){
-			return 1;
-		}
-		else{
-			return n*factorial(n-1);
-		}
-	}
-	
 	
 }
