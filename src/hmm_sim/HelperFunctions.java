@@ -222,8 +222,46 @@ public class HelperFunctions {
 			return T;
 		}
 		/*
-		else{
+		else{	
 			SingularValueDecomposition s = m.svd();
 		} */
 	}
+
+	
+	public static Matrix truncateSVD(Matrix H, int nStates){
+		
+		SingularValueDecomposition svd = H.svd();
+	    Matrix U = svd.getU();
+	    Matrix S = svd.getS();
+	    Matrix V = svd.getV();
+	    
+	    double[][] utemp = U.getArrayCopy();
+	    double[][] utrunc = new double[utemp.length][nStates];
+	    for (int i = 0; i < utrunc.length; i++) {
+			utrunc[i] = utemp[i];
+		}
+	    
+	    Matrix Utrunc = new Matrix(utrunc);
+	    
+	    double[][] stemp = S.getArrayCopy();
+	    double[][] strunc = new double[stemp.length][nStates];
+	    for (int i = 0; i < strunc.length; i++) {
+			strunc[i] = stemp[i];
+		}
+	    
+	    Matrix Strunc = new Matrix(strunc);
+	    
+	    double[][] vtemp = V.transpose().getArrayCopy();
+	    double[][] vtrunc = new double[utemp.length][nStates];
+	    for (int i = 0; i < vtrunc.length; i++) {
+			vtrunc[i] = vtemp[i];
+		}
+	    
+	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
+	    
+	    return Utrunc.times(Strunc).times(Vtrunc);
+	    
+	}
+
+
 }
