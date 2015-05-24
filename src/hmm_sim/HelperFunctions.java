@@ -1,5 +1,8 @@
 package hmm_sim;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -261,6 +264,23 @@ public class HelperFunctions {
 	    
 	    return Utrunc.times(Strunc).times(Vtrunc);
 	    
+	}
+	
+	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[] xaxis, double[] yaxis){
+		try {
+			PrintWriter writer = new PrintWriter(filename, "UTF-8");
+			
+			writer.println(xaxisLabel + "," + yaxisLabel);
+			for (int i = 0; i < xaxis.length; i++) {
+				writer.println( Double.toString(xaxis[i]) + "," + Double.toString(yaxis[i]) );
+			}
+			writer.close();
+			
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 

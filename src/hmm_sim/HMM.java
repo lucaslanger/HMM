@@ -48,8 +48,10 @@ public class HMM {
 		//h.testBaumWelch();
 		//h.testFullBaumWelch();
 		
-		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000);
-		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100);
+		HelperFunctions.outputData("test", "x","y",new double[]{1,2,3,4,5},new double[]{1,2,3,4,5} );
+		
+		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,5);
+		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,5);
 		
 		//System.out.println(emp.toString());
 		//System.out.println(tru.toString());
@@ -63,14 +65,14 @@ public class HMM {
 		
 		Matrix temp1, temp2, temp3, r;
 		int pow;
-		for (int i = 0; i < tru.get("max").norm1()-1; i++) {
+		for (int i = 0; i < emp.get("max").norm1()-1; i++) {
 			pow = (int) Math.pow(2, i);
 			temp1 = emp.get( Integer.toString( pow ) );
-			temp2 = HelperFunctions.matrixPower( temp1 , 2);
-			temp3 = emp.get( Integer.toString(pow*2) );
-			r = temp2.minus( temp3 ) ;	
-			//temp2.print(5, 5);
-			//temp3.print(5, 5);
+			temp1 = HelperFunctions.matrixPower( temp1 , 2);
+			temp2 = emp.get( Integer.toString(pow*2) );
+			r = temp2.minus( temp1 ) ;	
+		
+			
 			
 			System.out.println("Error between consecutive Asigmas");
 			System.out.println(pow);
@@ -79,8 +81,8 @@ public class HMM {
 		}
 		
 	}
-	
-	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples){
+		
+	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples, int basisSize){
 		int[] counts = new int[size];
 		int  sequenceLength=0, j=0, c=0, total=0;
 		
@@ -106,10 +108,10 @@ public class HMM {
 		
 		//System.out.println( Arrays.toString(probabilities) );
 		
-		return singleObservationHankel(probabilities, 3, 2, states );
+		return singleObservationHankel(probabilities, basisSize, 2, states );
 	}
 	
-	public HashMap<String, Matrix> singledataSpectralTrue(int size){
+	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize){
 		Matrix P_True, S_True;
 		
 		Matrix Asigma = O.times(T);
@@ -132,7 +134,7 @@ public class HMM {
 		
 		Matrix h = P_True.times(S_True);	
 
-		return singleObservationHankel(h.getArrayCopy()[0], 3, 2, states);
+		return singleObservationHankel(h.getArrayCopy()[0], basisSize, 2, states);
 	}
 
 	public HMM(Matrix T, Matrix O, Matrix P, Matrix E, int ns){
@@ -155,7 +157,7 @@ public class HMM {
 		Matrix H = buildHankel(counts, 0, basisSize);
 
 		//H.print(5, 5);
-		H = HelperFunctions.truncateSVD(H, numHiddenStates);
+		//H = HelperFunctions.truncateSVD(H, numHiddenStates);
 		//H.print(5, 5);
 		
 		SingularValueDecomposition SVD = H.svd();
