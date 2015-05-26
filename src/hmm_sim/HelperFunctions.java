@@ -257,7 +257,7 @@ public class HelperFunctions {
 		}
 	    Matrix Strunc = new Matrix(strunc);
 	    
-	    double[][] vtemp = V.transpose().getArrayCopy();			//Double check to make sure this isnt going wrong
+	    double[][] vtemp = V.getArrayCopy();			//Double check to make sure this isnt going wrong
 	    double[][] vtrunc = new double[utemp.length][nStates];
 	    for (int i = 0; i < vtrunc.length; i++) {
 	    	for (int j = 0; j < nStates; j++) {
@@ -271,16 +271,18 @@ public class HelperFunctions {
 	    r.put("VT", Vtrunc);
 	    r.put("S", Strunc);
 	    
+	    /*
 	    System.out.println("Before trunc");
 	    U.print(5, 5);
 	    S.print(5, 5);
-	    V.print(5, 5);
+	    V.transpose().print(5, 5);
 	    
 	    System.out.println("After trunc");
 
 	    Utrunc.print(5, 5);
 	    Strunc.print(5, 5);
 	    Vtrunc.print(5, 5);
+	    */
 	    
 	    return r;
 	    
@@ -301,6 +303,30 @@ public class HelperFunctions {
 			e.printStackTrace();
 		}
 
+	}
+	
+	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base){
+		int c = (int) d.get("max").norm1()-1;
+		int p = (int) Math.pow(base, c);
+		int size = d.get( Integer.toString(p) ).getArrayCopy().length;
+		Matrix r = Matrix.identity(size,size);
+		while(power != 0){
+			/*System.out.println("Before");
+			System.out.println(p);
+			System.out.println(power);
+			*/
+			while (p > power){
+				p = p/base;
+			}
+			r = r.times( d.get(Integer.toString( p ) ) );
+			power -= p;
+			/*System.out.println("After");
+			System.out.println(p);
+			System.out.println(power);
+			*/
+		}
+		
+		return r;
 	}
 
 

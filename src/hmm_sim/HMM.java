@@ -206,8 +206,9 @@ public class HMM {
 		returnData.put("s_values", SVD.get("S"));
 		returnData.put("U", SVD.get("U"));
 		returnData.put("VT", SVD.get("VT"));
+		returnData.put("a0", alpha_0);
+		returnData.put("ainf", alpha_0);
 
-		
 		return returnData;
 	}
 

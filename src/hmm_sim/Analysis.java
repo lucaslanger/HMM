@@ -66,6 +66,7 @@ public class Analysis {
 		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,10);
 		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,10);
 		
+		compareQueryErrors(emp, tru);
 		/*
 		System.out.println("H error");
 		emp.get("H").minus(tru.get("H")).print(5,5);
@@ -73,7 +74,7 @@ public class Analysis {
 		System.out.println("P's");
 		emp.get("pinv").print(5, 5);
 		tru.get("pinv").print(5, 5);
-		//emp.get("pinv").minus(tru.get("pinv")).print(5, 5);
+		emp.get("pinv").minus(tru.get("pinv")).print(5, 5);
 		
 		System.out.println("SVDs");
 		emp.get("s_values").print(5, 5);
@@ -86,10 +87,7 @@ public class Analysis {
 		tru.get("VT").print(5, 5);
 		
 		System.out.println("Hsigma=1 error");
-		emp.get("1").print(5, 5);
-		tru.get("1").print(5, 5);
 		emp.get("1").minus(tru.get("1")).print(5,5);
-		
 		*/
 		
 		int m = (int) (emp.get("max").norm1()-1); 
@@ -115,6 +113,35 @@ public class Analysis {
 		
 		HelperFunctions.outputData(pltFolder + "Sigma_Htrue_Hbar", "Sigma","Error", sigmaNumber, error );
 
+	}
+	
+	public static void compareQueryErrors(HashMap<String, Matrix> emp, HashMap<String, Matrix> tru){
+		int maxexp = (int) emp.get("max").norm1(); //same for tru by construction
+		int maxquery = (int) Math.pow(2, maxexp);
+		
+		double[] querys = new double[maxquery];
+		double[] errors = new double[maxquery];
+		
+		Matrix empQ, truQ;
+		Matrix a0emp, ainfemp, a0tru, ainftru, error;
+		for (int i = 0; i < maxquery ; i++) {
+			empQ = HelperFunctions.matrixQuery(emp, i, 2);
+			truQ = HelperFunctions.matrixQuery(tru, i, 2);
+			
+			//System.out.println("Error between emp and tru for sigma^" + Integer.toString(i));
+			a0emp = emp.get("a0");
+			ainfemp = emp.get("ainf").transpose();
+			
+			a0tru = tru.get("a0");
+			ainftru = tru.get("ainf").transpose();
+			
+			error = (a0tru.times(truQ).times(ainftru)).minus( a0emp.times(empQ).times(ainfemp) );
+			querys[i] = i;
+			errors[i] = error.norm1();
+		}
+		
+		HelperFunctions.outputData(pltFolder + "Query_Errors", "Sigma","Error", querys, errors );
+		
 	}
 	
 	public void compareSigmaError(){
