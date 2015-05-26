@@ -63,7 +63,7 @@ public class Analysis {
 	
 	public void compareHSigmas(){
 		HMM h = makeHMM();
-		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,10);
+		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,1000,10);
 		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,10);
 		
 		compareQueryErrors(emp, tru);
