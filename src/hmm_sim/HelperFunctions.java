@@ -231,7 +231,7 @@ public class HelperFunctions {
 	}
 
 	
-	public static Matrix truncateSVD(Matrix H, int nStates){
+	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
 		
 		SingularValueDecomposition svd = H.svd();
 	    Matrix U = svd.getU();
@@ -241,28 +241,48 @@ public class HelperFunctions {
 	    double[][] utemp = U.getArrayCopy();
 	    double[][] utrunc = new double[utemp.length][nStates];
 	    for (int i = 0; i < utrunc.length; i++) {
-			utrunc[i] = utemp[i];
+	    	for (int j = 0; j < nStates; j++) {
+	    		utrunc[i][j] = utemp[i][j];
+			}
+			
 		}
-	    
 	    Matrix Utrunc = new Matrix(utrunc);
 	    
 	    double[][] stemp = S.getArrayCopy();
-	    double[][] strunc = new double[stemp.length][nStates];
-	    for (int i = 0; i < strunc.length; i++) {
-			strunc[i] = stemp[i];
+	    double[][] strunc = new double[nStates][nStates];
+	    for (int i = 0; i < nStates; i++) {
+	    	for (int j = 0; j < nStates; j++) {
+	    		strunc[i][j] = stemp[i][j];
+			}
 		}
-	    
 	    Matrix Strunc = new Matrix(strunc);
 	    
-	    double[][] vtemp = V.transpose().getArrayCopy();
+	    double[][] vtemp = V.transpose().getArrayCopy();			//Double check to make sure this isnt going wrong
 	    double[][] vtrunc = new double[utemp.length][nStates];
 	    for (int i = 0; i < vtrunc.length; i++) {
-			vtrunc[i] = vtemp[i];
+	    	for (int j = 0; j < nStates; j++) {
+	    		vtrunc[i][j] = vtemp[i][j];
+			}
 		}
-	    
 	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
+
+	    HashMap<String, Matrix> r = new HashMap<String, Matrix>();
+	    r.put("U", Utrunc);
+	    r.put("VT", Vtrunc);
+	    r.put("S", Strunc);
 	    
-	    return Utrunc.times(Strunc).times(Vtrunc);
+	    System.out.println("Before trunc");
+	    U.print(5, 5);
+	    S.print(5, 5);
+	    V.print(5, 5);
+	    
+	    System.out.println("After trunc");
+
+	    Utrunc.print(5, 5);
+	    Strunc.print(5, 5);
+	    Vtrunc.print(5, 5);
+	    
+	    return r;
 	    
 	}
 	

@@ -63,7 +63,7 @@ public class HMM {
 		System.out.println( H.minus(Hbar).normF() );
 		System.out.println("");
 		
-		Matrix temp1, temp2, temp3, r;
+		Matrix temp1, temp2, r;
 		int pow;
 		for (int i = 0; i < emp.get("max").norm1()-1; i++) {
 			pow = (int) Math.pow(2, i);
@@ -157,30 +157,30 @@ public class HMM {
 		Matrix H = buildHankel(counts, 0, basisSize);
 
 		//H.print(5, 5);
-		//H = HelperFunctions.truncateSVD(H, numHiddenStates);
+		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
+		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));
 		//H.print(5, 5);
 		
-		SingularValueDecomposition SVD = H.svd();
-		Matrix pinv = SVD.getU().times(SVD.getS()).inverse();
-		Matrix sinv = (SVD.getV().transpose()).inverse();
+		//SingularValueDecomposition SVD = H.svd();
+		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
+		Matrix sinv = (SVD.get("VT")).transpose();
 						
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
-		HashMap<String, Matrix> A_Matrices  = new HashMap<String, Matrix>();
+		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
-		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ) - 1; 
+		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ) - 1; //Too low fix later to allow higher powers
 		int freq;
 		Matrix h;
 		for (int l = 0; l < maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
 			h = buildHankel(counts, freq, freq+basisSize);
-			//H_Matrices.add( truncateSVD(h, numHiddenStates) );
 			H_Matrices.add(h);
 		}
 		
 		Matrix m;
 		for (int i = 0; i < H_Matrices.size(); i++) {
 			m = pinv.times(H_Matrices.get(i)).times( sinv );
-			A_Matrices.put(Integer.toString( (int) Math.pow(2, i) ), m );
+			returnData.put(Integer.toString( (int) Math.pow(2, i) ), m );
 		}
 		
 		double[][] h_L = new double[basisSize][1];
@@ -195,14 +195,20 @@ public class HMM {
 		
 		//SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5); //Tests that you get back h_L
 		
-		/*alpha_0.times(A_Matrices.get("1")).times(alpha_inf).print(5, 5);
-		alpha_0.times(A_Matrices.get("2")).times(alpha_inf).print(5, 5);
-		alpha_0.times(A_Matrices.get("3")).times(alpha_inf).print(5, 5);
+		/*alpha_0.times(returnData.get("1")).times(alpha_inf).print(5, 5);
+		alpha_0.times(returnData.get("2")).times(alpha_inf).print(5, 5);
+		alpha_0.times(returnData.get("3")).times(alpha_inf).print(5, 5);
 		*/
-		A_Matrices.put("H", H);
-		A_Matrices.put("max", new Matrix(H_Matrices.size(),1,1) );
+		returnData.put("H", H);
+		returnData.put("max", new Matrix(H_Matrices.size(),1,1) );
+		returnData.put("pinv", pinv);
+		returnData.put("sinv", sinv);
+		returnData.put("s_values", SVD.get("S"));
+		returnData.put("U", SVD.get("U"));
+		returnData.put("VT", SVD.get("VT"));
 
-		return A_Matrices;
+		
+		return returnData;
 	}
 
 	public static Matrix buildHankel(double[] counts, int startingindex, int endingindex){

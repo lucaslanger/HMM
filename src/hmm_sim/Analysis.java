@@ -66,7 +66,31 @@ public class Analysis {
 		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,10);
 		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,10);
 		
+		/*
+		System.out.println("H error");
+		emp.get("H").minus(tru.get("H")).print(5,5);
+		
+		System.out.println("P's");
+		emp.get("pinv").print(5, 5);
+		tru.get("pinv").print(5, 5);
+		//emp.get("pinv").minus(tru.get("pinv")).print(5, 5);
+		
+		System.out.println("SVDs");
+		emp.get("s_values").print(5, 5);
+		tru.get("s_values").print(5, 5);
+		
+		emp.get("U").print(5, 5);
+		tru.get("U").print(5, 5);
+		
+		emp.get("VT").print(5, 5);
+		tru.get("VT").print(5, 5);
+		
+		System.out.println("Hsigma=1 error");
+		emp.get("1").print(5, 5);
+		tru.get("1").print(5, 5);
 		emp.get("1").minus(tru.get("1")).print(5,5);
+		
+		*/
 		
 		int m = (int) (emp.get("max").norm1()-1); 
 		
