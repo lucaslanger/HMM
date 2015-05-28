@@ -288,23 +288,6 @@ public class HelperFunctions {
 	    
 	}
 	
-	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[] xaxis, double[] yaxis){
-		try {
-			PrintWriter writer = new PrintWriter(filename, "UTF-8");
-			
-			writer.println(xaxisLabel + "," + yaxisLabel);
-			for (int i = 0; i < xaxis.length; i++) {
-				writer.println( Double.toString(xaxis[i]) + "," + Double.toString(yaxis[i]) );
-			}
-			writer.close();
-			
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-	
 	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base){
 		int c = (int) d.get("max").norm1()-1;
 		int p = (int) Math.pow(base, c);
@@ -327,6 +310,23 @@ public class HelperFunctions {
 		}
 		
 		return r;
+	}
+	
+	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[] xaxis, double[] yaxis){
+		try {
+			PrintWriter writer = new PrintWriter(filename, "UTF-8");
+			
+			writer.println(xaxisLabel + "," + yaxisLabel);
+			for (int i = 0; i < xaxis.length; i++) {
+				writer.println( Double.toString(xaxis[i]) + "," + Double.toString(yaxis[i]) );
+			}
+			writer.close();
+			
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 

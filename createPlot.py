@@ -42,14 +42,15 @@ def drawPlots(folder):
 	i = 1
 	for n in names:
 		d = getDataFromFile(folder+"/" + n)
-		plt.subplot(s,s,i)
-		plt.grid(True)
-		plt.plot(d[2],d[3], "yo")
+		#plt.subplot(s,s,i)
+		plt.subplot(1,l,i)
+		plt.plot(d[2],d[3], "b")
 		plt.xlabel(d[0])
 		plt.ylabel(d[1])
 		plt.title(n)
 		i += 1
 
+	#plt.subplots_adjust(wspace=0.4, hspace=0.02, top=.9, bottom=0.02, left=0.02, right=0.98)
 	plt.show()
 
 drawPlots("plotting")
