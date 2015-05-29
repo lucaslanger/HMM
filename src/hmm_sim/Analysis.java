@@ -17,12 +17,17 @@ public class Analysis {
 	private int hSize;
 	
 	public static void main(String[] args){
-		Analysis a = new Analysis(100,10,10);
+		Analysis a = new Analysis(100,10,1000);
 		a.compareSigmaError();
+		System.out.println("Power Sigma Done");
 		a.compareH_Hbar();
+		System.out.println("H Hbar Done");
 		a.compareHSigmas();
+		System.out.println("SigmaError Done");
 		a.compareQueryErrors(true);
+		System.out.println("Query comp Done");
 		a.compareQueryErrors(false);
+		System.out.println("Query no comp Done");
 
 	}
 	

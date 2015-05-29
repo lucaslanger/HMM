@@ -59,9 +59,10 @@ public class HMM {
 		Matrix H = tru.get("H");
 		Matrix Hbar = emp.get("H");	
 		
+		/*
 		System.out.println("Error between H and Hbar");
 		System.out.println( H.minus(Hbar).normF() );
-		System.out.println("");
+		System.out.println(""); */
 		
 		Matrix temp1, temp2, r;
 		int pow;
@@ -71,13 +72,11 @@ public class HMM {
 			temp1 = HelperFunctions.matrixPower( temp1 , 2);
 			temp2 = emp.get( Integer.toString(pow*2) );
 			r = temp2.minus( temp1 ) ;	
-		
 			
-			
-			System.out.println("Error between consecutive Asigmas");
+			/*System.out.println("Error between consecutive Asigmas");
 			System.out.println(pow);
 			System.out.println(r.normF());
-			System.out.println("");
+			System.out.println("");*/
 		}
 		
 	}
@@ -154,21 +153,32 @@ public class HMM {
 	
 	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
 			
+		/*Test of concatenation method 
+		Matrix cH = HelperFunctions.buildConcatHankel(counts, basisSize);
+		HashMap<String, Matrix> SVDc = HelperFunctions.truncateSVD(cH, numHiddenStates);
+		Matrix pinvc = (SVDc.get("U").times(SVDc.get("S"))).inverse();
+		Matrix sinvc = SVDc.get("VT").transpose();
+		System.out.println("Concat pinv");
+		pinvc.print(5, 5);
+		*/
+		
 		Matrix H = buildHankel(counts, 0, basisSize);
 
-		//H.print(5, 5);
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
 		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));
-		//H.print(5, 5);
 		
 		//SingularValueDecomposition SVD = H.svd();
 		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
 		Matrix sinv = (SVD.get("VT")).transpose();
+		
+		//System.out.println("Real pinv");
+		//pinvc.print(5, 5);
+		
 						
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
-		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ) - 1; //Too low fix later to allow higher powers
+		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ); //Too low fix later to allow higher powers
 		int freq;
 		Matrix h;
 		for (int l = 0; l < maxDigit; l++) {

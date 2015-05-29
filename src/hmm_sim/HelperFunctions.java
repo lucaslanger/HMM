@@ -288,6 +288,28 @@ public class HelperFunctions {
 	    
 	}
 	
+	public static Matrix buildConcatHankel(double counts[], int basisSize){
+		int l = counts.length-2*basisSize;
+		double[][] concatHankel = new double[basisSize][basisSize*l];
+		
+		int h,s;
+		for (int i = 0; i < basisSize; i++) {
+			for (int j = 0; j < basisSize*l; j++) {
+				h = j/basisSize;
+				s = j%basisSize;
+				/*System.out.println(i);
+				System.out.println(j);
+				System.out.println(basisSize);
+				System.out.println(basisSize*l);
+				System.out.println(h);
+				System.out.println(s); */
+				concatHankel[i][j] = counts[i + h + s ];
+			}
+		}
+		return new Matrix(concatHankel);
+		
+	}
+	
 	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base){
 		int c = (int) d.get("max").norm1()-1;
 		int p = (int) Math.pow(base, c);
