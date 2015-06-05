@@ -154,6 +154,7 @@ public class HelperFunctions {
 	    return result;
 	}
 	
+	
 	public static double sumArray(double[] da){
 		double s = 0;
 		for(double d: da){
@@ -310,38 +311,44 @@ public class HelperFunctions {
 		
 	}
 	
-	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base){
+	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base, boolean forward){
 		int c = (int) d.get("max").norm1()-1;
 		int p = (int) Math.pow(base, c);
 		int size = d.get( Integer.toString(p) ).getArrayCopy().length;
 		Matrix r = Matrix.identity(size,size);
 		while(power != 0){
-			/*System.out.println("Before");
-			System.out.println(p);
-			System.out.println(power);
-			*/
+	
 			while (p > power){
 				p = p/base;
 			}
-			r = r.times( d.get(Integer.toString( p ) ) );
+			if (forward){
+				r = r.times( d.get(Integer.toString( p ) ) );
+			}
+			else{
+				r = d.get(Integer.toString( p )).times(r);
+			}
 			power -= p;
-			/*System.out.println("After");
-			System.out.println(p);
-			System.out.println(power);
-			*/
 		}
 		
 		return r;
 	}
 	
-	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[] xaxis, double[] yaxis){
+	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");
 			
 			writer.println(xaxisLabel + "," + yaxisLabel);
-			for (int i = 0; i < xaxis.length; i++) {
-				writer.println( Double.toString(xaxis[i]) + "," + Double.toString(yaxis[i]) );
-			}
+			
+			StringBuilder line = new StringBuilder();
+			for (int j = 0; j < xaxis[0].length; j++) {	
+				for (int i = 0; i < xaxis.length; i++) {
+					line.append(xaxis[i][j] + ",");
+					line.append(yaxis[i][j] + " ");
+				}
+				writer.println( line );
+				line.setLength(0);
+			} 
+			
 			writer.close();
 			
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
@@ -350,6 +357,8 @@ public class HelperFunctions {
 		}
 
 	}
+	
+	
 
 
 }
