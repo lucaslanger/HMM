@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import sys
 import os
+import math
 
-colors = { 0:"r" ,1:'g', 2:'k', 3: 'b', 4:'c', 5:'m', 6:"y", 7:"y"}
+colors = { 0:"g" ,1:'r', 2:'k', 3: 'b', 4:'c', 5:'m', 6:"y", 7:"y"}
 
 def getDataFromFile(datafile):
 	with open(datafile) as f:
@@ -49,19 +50,28 @@ def drawPlots(folder):
 	l = len(names)
 
 	i = 1
+	s = math.ceil(l**0.5)
+	L = ''
 	for n in names:
 		d = getDataFromFile(folder+"/" + n)
-		print d[2]
-		plt.subplot(1,l,i)
+		plt.subplot(s,s,i)
 		for j in range(len(d[2])):
-			plt.plot(d[2][j],d[3][j], colors[j], label='line' + str(j))
+			if j == 0:
+				L = 'Abs'
+			else:
+				L = 'Non-Abs'
+			plt.plot(d[2][j],d[3][j], colors[j], label=L)
+
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+		#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+        #   ncol=2, mode="expand", borderaxespad=0.)
 
 		plt.xlabel(d[0])
 		plt.ylabel(d[1])
 		plt.title(n)
 		i += 1
 
-	#plt.subplots_adjust(wspace=0.4, hspace=0.02, top=.9, bottom=0.02, left=0.02, right=0.98)
+	plt.subplots_adjust( hspace=0.50 )
 	#plt.tight_layout()
 	plt.show()
 

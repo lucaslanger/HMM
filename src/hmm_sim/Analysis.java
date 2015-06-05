@@ -77,7 +77,7 @@ public class Analysis {
 			error[0][i] = avgError;
 		}
 			
-		HelperFunctions.outputData(pltFolder + "True_Hankel_vs_Emperical", "Observation Count","F Norm", dataSize, error );
+		HelperFunctions.outputData(pltFolder + "True_Hankel_vs_Emperical", "X:#Data Seen Y:Fnorm","", dataSize, error );
 		
 	}
 	
@@ -111,7 +111,7 @@ public class Analysis {
 			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
 		}
 		
-		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emperical_Ax", "Sigma^x","Relative Fnorm", sigmaNumber, errors );
+		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emperical_Ax", "X:Sigma Y:Relative Fnorm","", sigmaNumber, errors );
 		// Add file containing error analysis for alphaInf and alpha0?
 	}
 	
@@ -134,7 +134,6 @@ public class Analysis {
 				r = temp2.minus( temp1 ) ;	
 			
 				errors[0][i] += r.normF();
-				
 			}
 			
 		}
@@ -147,7 +146,7 @@ public class Analysis {
 			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
 		}
 		
-		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "Sigma^x","Relative Fnorm", sigmaNumber, errors );
+		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:Relative Fnorm","", sigmaNumber, errors );
 
 	}
 	
@@ -185,26 +184,30 @@ public class Analysis {
 				empProbQB = a0emp.times(empQB).times(ainfemp);
 				empProbP = a0emp.times(empP).times(ainfemp);
 				
-				errors[0][i] = truProbQF.minus(empProbQF).get(0,0);
-				errors[1][i] = Math.abs(truProbQF.minus(empProbQF).get(0,0));
-				
-				errors[2][i] = truProbQF.minus(empProbP).get(0,0);
-				errors[3][i] = Math.abs(truProbQF.minus(empProbP).get(0,0));
+				errors[0][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0));
+				errors[1][i] += truProbQF.minus(empProbQF).get(0,0);
+
+				errors[2][i] += Math.abs(truProbQF.minus(empProbP).get(0,0));
+				errors[3][i] += truProbQF.minus(empProbP).get(0,0);
 								
-				errors[4][i] = empProbQF.minus(empProbQB).get(0,0);
-				errors[5][i] = Math.abs(empProbQF.minus(empProbQB).get(0,0));
+				errors[4][i] += Math.abs(empProbQF.minus(empProbQB).get(0,0));
+				errors[5][i] += empProbQF.minus(empProbQB).get(0,0);
 
 			}
-			for (int c = 0; c < 6; c++) {
-				errors[c][i] /= empArray.size();
+			for (int c = 0; c < 4; c++) {
+				errors[c][i] /= (empArray.size());
 				queries[c][i] = i;
 			}
+			errors[4][i] /= (empArray.size()*truProbQF.get(0,0));
+			errors[5][i] /= (empArray.size()*truProbQF.get(0,0));
+			queries[4][i] = i;
+			queries[5][i] = i;
 			
 		}
 		
-		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "Sigma^x","Error", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
-		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "Sigma^x","Error", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
-		HelperFunctions.outputData(pltFolder + "Non-Commutive_Error", "Sigma^x","Error", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
+		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y:error","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
+		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y:error","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
+		HelperFunctions.outputData(pltFolder + "Non-Commutative_Error", "X:Sigma Y:Relative a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
 
 	}
 	
