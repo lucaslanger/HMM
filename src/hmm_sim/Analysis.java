@@ -18,7 +18,7 @@ public class Analysis {
 	private int hSize;
 	
 	public static void main(String[] args){
-		Analysis a = new Analysis(100,10,1000);
+		Analysis a = new Analysis(100,20,1000,1000);
 		
 		a.compareSigmaError();
 		System.out.println("Power Sigma Done");
@@ -28,24 +28,24 @@ public class Analysis {
 		System.out.println("SigmaError Done");
 		a.compareQueryErrors();
 		System.out.println("Query Done");
-
+		
 	}
 	
-	public Analysis(int hSize, int basisSize, int repeats){
+	public Analysis(int hSize, int basisSize, int trials, int trialSize){
 		this.h = makeHMM();
+		//this.h = makeLabyrinth();
+		
 		this.tru = h.singledataSpectralTrue(hSize, basisSize);
 		
 		this.hSize = hSize;
 		this.basisSize = basisSize;
 		
-		for (int i = 0; i < repeats; i++) {
-			empArray.add(h.singledataSpectralEmperical(hSize, 10000, basisSize));
+		for (int i = 0; i < trials; i++) {
+			empArray.add(h.singledataSpectralEmperical(hSize, trialSize, basisSize));
 		}
 	}
 	
 	public void compareH_Hbar(){
-		
-		HMM h = makeHMM();
 		
 		int[] sizes = new int[]{100,1000,10000};
 		
@@ -61,6 +61,12 @@ public class Analysis {
 		double[][] error = new double[1][trailsize];
 		double avgError, e;
 		
+		/*
+		System.out.println("true");
+		tru.get("H").print(5, 5);
+		System.out.println("emp");
+		h.singledataSpectralEmperical(hSize, 100, basisSize).get("H").print(5, 5);;
+		*/
 		for (int i = 0; i < trailsize; i++) {
 			avgError = 0;
 			for (int j = 0; j < repeats; j++) {
@@ -98,7 +104,6 @@ public class Analysis {
 				pow = (int) Math.pow(2, i);
 				h_sigma_true = tru.get( Integer.toString(pow) );
 				h_sigma_exp = emp.get( Integer.toString(pow) );
-				
 				r = h_sigma_true.minus( h_sigma_exp );
 				errors[0][i] += r.normF();
 			}
@@ -165,11 +170,15 @@ public class Analysis {
 			truF = HelperFunctions.matrixQuery(tru, i, 2, true);
 			truB = HelperFunctions.matrixQuery(tru, i, 2, false);
 			a0tru = tru.get("a0");
-			ainftru = tru.get("ainf").transpose();
+			ainftru = tru.get("ainf");
 			truProbQF = a0tru.times(truF).times(ainftru);
 			truProbQB = a0tru.times(truB).times(ainftru);
 			//truProbF.minus(truProbB).print(5, 5); //Always 0 which makes sense
 			
+			/*System.out.println("Query, Prob");
+			System.out.println(i);
+			System.out.println(truProbQF.get(0,0));
+			*/
 			for (int j = 0; j < empArray.size(); j++) {	
 				emp = empArray.get(j);
 		
@@ -178,11 +187,12 @@ public class Analysis {
 				empP = HelperFunctions.matrixPower(emp.get("1"), i);										//inefficient, if slow optimize later
 				
 				a0emp = emp.get("a0");
-				ainfemp = emp.get("ainf").transpose();
+				ainfemp = emp.get("ainf");
 				
 				empProbQF = a0emp.times(empQF).times(ainfemp);
 				empProbQB = a0emp.times(empQB).times(ainfemp);
 				empProbP = a0emp.times(empP).times(ainfemp);
+	
 				
 				errors[0][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0));
 				errors[1][i] += truProbQF.minus(empProbQF).get(0,0);
@@ -220,11 +230,64 @@ public class Analysis {
 		Matrix T = new Matrix( t );
 		Matrix O = new Matrix( o );
 		Matrix P = new Matrix( p );
-		
 		Matrix E = new Matrix( e );
 		
 		HMM h = new HMM(T,O,P,E,2);	
 		return h;
+	}
+	
+	public HMM makeLabyrinth(){
+		int states = 11;
+		
+		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
+		termStates.put(0, .5);
+		termStates.put(9, .5);
+		
+		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
+		changeTo.put(4, new int[]{5,8} );
+		changeTo.put(10, new int[]{4});
+		changeTo.put(7, new int[]{0});
+
+		
+		double[][] p = new double[states][1];
+		p[0][0] = 1;
+		double[][] t = new double[states][states];
+		double[][] e = new double[states][1];
+		int[] v;
+		for (int i = 0; i < states; i++) {
+			if (changeTo.containsKey(i) ){	
+			 	v = changeTo.get(i);
+			 	for(int c=0;c<v.length;c++){
+				   t[v[c]][i] = 1.0/v.length;
+			 	}
+			} 
+			else if(termStates.containsKey(i)){
+				t[i+1][i] = 1 - termStates.get(i);
+				e[i][0] = termStates.get(i);
+			}
+			else{
+				t[i+1][i] = 1;
+			} 
+		}
+
+		double[][] o = new double[states][states];
+		for (int i = 0; i < states; i++) {
+			o[i][i] = 1;
+		}
+		
+		Matrix T = new Matrix( t ).transpose();
+		Matrix O = new Matrix( o );
+		Matrix P = new Matrix( p );
+		Matrix E = new Matrix( e );
+		
+		/*T.print(5, 5);
+		E.print(5, 5);
+		O.print(5, 5);
+		P.print(5, 5);*/
+		HMM l = new HMM(T, O, P, E, states);
+		
+		return l;
+		
 	}
 	
 	public void debugHComparisons(HashMap<String, Matrix> emp ){

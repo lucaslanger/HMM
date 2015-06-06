@@ -48,8 +48,6 @@ public class HMM {
 		//h.testBaumWelch();
 		//h.testFullBaumWelch();
 		
-		HelperFunctions.outputData("test", "x","y",new double[]{1,2,3,4,5},new double[]{1,2,3,4,5} );
-		
 		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,5);
 		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,5);
 		
@@ -168,6 +166,7 @@ public class HMM {
 		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));
 		
 		//SingularValueDecomposition SVD = H.svd();
+		
 		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
 		Matrix sinv = (SVD.get("VT")).transpose();
 		
@@ -217,7 +216,7 @@ public class HMM {
 		returnData.put("U", SVD.get("U"));
 		returnData.put("VT", SVD.get("VT"));
 		returnData.put("a0", alpha_0);
-		returnData.put("ainf", alpha_0);
+		returnData.put("ainf", alpha_inf);
 
 		return returnData;
 	}
@@ -236,45 +235,7 @@ public class HMM {
 		return new Matrix(hankel);
 	}
 	
-	public static void baumWelch(int numStates, int numIterations, int durations[] ){
-		Matrix P,T,E, Pdiag;
-		
-		double[] prior =  HelperFunctions.randomNormVector(numStates);
-		double[][] transition = new double[numStates][numStates]; 
-		double[] ending = new double[numStates];
-		
-		for (int s = 0; s < numStates; s++) {
-			double[] v = HelperFunctions.randomNormVector(numStates + 1);
-			transition[s] = Arrays.copyOfRange(v, 0, v.length-1);
-			ending[s] = v[v.length-1];
-		}
-		
-		P = new Matrix(prior,1);
-		T = new Matrix(transition);
-		E = new Matrix(ending,1).transpose();
-		
-		double[][] pd = new double[numStates][numStates];
-		for (int i = 0; i < pd.length; i++) {
-			pd[i][i] = prior[i];
-		}
-		
-		Pdiag = new Matrix(pd);
-		
-		//Compute probability of being in state i given a duration sequence
-		double[][] forward;
-		Matrix m,r;
-		for (int d: durations){
-			 forward = new double[d][numStates];
-			 m = HelperFunctions.matrixPower(T,d);	//Inefficient fix later
-			 r = Pdiag.times(m).times(E);
-			 System.out.println(d);
-			 r.print(5,10);	 
-		}
-
-	}
-	
-	
-	//Not working and development halted because full HMM not needed for project
+	//Development halted because full HMM not needed for project
 	//Fix: Vectorize and debug non normal transition matrix
 	
 	public static void baumWelchFULLHMM(int numStates, int numIterations, int[] observations){
@@ -535,20 +496,27 @@ public class HMM {
 		System.out.println( s );
 	}
 	
-	private int generateSequenceStreakCount(){
+	public int generateSequenceStreakCount(){
 		
 		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
 		int c = 0;
+		double[] statesPossibilities;
 		while(true){
+			//System.out.println("HiddenState");
 			//System.out.println(hiddenState);
-			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
-			if( hiddenState <= 1){
+			
+			statesPossibilities = T.getArrayCopy()[hiddenState];
+			//System.out.println(Arrays.toString(statesPossibilities));
+			hiddenState = HelperFunctions.generateState( statesPossibilities );
+			if( hiddenState < states){
 				c++;
 			}
 			else{
 				break;
 			}
+			
 		} 
+		//System.out.println("Streak");
 		//System.out.println(c);
 		return c;
 	}

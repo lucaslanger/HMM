@@ -46,7 +46,8 @@ def getDataFromFile(datafile):
 		return (xaxisLabel,yaxisLabel,xvals,yvals)
 
 def drawPlots(folder):
-	names = os.listdir(folder)
+	#names = os.listdir(folder)
+	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Non-Commutative_Error', 'True_Hankel_vs_Emperical', 'True_Ax_vs_Emperical_Ax',  '(Ax)^2_v.s A(x^2)']
 	l = len(names)
 
 	i = 1
