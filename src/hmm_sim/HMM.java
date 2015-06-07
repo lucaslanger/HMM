@@ -57,10 +57,12 @@ public class HMM {
 		Matrix H = tru.get("H");
 		Matrix Hbar = emp.get("H");	
 		
-		/*
+		
+		H.print(5,5);
+		Hbar.print(5,5);
 		System.out.println("Error between H and Hbar");
 		System.out.println( H.minus(Hbar).normF() );
-		System.out.println(""); */
+		System.out.println(""); 
 		
 		Matrix temp1, temp2, r;
 		int pow;

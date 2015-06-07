@@ -32,10 +32,12 @@ public class Analysis {
 	}
 	
 	public Analysis(int hSize, int basisSize, int trials, int trialSize){
-		this.h = makeHMM();
-		//this.h = makeLabyrinth();
+		//this.h = makeHMM();
+		this.h = makeLabyrinth();
 		
 		this.tru = h.singledataSpectralTrue(hSize, basisSize);
+		
+		this.tru.get("H").print(5,5); 
 		
 		this.hSize = hSize;
 		this.basisSize = basisSize;
@@ -60,13 +62,7 @@ public class Analysis {
 		double[][] dataSize = new double[1][trailsize];
 		double[][] error = new double[1][trailsize];
 		double avgError, e;
-		
-		/*
-		System.out.println("true");
-		tru.get("H").print(5, 5);
-		System.out.println("emp");
-		h.singledataSpectralEmperical(hSize, 100, basisSize).get("H").print(5, 5);;
-		*/
+	
 		for (int i = 0; i < trailsize; i++) {
 			avgError = 0;
 			for (int j = 0; j < repeats; j++) {
@@ -137,6 +133,7 @@ public class Analysis {
 				temp1 = HelperFunctions.matrixPower( temp1 , 2);
 				temp2 = empArray.get(j).get( Integer.toString(pow*2) );
 				r = temp2.minus( temp1 ) ;	
+				//r.print(5, 5);
 			
 				errors[0][i] += r.normF();
 			}
@@ -159,8 +156,8 @@ public class Analysis {
 		int maxexp = (int) tru.get("max").norm1(); //same for tru by construction
 		int maxquery = (int) Math.pow(2, maxexp);
 		
-		double[][] queries = new double[6][maxquery];
-		double[][] errors = new double[6][maxquery];
+		double[][] queries = new double[7][maxquery];
+		double[][] errors = new double[7][maxquery];
 		
 		Matrix a0emp, ainfemp, empQF, empQB, empP, empProbQF, empProbQB, empProbP;
 		Matrix truF, truB, a0tru, ainftru, truProbQF, truProbQB;
@@ -175,15 +172,19 @@ public class Analysis {
 			truProbQB = a0tru.times(truB).times(ainftru);
 			//truProbF.minus(truProbB).print(5, 5); //Always 0 which makes sense
 			
-			/*System.out.println("Query, Prob");
+			/*
+			System.out.println("Query, Prob");
 			System.out.println(i);
+			truProbQF.print(5,5);
 			System.out.println(truProbQF.get(0,0));
 			*/
+			
 			for (int j = 0; j < empArray.size(); j++) {	
 				emp = empArray.get(j);
 		
 				empQF = HelperFunctions.matrixQuery(emp, i, 2, true);
 				empQB = HelperFunctions.matrixQuery(emp, i, 2, false);
+
 				empP = HelperFunctions.matrixPower(emp.get("1"), i);										//inefficient, if slow optimize later
 				
 				a0emp = emp.get("a0");
@@ -192,7 +193,18 @@ public class Analysis {
 				empProbQF = a0emp.times(empQF).times(ainfemp);
 				empProbQB = a0emp.times(empQB).times(ainfemp);
 				empProbP = a0emp.times(empP).times(ainfemp);
-	
+				
+				/*
+				System.out.println("Forward");
+				empQF.print(5, 5);
+				System.out.println("Backward");
+				empQB.print(5, 5);
+				System.out.println("a0");
+				a0emp.print(5, 5);
+				ainfemp.print(5, 5);
+				empProbQF.minus(empProbQB).print(5, 5);
+				*/
+				
 				
 				errors[0][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0));
 				errors[1][i] += truProbQF.minus(empProbQF).get(0,0);
@@ -202,27 +214,32 @@ public class Analysis {
 								
 				errors[4][i] += Math.abs(empProbQF.minus(empProbQB).get(0,0));
 				errors[5][i] += empProbQF.minus(empProbQB).get(0,0);
+				
+				errors[6][i] += empQF.minus(empQB).normF();
 
 			}
-			for (int c = 0; c < 4; c++) {
+			for (int c = 0; c < 7; c++) {
 				errors[c][i] /= (empArray.size());
 				queries[c][i] = i;
 			}
+			/*
 			errors[4][i] /= (empArray.size()*truProbQF.get(0,0));
 			errors[5][i] /= (empArray.size()*truProbQF.get(0,0));
 			queries[4][i] = i;
 			queries[5][i] = i;
+			*/
 			
 		}
 		
 		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y:error","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
 		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y:error","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
-		HelperFunctions.outputData(pltFolder + "Non-Commutative_Error", "X:Sigma Y:Relative a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
+		HelperFunctions.outputData(pltFolder + "Non-Comm_Query_Error", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
+		HelperFunctions.outputData(pltFolder + "Non-Comm_Matrix_Error", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
 
 	}
 	
 	public HMM makeHMM(){
-		double[][] p = { {0}, {1}};
+		double[][] p = { {0.5}, {0.5}};
 		double[][] t = { {0.5,0.45}, {0.3,0.67} };
 		double[][] o = { {0,1}, {0,1} };
 		double[][] e = { {0.05}, {0.03} };

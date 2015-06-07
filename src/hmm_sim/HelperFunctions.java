@@ -323,9 +323,11 @@ public class HelperFunctions {
 			}
 			if (forward){
 				r = r.times( d.get(Integer.toString( p ) ) );
+				//System.out.println("Forward" );
 			}
 			else{
 				r = d.get(Integer.toString( p )).times(r);
+				//System.out.println("Backward" );
 			}
 			power -= p;
 		}
