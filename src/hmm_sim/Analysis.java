@@ -235,6 +235,24 @@ public class Analysis {
 		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y:error","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
 		HelperFunctions.outputData(pltFolder + "Non-Comm_Query_Error", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
 		HelperFunctions.outputData(pltFolder + "Non-Comm_Matrix_Error", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
+	
+		double[][] ebase = Arrays.copyOfRange(errors,0, 1);
+		double[][] enaive = Arrays.copyOfRange(errors, 2, 3);
+		double[][] ejoint = new double[][]{ebase[0], enaive[0]};
+		
+		double[][] qbase = Arrays.copyOfRange(queries, 2, 3);
+		double[][] qnaive = Arrays.copyOfRange(queries, 2, 3);
+		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
+		HelperFunctions.outputData(pltFolder + "QError_Abs_Base_vs_Naive", "X:Sigma Y:error","",qjoint,ejoint  );
+		
+		ebase = Arrays.copyOfRange(errors, 1, 2);
+		enaive = Arrays.copyOfRange(errors, 3, 4);
+		ejoint = new double[][]{ebase[0], enaive[0]};
+		
+		qbase = Arrays.copyOfRange(queries, 1, 2);
+		qnaive = Arrays.copyOfRange(queries, 3, 4);
+		qjoint = new double[][]{qbase[0], qnaive[0]};
+		HelperFunctions.outputData(pltFolder + "QError_Reg_Base_vs_Naive", "X:Sigma Y:error","",qjoint,ejoint  );
 
 	}
 	
