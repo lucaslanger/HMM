@@ -18,13 +18,13 @@ public class Analysis {
 	private int hSize;
 	
 	public static void main(String[] args){
-		Analysis a = new Analysis(100,20,1000,1000);
+		Analysis a = new Analysis(100,30,1000,1000);
 		
 		a.compareSigmaError();
 		System.out.println("Power Sigma Done");
 		a.compareH_Hbar();
 		System.out.println("H Hbar Done");
-		a.compareHSigmas();
+		a.compareASigmas();
 		System.out.println("SigmaError Done");
 		a.compareQueryErrors();
 		System.out.println("Query Done");
@@ -83,7 +83,7 @@ public class Analysis {
 		
 	}
 	
-	public void compareHSigmas(){
+	public void compareASigmas(){
 		HashMap<String, Matrix> emp;
 		
 		int maxQuery = (int) (tru.get("max").norm1()-1); 
@@ -156,8 +156,8 @@ public class Analysis {
 		int maxexp = (int) tru.get("max").norm1(); //same for tru by construction
 		int maxquery = (int) Math.pow(2, maxexp);
 		
-		double[][] queries = new double[7][maxquery];
-		double[][] errors = new double[7][maxquery];
+		double[][] queries = new double[9][maxquery];
+		double[][] errors = new double[9][maxquery];
 		
 		Matrix a0emp, ainfemp, empQF, empQB, empP, empProbQF, empProbQB, empProbP;
 		Matrix truF, truB, a0tru, ainftru, truProbQF, truProbQB;
@@ -216,23 +216,20 @@ public class Analysis {
 				errors[5][i] += empProbQF.minus(empProbQB).get(0,0);
 				
 				errors[6][i] += empQF.minus(empQB).normF();
-
+				
+				errors[7][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0))/ Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbQF.get(0,0)) );
+				errors[8][i] += Math.abs(truProbQF.minus(empProbP).get(0,0))/ Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbP.get(0,0)) );
 			}
-			for (int c = 0; c < 7; c++) {
+			for (int c = 0; c < 9; c++) {
 				errors[c][i] /= (empArray.size());
 				queries[c][i] = i;
 			}
-			/*
-			errors[4][i] /= (empArray.size()*truProbQF.get(0,0));
-			errors[5][i] /= (empArray.size()*truProbQF.get(0,0));
-			queries[4][i] = i;
-			queries[5][i] = i;
-			*/
+
 			
 		}
 		
-		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y:error","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
-		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y:error","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
+		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
+		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
 		HelperFunctions.outputData(pltFolder + "Non-Comm_Query_Error", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
 		HelperFunctions.outputData(pltFolder + "Non-Comm_Matrix_Error", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
 	
@@ -243,16 +240,9 @@ public class Analysis {
 		double[][] qbase = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qnaive = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
-		HelperFunctions.outputData(pltFolder + "QError_Abs_Base_vs_Naive", "X:Sigma Y:error","",qjoint,ejoint  );
+		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:Absolute error","",qjoint,ejoint  );
 		
-		ebase = Arrays.copyOfRange(errors, 1, 2);
-		enaive = Arrays.copyOfRange(errors, 3, 4);
-		ejoint = new double[][]{ebase[0], enaive[0]};
-		
-		qbase = Arrays.copyOfRange(queries, 1, 2);
-		qnaive = Arrays.copyOfRange(queries, 3, 4);
-		qjoint = new double[][]{qbase[0], qnaive[0]};
-		HelperFunctions.outputData(pltFolder + "QError_Reg_Base_vs_Naive", "X:Sigma Y:error","",qjoint,ejoint  );
+		HelperFunctions.outputData(pltFolder + "QError_Rel_Base_vs_Naive", "X:Sigma Y:Absolute error","", qjoint, Arrays.copyOfRange(errors,7,9) );
 
 	}
 	
@@ -272,16 +262,17 @@ public class Analysis {
 	}
 	
 	public HMM makeLabyrinth(){
-		int states = 11;
+		int states = 27;
+		double selfTransitionP = 0.05;
 		
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
 		termStates.put(0, .5);
-		termStates.put(9, .5);
+		termStates.put(13, .5);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
-		changeTo.put(4, new int[]{5,8} );
-		changeTo.put(10, new int[]{4});
-		changeTo.put(7, new int[]{0});
+		changeTo.put(7, new int[]{8,20} );
+		changeTo.put(26, new int[]{0});
+		changeTo.put(19, new int[]{7});
 
 		
 		double[][] p = new double[states][1];
@@ -301,7 +292,8 @@ public class Analysis {
 				e[i][0] = termStates.get(i);
 			}
 			else{
-				t[i+1][i] = 1;
+				t[i+1][i] = 1-selfTransitionP;
+				t[i][i] = selfTransitionP;
 			} 
 		}
 
