@@ -73,6 +73,14 @@ public class HelperFunctions {
 
 	}
 	
+	public static double[] incArray(int length){
+		double[] output = new double[length];
+		for (int i = 0; i < output.length; i++) {
+			output[i] = i;
+		}
+		return output;
+	}
+	
 	public static HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
 		
 		//Reason for copy is to avoid overwriting 
@@ -311,7 +319,8 @@ public class HelperFunctions {
 		
 	}
 	
-	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base, boolean forward){
+	//TODO add paramter "maxdigit" to limit the query
+	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base, boolean forward){	
 		int c = (int) d.get("max").norm1()-1;
 		int p = (int) Math.pow(base, c);
 		int size = d.get( Integer.toString(p) ).getArrayCopy().length;

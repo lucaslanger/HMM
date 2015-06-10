@@ -445,16 +445,7 @@ public class HMM {
 		test5.print(5,5);
 		test6.print(5,5);
 	}
-	
-	public void testBaumWelch(){
-		int seq[] = new int[5];
-		for (int i = 0; i < seq.length; i++) {
-			seq[i] = generateSequenceStreakCount();
-
-		}
-		baumWelch(2, 10 ,seq );
-	}
-	
+		
 	public void testFullBaumWelch(){
 		int[] seq = generateSequence(20);
 		//System.out.println(Arrays.toString(seq));

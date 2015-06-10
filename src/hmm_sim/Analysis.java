@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.awt.font.NumericShaper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,11 +34,12 @@ public class Analysis {
 	
 	public Analysis(int hSize, int basisSize, int trials, int trialSize){
 		//this.h = makeHMM();
-		this.h = makeLabyrinth();
+		this.h = makeShortLabyrinth();
+		//this.makeLongLabyrinth();
 		
 		this.tru = h.singledataSpectralTrue(hSize, basisSize);
 		
-		this.tru.get("H").print(5,5); 
+		//this.tru.get("H").print(5,5); 
 		
 		this.hSize = hSize;
 		this.basisSize = basisSize;
@@ -45,6 +47,53 @@ public class Analysis {
 		for (int i = 0; i < trials; i++) {
 			empArray.add(h.singledataSpectralEmperical(hSize, trialSize, basisSize));
 		}
+		
+		int traj = 5;
+		int maxAhead = 10;
+		
+		double[][] xaxis = new double[traj][maxAhead];
+		double[][] queryArrayTru = new double[traj][maxAhead];
+		for (int i = 0; i < traj; i=i+1) {
+			queryArrayTru[i] = conditionalQuery(this.tru,i, maxAhead);
+			xaxis[i] = HelperFunctions.incArray(maxAhead);
+			//System.out.println(HelperFunctions.sumArray(queryArray[i]));  
+		}
+		Matrix truPredictions = new Matrix(queryArrayTru);
+		
+
+		double[][] queryArrayEmp = new double[traj][maxAhead];
+		double[][] errorArray;
+		Matrix error, errorAbs, avgError = null;
+		
+		for (int i = 0; i < trials; i++) {
+			for (int j = 0; j < traj; j++) {
+				queryArrayEmp[j] = conditionalQuery(empArray.get(i), j, maxAhead);
+			}
+			error = new Matrix(queryArrayEmp).minus(truPredictions);
+			
+			errorArray = new double[traj][maxAhead];
+			for (int j = 0; j < traj; j++) {
+				for (int j2 = 0; j2 < maxAhead; j2++) {
+					errorArray[j][j2] = Math.abs(error.get(j,j2));
+				}
+			}
+			errorAbs = new Matrix(errorArray);
+			
+			//error.print(5, 5);
+
+			if (avgError != null){
+				avgError = avgError.plus(errorAbs);
+			}
+			else{
+				avgError = errorAbs;
+			}
+			
+		}
+
+		avgError = avgError.times(1.0/trials);
+		
+		HelperFunctions.outputData(pltFolder + "ConditionalPlots", "x:Traj Length y:Probability", "", xaxis, avgError.getArrayCopy());
+		
 	}
 	
 	public void compareH_Hbar(){
@@ -247,7 +296,7 @@ public class Analysis {
 	}
 	
 	public HMM makeHMM(){
-		double[][] p = { {0.5}, {0.5}};
+		double[][] p = { {1}, {0}};
 		double[][] t = { {0.5,0.45}, {0.3,0.67} };
 		double[][] o = { {0,1}, {0,1} };
 		double[][] e = { {0.05}, {0.03} };
@@ -261,13 +310,62 @@ public class Analysis {
 		return h;
 	}
 	
-	public HMM makeLabyrinth(){
+	public HMM makeShortLabyrinth(){
+		int states = 7;
+		double selfTransitionP = 0.05;
+		
+		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
+		termStates.put(0, .6);
+		termStates.put(5, .4);
+		
+		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
+		changeTo.put(2, new int[]{3,0} );
+		changeTo.put(6, new int[]{2});
+		
+		double[][] p = new double[states][1];
+		p[0][0] = 1;
+		double[][] t = new double[states][states];
+		double[][] e = new double[states][1];
+		int[] v;
+		for (int i = 0; i < states; i++) {
+			if (changeTo.containsKey(i) ){	
+			 	v = changeTo.get(i);
+			 	for(int c=0;c<v.length;c++){
+				   t[v[c]][i] = 1.0/v.length;
+			 	}
+			} 
+			else if(termStates.containsKey(i)){
+				t[i+1][i] = 1 - termStates.get(i);
+				e[i][0] = termStates.get(i);
+			}
+			else{
+				t[i+1][i] = 1-selfTransitionP;
+				t[i][i] = selfTransitionP;
+			} 
+		}
+
+		double[][] o = new double[states][states];
+		for (int i = 0; i < states; i++) {
+			o[i][i] = 1;
+		}
+		
+		Matrix T = new Matrix( t ).transpose();
+		Matrix O = new Matrix( o );
+		Matrix P = new Matrix( p );
+		Matrix E = new Matrix( e );
+		
+		HMM l = new HMM(T, O, P, E, states);
+		
+		return l;
+	}
+	
+	public HMM makeLongLabyrinth(){
 		int states = 27;
 		double selfTransitionP = 0.05;
 		
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
-		termStates.put(0, .5);
-		termStates.put(13, .5);
+		termStates.put(0, .6);
+		termStates.put(13, .4);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
 		changeTo.put(7, new int[]{8,20} );
@@ -307,14 +405,34 @@ public class Analysis {
 		Matrix P = new Matrix( p );
 		Matrix E = new Matrix( e );
 		
-		/*T.print(5, 5);
-		E.print(5, 5);
-		O.print(5, 5);
-		P.print(5, 5);*/
 		HMM l = new HMM(T, O, P, E, states);
 		
 		return l;
 		
+	}
+	
+	public double[] conditionalQuery(HashMap<String, Matrix> learned,int k, int maxAhead){
+		Matrix alpha_0 = learned.get("a0");
+		Matrix alpha_inf = learned.get("ainf");
+		Matrix Ak = HelperFunctions.matrixQuery(learned, k, 2, true);
+		Matrix alpha_k = alpha_0.times(Ak);
+		
+		int nstates = alpha_0.getArray()[0].length;
+		
+		Matrix mid = Matrix.identity(nstates, nstates).minus(learned.get("1") );
+		double normalizer = alpha_k.times( mid.inverse() ).times( alpha_inf ).get(0,0);
+		double jointProb;
+		Matrix Aquery;
+		double[] pA = new double[maxAhead];
+		for (int i = 0; i < pA.length; i++) {
+			Aquery = HelperFunctions.matrixQuery(learned, i, 2,true);				//Inefficient way to multiply fix to optimize if slow
+			//System.out.println(normalizer);
+			jointProb = alpha_k.times(Aquery).times(alpha_inf).get(0,0);
+			//System.out.println(jointProb);
+			pA[i] = jointProb/normalizer;			
+		}
+		
+		return pA;
 	}
 	
 	public void debugHComparisons(HashMap<String, Matrix> emp ){
@@ -328,8 +446,7 @@ public class Analysis {
 		
 		System.out.println("SVDs");
 		emp.get("s_values").print(5, 5);
-		tru.get("s_values").print(5, 5);
-		
+		tru.get("s_values").print(5, 5);	
 		
 		System.out.println("U's");
 		emp.get("U").print(5, 5);
@@ -343,5 +460,13 @@ public class Analysis {
 		System.out.println("Hsigma=1 error");
 		emp.get("1").minus(tru.get("1")).print(5,5);
 	}
+	
+	/*
+	public matrixQuery(a0, qval, ainf){
+		while(){
+			
+		}
+	}
+	*/
 
 }

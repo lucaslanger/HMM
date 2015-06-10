@@ -47,7 +47,7 @@ def getDataFromFile(datafile):
 
 def drawPlots(folder):
 	#names = os.listdir(folder)
-	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Non-Comm_Query_Error', "QError_Base_vs_Naive",'QError_Rel_Base_vs_Naive','Non-Comm_Matrix_Error','True_Hankel_vs_Emperical', 'True_Ax_vs_Emperical_Ax',  '(Ax)^2_v.s A(x^2)']
+	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Non-Comm_Query_Error', "QError_Base_vs_Naive",'QError_Rel_Base_vs_Naive','Non-Comm_Matrix_Error','True_Hankel_vs_Emperical', 'True_Ax_vs_Emperical_Ax',  '(Ax)^2_v.s A(x^2)', 'ConditionalPlots']
 	l = len(names)
 
 	i = 1
@@ -61,7 +61,7 @@ def drawPlots(folder):
 				L = 'Abs'
 			else:
 				L = 'Non-Abs'
-			plt.plot(d[2][j],d[3][j], colors[j], label=L)
+			plt.plot(d[2][j],d[3][j], colors[j%8], label=L)
 
 		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 		#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
