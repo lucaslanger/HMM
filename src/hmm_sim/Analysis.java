@@ -34,8 +34,8 @@ public class Analysis {
 	
 	public Analysis(int hSize, int basisSize, int trials, int trialSize){
 		//this.h = makeHMM();
-		this.h = makeShortLabyrinth();
-		//this.makeLongLabyrinth();
+		//this.h = makeShortLabyrinth();
+		this.h = this.makeLongLabyrinth();
 		
 		this.tru = h.singledataSpectralTrue(hSize, basisSize);
 		
@@ -59,9 +59,10 @@ public class Analysis {
 			//System.out.println(HelperFunctions.sumArray(queryArray[i]));  
 		}
 		Matrix truPredictions = new Matrix(queryArrayTru);
-		
+		truPredictions.print(5, 5);
 
 		double[][] queryArrayEmp = new double[traj][maxAhead];
+		Matrix queryEmpAvg = null, qE = null;
 		double[][] errorArray;
 		Matrix error, errorAbs, avgError = null;
 		
@@ -69,7 +70,15 @@ public class Analysis {
 			for (int j = 0; j < traj; j++) {
 				queryArrayEmp[j] = conditionalQuery(empArray.get(i), j, maxAhead);
 			}
-			error = new Matrix(queryArrayEmp).minus(truPredictions);
+			qE = new Matrix(queryArrayEmp);
+			if (queryEmpAvg != null){
+				queryEmpAvg = queryEmpAvg.plus(qE);
+			}
+			else{
+				queryEmpAvg = qE;
+			}
+			
+			error = qE.minus(truPredictions);
 			
 			errorArray = new double[traj][maxAhead];
 			for (int j = 0; j < traj; j++) {
@@ -79,8 +88,6 @@ public class Analysis {
 			}
 			errorAbs = new Matrix(errorArray);
 			
-			//error.print(5, 5);
-
 			if (avgError != null){
 				avgError = avgError.plus(errorAbs);
 			}
@@ -89,10 +96,15 @@ public class Analysis {
 			}
 			
 		}
-
-		avgError = avgError.times(1.0/trials);
 		
-		HelperFunctions.outputData(pltFolder + "ConditionalPlots", "x:Traj Length y:Probability", "", xaxis, avgError.getArrayCopy());
+		avgError = avgError.times(1.0/trials);
+		queryEmpAvg = queryEmpAvg.times(1.0/trials);
+		
+		HelperFunctions.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
+		HelperFunctions.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
+		HelperFunctions.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
+
+
 		
 	}
 	
@@ -161,7 +173,7 @@ public class Analysis {
 			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
 		}
 		
-		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emperical_Ax", "X:Sigma Y:Relative Fnorm","", sigmaNumber, errors );
+		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emperical_Ax", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
 		// Add file containing error analysis for alphaInf and alpha0?
 	}
 	
@@ -171,7 +183,7 @@ public class Analysis {
 		double[][] sigmaNumber = new double[1][m];
 		double[][] errors = new double[1][m];
 		
-		Matrix temp1, temp2,  r;
+		Matrix temp1, temp2, r;
 		int pow;
 		
 		for (int j = 0; j < empArray.size(); j++) {
@@ -197,7 +209,7 @@ public class Analysis {
 			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
 		}
 		
-		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:Relative Fnorm","", sigmaNumber, errors );
+		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
 
 	}
 	
@@ -266,15 +278,19 @@ public class Analysis {
 				
 				errors[6][i] += empQF.minus(empQB).normF();
 				
-				errors[7][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0))/ Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbQF.get(0,0)) );
-				errors[8][i] += Math.abs(truProbQF.minus(empProbP).get(0,0))/ Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbP.get(0,0)) );
+				double r7 = Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbQF.get(0,0)) );
+				double r8 = Math.max( Math.abs(truProbQF.get(0,0)), Math.abs(empProbP.get(0,0)) );
+				
+				//empProbQF.print(5, 15);
+				//truProbQF.print(5, 15);
+				errors[7][i] += Math.abs(truProbQF.minus(empProbQF).get(0,0))/ r7;
+				errors[8][i] += Math.abs(truProbQF.minus(empProbP).get(0,0))/ r8;
 			}
 			for (int c = 0; c < 9; c++) {
 				errors[c][i] /= (empArray.size());
 				queries[c][i] = i;
 			}
-
-			
+		
 		}
 		
 		HelperFunctions.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
@@ -289,9 +305,9 @@ public class Analysis {
 		double[][] qbase = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qnaive = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
-		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:Absolute error","",qjoint,ejoint  );
+		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
 		
-		HelperFunctions.outputData(pltFolder + "QError_Rel_Base_vs_Naive", "X:Sigma Y:Absolute error","", qjoint, Arrays.copyOfRange(errors,7,9) );
+		HelperFunctions.outputData(pltFolder + "QError_Rel_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|/max","", qjoint, Arrays.copyOfRange(errors,7,9) );
 
 	}
 	
