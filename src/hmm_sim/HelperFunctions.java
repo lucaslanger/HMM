@@ -320,9 +320,9 @@ public class HelperFunctions {
 	}
 	
 	//TODO add paramter "maxdigit" to limit the query
-	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int base, boolean forward){	
-		int c = (int) d.get("max").norm1()-1;
-		int p = (int) Math.pow(base, c);
+	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int maxPower, int base, boolean forward){	
+		int p = maxPower;
+		
 		int size = d.get( Integer.toString(p) ).getArrayCopy().length;
 		Matrix r = Matrix.identity(size,size);
 		while(power != 0){
@@ -332,16 +332,66 @@ public class HelperFunctions {
 			}
 			if (forward){
 				r = r.times( d.get(Integer.toString( p ) ) );
-				//System.out.println("Forward" );
 			}
 			else{
 				r = d.get(Integer.toString( p )).times(r);
-				//System.out.println("Backward" );
 			}
 			power -= p;
 		}
 		
 		return r;
+	}
+	
+	public static double probabilityQuery(HashMap<String, Matrix> d, Matrix ao, Matrix ainf,  int power, int maxPower, int base, boolean forward){
+		int p = maxPower;
+		Matrix r;
+		if (forward){
+			r = ao;
+		}
+		else{
+			r = ainf;
+		}
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+			if (forward){
+				r = r.times( d.get(Integer.toString( p ) ) );
+			}
+			else{
+				r = d.get(Integer.toString( p )).times(r);
+			}
+			power -= p;
+		}
+		if (forward){
+			r = r.times(ainf);
+		}
+		else{
+			r = ao.times(r);
+		}
+		return r.get(0,0);
+		
+	}
+	
+	
+	public static Matrix alphaKQuery(HashMap<String, Matrix> d, Matrix ao, int power, int maxPower, int base){	//Always forward for now
+		int p = maxPower;
+		
+		Matrix r = ao;
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+		
+			r = r.times( d.get(Integer.toString( p ) ) );
+		
+			power -= p;
+		}
+		
+		return r;
+		
 	}
 	
 	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
