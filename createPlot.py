@@ -36,7 +36,6 @@ def getDataFromFile(datafile):
 						else:
 							xvals[d].append(float(s[0]) )
 							yvals[d].append(float(s[1]) )  
-
 				except Exception, e:
 					print "Required format not met"					
 					print str(e)
@@ -47,7 +46,7 @@ def getDataFromFile(datafile):
 
 def drawPlots(folder):
 	#names = os.listdir(folder)
-	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'QError_Rel_B_vs_N','Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
+	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'QError_Rel_B_vs_N','Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors', 'BaseDifferences']
 	l = len(names)
 
 	i = 1

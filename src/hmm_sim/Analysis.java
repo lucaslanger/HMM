@@ -20,7 +20,7 @@ public class Analysis {
 	private int maxPower;
 	
 	public static void main(String[] args){
-		Analysis a = new Analysis(200,50,1,200000,64,3);
+		Analysis a = new Analysis(200,40,15,70,64,3);
 
 		a.compareSigmaError();
 		System.out.println("Power Sigma Done");
@@ -115,25 +115,29 @@ public class Analysis {
 		HelperFunctions.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
 		HelperFunctions.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
 		HelperFunctions.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
+	
+		//Seperate
+		
+		this.plotBaseDifferences();
 	}
 	
 	public void compareH_Hbar(){
 		
-		int[] sizes = new int[]{100,1000,10000};
+		int[] sizes = new int[]{100,500,1000,2000,5000,10000};
 		
 		HashMap<String, Matrix> emp;
 		
 		Matrix H;
 		Matrix Hbar;
 		
-		int trailsize = sizes.length;
+		int trialsize = sizes.length;
 		int repeats = 10;
 		
-		double[][] dataSize = new double[1][trailsize];
-		double[][] error = new double[1][trailsize];
+		double[][] dataSize = new double[1][trialsize];
+		double[][] error = new double[1][trialsize];
 		double avgError, e;
 	
-		for (int i = 0; i < trailsize; i++) {
+		for (int i = 0; i < trialsize; i++) {
 			avgError = 0;
 			for (int j = 0; j < repeats; j++) {
 				emp = h.singledataSpectralEmperical(hSize, sizes[i], basisSize);
@@ -153,10 +157,50 @@ public class Analysis {
 		
 	}
 	
+	public void plotBaseDifferences(){
+		int[] sizes = new int[]{50,100,200};
+		HashMap<String, Matrix> emp;
+		
+		int trialsize = sizes.length;
+		int repeats = 50;
+		int maxquery = 100;
+		
+		int maxExp = (int) tru.get("max").get(0,0);
+		
+		double[][] dataSize = new double[maxExp][trialsize];
+		double[][] errors = new double[maxExp][trialsize];
+		double error = 0, empProb, truProb;
+		for (int j = 0; j < trialsize; j++){
+			for (int z = 0; z < repeats; z++){
+				emp = h.singledataSpectralEmperical(this.hSize, sizes[j], this.basisSize);	
+				for (int i = 0; i < maxExp; i++){
+					int exp = (int) Math.pow(2, i);
+					dataSize[i][j] = sizes[j];
+					for (int j2 = 0; j2 < maxquery; j2++){
+						truProb = HelperFunctions.probabilityQuery(tru, tru.get("a0"), tru.get("ainf"), j2, exp, 2, true);
+						empProb = HelperFunctions.probabilityQuery(emp, emp.get("a0"), emp.get("ainf"), j2, exp, 2, true);
+						error = Math.abs(truProb - empProb);
+						errors[i][j] += error;
+					}
+				}
+			}
+		}
+		
+		for (int i = 0; i < maxExp; i++) {
+			for (int j = 0; j < trialsize; j++) {
+				errors[i][j] /= (repeats*maxquery*sizes[j]);
+			}
+		}
+		HelperFunctions.outputData(pltFolder + "BaseDifferences", "X:#Data Seen Y:Fnorm","", dataSize, errors );
+	}
+	
 	public void compareASigmas(){
 		HashMap<String, Matrix> emp;
 		
 		int maxQuery = (int) (tru.get("max").norm1()-1); 
+		
+		System.out.println("maxQ");
+		System.out.println(maxQuery);
 		
 		double[][] sigmaNumber = new double[1][maxQuery];
 		double[][] errors = new double[1][maxQuery];
@@ -215,7 +259,7 @@ public class Analysis {
 			pow = (int) Math.pow(2, i+1);
 			h_sigma_true = tru.get( Integer.toString(pow) );
 			sigmaNumber[0][i] = pow;
-			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
+			errors[0][i] /= (empArray.size()*h_sigma_true.normF()*hSize*hSize);
 		}
 		
 		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
@@ -286,14 +330,15 @@ public class Analysis {
 				errors[7][i] += Math.abs(truProbQF - empProbQF)/ r7;	//Relative Error Base + Naive
 				errors[8][i] += Math.abs(truProbQF - empProbP)/ r8;
 				
-				
+				double pq;
 				for (int k = 0; k < baseQueries.length; k++) {
-					baseQueries[k][i] += Math.abs(HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, (int) Math.pow(2,k), 2, true) - truProbQF);
+					pq = Math.abs(HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, (int) Math.pow(2,k), 2, true) - truProbQF);
+					baseQueries[k][i] += pq;
 				}
 			}
 			
 			for (int j = 0; j < x_base_Queries.length; j++){
-				baseQueries[j][i] /= (empArray.size());
+				baseQueries[j][i] /= (empArray.size() );
 				x_base_Queries[j] = HelperFunctions.incArray(maxquery);
 			}
 			
@@ -307,7 +352,6 @@ public class Analysis {
 		HelperFunctions.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
 		HelperFunctions.outputData(pltFolder + "Comm_Query_Error", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
 		HelperFunctions.outputData(pltFolder + "Comm_Matrix_Error", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
-	
 		HelperFunctions.outputData(pltFolder + "Base_Errors","X:Sigma Y: Error" ,"", x_base_Queries, baseQueries);
 		
 		double[][] ebase = Arrays.copyOfRange(errors,0, 1);
@@ -460,6 +504,7 @@ public class Analysis {
 		
 		return pA;
 	}
+
 	
 	public void debugHComparisons(HashMap<String, Matrix> emp ){
 		System.out.println("H error");

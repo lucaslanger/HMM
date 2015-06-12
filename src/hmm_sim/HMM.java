@@ -179,6 +179,7 @@ public class HMM {
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
+		
 		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ); //Too low fix later to allow higher powers
 		int freq;
 		Matrix h;
@@ -211,7 +212,9 @@ public class HMM {
 		alpha_0.times(returnData.get("3")).times(alpha_inf).print(5, 5);
 		*/
 		returnData.put("H", H);
-		returnData.put("max", new Matrix(H_Matrices.size(),1,1) );
+		//System.out.println(H_Matrices.size());
+		Matrix maX = new Matrix(new double[][]{{H_Matrices.size()}});
+		returnData.put("max", maX);
 		returnData.put("pinv", pinv);
 		returnData.put("sinv", sinv);
 		returnData.put("s_values", SVD.get("S"));
