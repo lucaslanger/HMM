@@ -3,7 +3,14 @@ import sys
 import os
 import math
 
-colors = { 0:"g" ,1:'r', 2:'k', 3: 'b', 4:'c', 5:'m', 6:"y", 7:"y"}
+colors = {}
+for i in range(10):
+	r = 55 + 20*i
+	g = 55 + 20*i
+	b = 55 + 20*i
+	colors[i] = '#%02x%02x%02x' % (r,g,b)
+
+colorsOther = {0:'g', 1:'r', 2:'b', 3:'y'}
 
 def getDataFromFile(datafile):
 	with open(datafile) as f:
@@ -46,7 +53,7 @@ def getDataFromFile(datafile):
 
 def drawPlots(folder):
 	#names = os.listdir(folder)
-	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'QError_Rel_B_vs_N','Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors', 'BaseDifferences']
+	names = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors', 'BaseComp_19-12' ]
 	l = len(names)
 
 	i = 1
@@ -60,7 +67,10 @@ def drawPlots(folder):
 				L = 'Abs'
 			else:
 				L = 'Non-Abs'
-			plt.plot(d[2][j],d[3][j], colors[j%8], label=L)
+			if n[:4] == 'Base':
+				plt.plot(d[2][j],d[3][j], colors[j%10], label=L)
+			else:
+				plt.plot(d[2][j],d[3][j], colorsOther[j%4], label=L)
 
 		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 		#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,

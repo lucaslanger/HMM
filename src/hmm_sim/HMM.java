@@ -118,6 +118,9 @@ public class HMM {
 		double[][] p = new double[size][states];
 		double[][] s = new double[size][states];
 		
+		//System.out.println(states);
+		//Asigma.print(5, 5);
+		
 		Matrix runningProductPrefixes = P.transpose();
 		Matrix runningProductSuffixes = E;
 
@@ -179,11 +182,12 @@ public class HMM {
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
-		
-		int maxDigit = (int) Math.floor( Math.log(counts.length - basisSize )/Math.log(base) ); //Too low fix later to allow higher powers
+		//System.out.println((int) Math.floor(Math.log(counts.length )/Math.log(base)));
+		int maxDigit = (int) Math.floor((Math.log(counts.length )/Math.log(base))) ; //Too low fix later to allow higher powers
+		//System.out.println(maxDigit);
 		int freq;
 		Matrix h;
-		for (int l = 0; l < maxDigit; l++) {
+		for (int l = 0; l <= maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
 			h = buildHankel(counts, freq, freq+basisSize);
 			H_Matrices.add(h);
@@ -213,7 +217,7 @@ public class HMM {
 		*/
 		returnData.put("H", H);
 		//System.out.println(H_Matrices.size());
-		Matrix maX = new Matrix(new double[][]{{H_Matrices.size()}});
+		Matrix maX = new Matrix(new double[][]{{maxDigit}});
 		returnData.put("max", maX);
 		returnData.put("pinv", pinv);
 		returnData.put("sinv", sinv);

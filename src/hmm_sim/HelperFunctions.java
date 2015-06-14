@@ -322,7 +322,8 @@ public class HelperFunctions {
 	//TODO add paramter "maxdigit" to limit the query
 	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int maxPower, int base, boolean forward){	
 		int p = maxPower;
-		
+		//System.out.println(d.get("max").get(0, 0));
+		//System.out.println(d.keySet());
 		int size = d.get( Integer.toString(p) ).getArrayCopy().length;
 		Matrix r = Matrix.identity(size,size);
 		while(power != 0){
@@ -376,6 +377,7 @@ public class HelperFunctions {
 	
 	
 	public static Matrix alphaKQuery(HashMap<String, Matrix> d, Matrix ao, int power, int maxPower, int base){	//Always forward for now
+		
 		int p = maxPower;
 		
 		Matrix r = ao;

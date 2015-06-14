@@ -16,72 +16,100 @@ public class Analysis {
 	
 	private int basisSize;
 	private int hSize;
-	
-	private int maxPower;
-	
-	public static void main(String[] args){
-		Analysis a = new Analysis(200,40,15,70,64,3);
 
-		a.compareSigmaError();
-		System.out.println("Power Sigma Done");
-		a.compareH_Hbar();
-		System.out.println("H Hbar Done");
-		a.compareASigmas();
-		System.out.println("SigmaError Done");
-		a.compareQueryErrors();
-		System.out.println("Query Done");
-		
+	public static void main(String[] args){
+		Analysis a = new Analysis(400,40,30,70);
 	}
 	
-	public Analysis(int hSize, int basisSize, int trials, int trialSize, int mP, int type){
-		if (type == 1){
-			this.h = this.makeHMM();
-		}
-		else if( type == 2){
-			this.h = this.makeShortLabyrinth();
-		}
-		else if(type == 3){
-			this.h = this.makeLongLabyrinth();
-		}
-		this.tru = h.singledataSpectralTrue(hSize, basisSize);
-		
-		//this.tru.get("H").print(5,5); 
-		
+	public Analysis(int hSize, int basisSize, int trials, int trialSize){
 		this.hSize = hSize;
 		this.basisSize = basisSize;
-		this.maxPower = mP;
+		
+		//this.h = this.makeHMM();
+		
+		this.h = this.makeLabyrinth(19,12,0.05);
+		//this.h = this.makeLabyrinth(19,3,0.05);
+		//this.h = this.makeLabyrinth(4,8,0.05);
+		//this.h = this.makeLabyrinth(3,5, 0.05);
+		
+		//Specific to L1
+		this.tru = h.singledataSpectralTrue(hSize, basisSize);
+		//this.tru.get("H").print(5, 5);
 		
 		for (int i = 0; i < trials; i++) {
-			empArray.add(h.singledataSpectralEmperical(hSize, trialSize, basisSize));
+			this.empArray.add(h.singledataSpectralEmperical(hSize, trialSize, basisSize));
 		}
-
-		//Seperate
 		
-		h = this.makeShortLabyrinth();
-		tru = h.singledataSpectralTrue(hSize, basisSize);
-		this.plotBaseDifferences(tru, h, 1);
-		h = this.makeLongLabyrinth();
-		tru = h.singledataSpectralTrue(hSize, basisSize);
-		this.plotBaseDifferences(tru, h, 2);
+		this.conditionalPlots(10,5,50);
 	
+		this.compareSigmaError();
+		System.out.println("Power Sigma Done");
+		this.compareH_Hbar(h);
+		System.out.println("H Hbar Done");
+		this.compareASigmas();
+		System.out.println("SigmaError Done");
+		this.compareQueryErrors();
+		System.out.println("Query Done");
+			
+		this.plotBaseDifferences( h, hSize,40, "19-12" );
+		//this.plotBaseDifferences( h, hSize, 40, "19-3" );
+		//this.plotBaseDifferences( h, hSize, 40, "4-8" );
+		//this.plotBaseDifferences( h, hSize, 40, "3-5" );
+		
+		System.out.println("Base Differences done");
 	}
 	
+	public void plotBaseDifferences( HMM hmm, int hankelSize, int basisSize, String id){
+		int repeats = 30;
+		
+		HashMap<String, Matrix> d = hmm.singledataSpectralTrue(hankelSize, basisSize);
+		int[] dataAmount = new int[]{70,100,150,200,300};
+		HashMap<String, Matrix> emp;
+			
+		int maxExp = (int) d.get("max").get(0,0);
+		
+		int maxQuery = hankelSize;
+		
+		double[][] dataSize = new double[maxExp+1][dataAmount.length];
+		double[][] errors = new double[maxExp+1][dataAmount.length];
+		double error = 0, empProb, truProb;
+		int exp;
+		for (int j = 0; j < dataAmount.length; j++){
+			for (int z = 0; z < repeats; z++){
+				emp = hmm.singledataSpectralEmperical(hankelSize, dataAmount[j], basisSize);	
+				for (int i = 0; i <= maxExp; i++){
+					exp = (int) Math.pow(2, i);
+					dataSize[i][j] = dataAmount[j];
+					for (int j2 = 0; j2 < maxQuery; j2++){
+						truProb = HelperFunctions.probabilityQuery(d, d.get("a0"), d.get("ainf"), j2, maxExp, 2, true);
+						empProb = HelperFunctions.probabilityQuery(emp, emp.get("a0"), emp.get("ainf"), j2, exp, 2, true);
+						error = Math.abs(truProb - empProb);
+						errors[i][j] += Math.pow(error,0.33);
+					}
+				}
+			}
+		}
+		
+		for (int i = 0; i <= maxExp; i++) {
+			for (int j = 0; j < dataAmount.length; j++) {
+				errors[i][j] /= (repeats*dataAmount[j]);
+				errors[i][j] = Math.pow(errors[i][j],3);
+				/*System.out.print("Max Base: ");
+				System.out.println(Math.pow(2, i));
+				System.out.print("Error: ");
+				System.out.println(errors[i][j]);
+				*/
+			}
+		}
+		HelperFunctions.outputData(pltFolder + "BaseComp_" + id, "X:#Data Seen Y:Fnorm","", dataSize, errors );
+	}
 	
-	public void conditionalPlots(int trials, int type){
-		int traj, maxAhead;
-		if (type == 3){
-			traj = 3;
-			maxAhead = 50;
-		}
-		else{
-			traj = 3;
-			maxAhead = 10;
-		}
+	public void conditionalPlots(int trials, int traj, int maxAhead){
 		
 		double[][] xaxis = new double[traj][maxAhead];
 		double[][] queryArrayTru = new double[traj][maxAhead];
 		for (int i = 0; i < traj; i=i+1) {
-			queryArrayTru[i] = conditionalQuery(this.tru,i, maxAhead);
+			queryArrayTru[i] = conditionalQuery(this.tru,i,maxAhead);
 			xaxis[i] = HelperFunctions.incArray(maxAhead);
 			//System.out.println(HelperFunctions.sumArray(queryArray[i]));  
 		}
@@ -94,7 +122,7 @@ public class Analysis {
 		
 		for (int i = 0; i < trials; i++) {
 			for (int j = 0; j < traj; j++) {
-				queryArrayEmp[j] = conditionalQuery(empArray.get(i), j, maxAhead);
+				queryArrayEmp[j] = conditionalQuery(this.empArray.get(i), j, maxAhead);
 			}
 			qE = new Matrix(queryArrayEmp);
 			if (queryEmpAvg != null){
@@ -131,7 +159,7 @@ public class Analysis {
 		HelperFunctions.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
 	}
 	
-	public void compareH_Hbar(){
+	public void compareH_Hbar(HMM hmm){
 		
 		int[] sizes = new int[]{100,500,1000,2000,5000,10000};
 		
@@ -150,9 +178,9 @@ public class Analysis {
 		for (int i = 0; i < trialsize; i++) {
 			avgError = 0;
 			for (int j = 0; j < repeats; j++) {
-				emp = h.singledataSpectralEmperical(hSize, sizes[i], basisSize);
+				emp = hmm.singledataSpectralEmperical(hSize, sizes[i], basisSize);
 				
-				H = tru.get("H");
+				H = this.tru.get("H");
 				Hbar = emp.get("H");
 				
 				e = H.minus(Hbar).normF();
@@ -167,51 +195,10 @@ public class Analysis {
 		
 	}
 	
-	public void plotBaseDifferences(HashMap<String, Matrix> d, HMM h, int id){
-		int[] sizes = new int[]{50,100,200};
-		HashMap<String, Matrix> emp;
-		
-		int trialsize = sizes.length;
-		int repeats = 50;
-		int maxquery = 100;
-		
-		int maxExp = (int) d.get("max").get(0,0);
-		
-		double[][] dataSize = new double[maxExp][trialsize];
-		double[][] errors = new double[maxExp][trialsize];
-		double error = 0, empProb, truProb;
-		int exp;
-		for (int j = 0; j < trialsize; j++){
-			for (int z = 0; z < repeats; z++){
-				emp = h.singledataSpectralEmperical(this.hSize, sizes[j], this.basisSize);	
-				for (int i = 0; i < maxExp; i++){
-					exp = (int) Math.pow(2, i);
-					dataSize[i][j] = sizes[j];
-					for (int j2 = 0; j2 < maxquery; j2++){
-						truProb = HelperFunctions.probabilityQuery(d, d.get("a0"), d.get("ainf"), j2, exp, 2, true);
-						empProb = HelperFunctions.probabilityQuery(emp, emp.get("a0"), emp.get("ainf"), j2, exp, 2, true);
-						error = Math.abs(truProb - empProb);
-						errors[i][j] += error;
-					}
-				}
-			}
-		}
-		
-		for (int i = 0; i < maxExp; i++) {
-			for (int j = 0; j < trialsize; j++) {
-				errors[i][j] /= (repeats*maxquery*sizes[j]);
-			}
-		}
-		HelperFunctions.outputData(pltFolder + "BaseDifferences_" + Integer.toString(id), "X:#Data Seen Y:Fnorm","", dataSize, errors );
-	}
-	
 	public void compareASigmas(){
 		HashMap<String, Matrix> emp;
 		
-		int maxQuery = (int) (tru.get("max").norm1()-1); 
-		
-		System.out.println("maxQ");
-		System.out.println(maxQuery);
+		int maxQuery = (int) (tru.get("max").get(0,0) ); 
 		
 		double[][] sigmaNumber = new double[1][maxQuery];
 		double[][] errors = new double[1][maxQuery];
@@ -219,8 +206,8 @@ public class Analysis {
 		Matrix h_sigma_true, h_sigma_exp, r;
 		int pow;
 		
-		for (int j = 0; j < empArray.size(); j++) {
-			emp = empArray.get(j);
+		for (int j = 0; j < this.empArray.size(); j++) {
+			emp = this.empArray.get(j);
 			for (int i = 0; i < maxQuery; i++) {
 				pow = (int) Math.pow(2, i);
 				h_sigma_true = tru.get( Integer.toString(pow) );
@@ -234,7 +221,7 @@ public class Analysis {
 			pow = (int) Math.pow(2, i);
 			h_sigma_true = tru.get( Integer.toString(pow) );
 			sigmaNumber[0][i] = pow;
-			errors[0][i] /= (empArray.size()*h_sigma_true.normF());
+			errors[0][i] /= (this.empArray.size()*h_sigma_true.normF());
 		}
 		
 		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
@@ -242,7 +229,7 @@ public class Analysis {
 	}
 	
 	public void compareSigmaError(){
-		int m = (int) (tru.get("max").norm1()-1); 
+		int m = (int) (tru.get("max").get(0,0) - 1); 
 		
 		double[][] sigmaNumber = new double[1][m];
 		double[][] errors = new double[1][m];
@@ -250,13 +237,13 @@ public class Analysis {
 		Matrix temp1, temp2, r;
 		int pow;
 		
-		for (int j = 0; j < empArray.size(); j++) {
+		for (int j = 0; j < this.empArray.size(); j++) {
 				
 			for (int i = 0; i < m; i++) {
 				pow = (int) Math.pow(2, i);
-				temp1 = empArray.get(j).get( Integer.toString( pow ) );
+				temp1 = this.empArray.get(j).get( Integer.toString( pow ) );
 				temp1 = HelperFunctions.matrixPower( temp1 , 2);
-				temp2 = empArray.get(j).get( Integer.toString(pow*2) );
+				temp2 = this.empArray.get(j).get( Integer.toString(pow*2) );
 				r = temp2.minus( temp1 ) ;	
 				//r.print(5, 5);
 			
@@ -270,7 +257,7 @@ public class Analysis {
 			pow = (int) Math.pow(2, i+1);
 			h_sigma_true = tru.get( Integer.toString(pow) );
 			sigmaNumber[0][i] = pow;
-			errors[0][i] /= (empArray.size()*h_sigma_true.normF()*hSize*hSize);
+			errors[0][i] /= (this.empArray.size()*h_sigma_true.normF()*hSize*hSize);
 		}
 		
 		HelperFunctions.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
@@ -278,10 +265,10 @@ public class Analysis {
 	}
 	
 	public void compareQueryErrors(){
-		int maxexp = (int) tru.get("max").norm1(); //same for tru by construction
+		int maxexp = (int) tru.get("max").get(0,0); //same for tru by construction
+		int maxpow = (int) Math.pow(2, maxexp);
 		
-		int extraQueryFactor = 1; //Used to test powers
-		int maxquery = (int) Math.pow(2, maxexp) * extraQueryFactor ;
+		int maxquery = maxpow +50;
 		
 		double[][] queries = new double[9][maxquery];
 		double[][] errors = new double[9][maxquery];
@@ -289,9 +276,9 @@ public class Analysis {
 		double[][] baseQueries = new double[maxexp][maxquery];
 		double[][] x_base_Queries = new double[maxexp][maxquery];
 		
-		Matrix a0emp, ainfemp, empQF, empQB, empP;
-		Matrix truF, truB, a0tru, ainftru;
-		double truProbQF, truProbQB, empProbQF, empProbQB, empProbP;
+		Matrix a0emp, ainfemp, empQF, empQB;
+		Matrix a0tru, ainftru;
+		double truProbQF, truProbQB , empProbQF, empProbQB, empProbP;
 		
 		HashMap<String, Matrix> emp;
 		for (int i = 0; i < maxquery ; i++) {
@@ -300,15 +287,15 @@ public class Analysis {
 			a0tru = tru.get("a0");
 			ainftru = tru.get("ainf");
 	
-			truProbQF = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i,this.maxPower, 2, true);
-			truProbQB = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i,this.maxPower, 2, false);
+			truProbQF = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, maxpow, 2, true);
+			truProbQB = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, maxpow, 2, false);
 			//truProbF.minus(truProbB).print(5, 5); //Always 0 which makes sense
 			
-			for (int j = 0; j < empArray.size(); j++) {	
-				emp = empArray.get(j);
+			for (int j = 0; j < this.empArray.size(); j++) {	
+				emp = this.empArray.get(j);
 		
-				empQF = HelperFunctions.matrixQuery(emp, i, this.maxPower, 2, true);
-				empQB = HelperFunctions.matrixQuery(emp, i, this.maxPower, 2, false);
+				empQF = HelperFunctions.matrixQuery(emp, i, maxpow, 2, true);
+				empQB = HelperFunctions.matrixQuery(emp, i, maxpow, 2, false);
 				//empP = HelperFunctions.matrixPower(emp.get("1"), i);										//inefficient, if slow optimize later
 				
 				a0emp = emp.get("a0");
@@ -318,8 +305,9 @@ public class Analysis {
 				empProbQB = a0emp.times(empQB).times(ainfemp);
 				empProbP = a0emp.times(empP).times(ainfemp);
 				*/
-				empProbQF = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, this.maxPower, 2, true);
-				empProbQB = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, this.maxPower, 2, false);
+				
+				empProbQF = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, maxpow, 2, true);
+				empProbQB = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, maxpow, 2, false);
 				empProbP = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, 1, 2, true);
 				
 				errors[0][i] += Math.abs(truProbQF - empProbQF);	//Tru v.s Base 
@@ -333,13 +321,13 @@ public class Analysis {
 				
 				errors[6][i] += empQF.minus(empQB).normF();			// Matrix Comm Error
 				
+				/*
 				double r7 = Math.max( Math.abs(truProbQF), Math.abs(empProbQF) );
 				double r8 = Math.max( Math.abs(truProbQF), Math.abs(empProbP) );
 				
-				//empProbQF.print(5, 15);
-				//truProbQF.print(5, 15);
-				errors[7][i] += Math.abs(truProbQF - empProbQF)/ r7;	//Relative Error Base + Naive
-				errors[8][i] += Math.abs(truProbQF - empProbP)/ r8;
+				errors[7][i] += Math.abs(truProbQF - empProbQF);	
+				errors[8][i] += Math.abs(truProbQF - empProbP);
+				*/
 				
 				double pq;
 				for (int k = 0; k < baseQueries.length; k++) {
@@ -349,12 +337,12 @@ public class Analysis {
 			}
 			
 			for (int j = 0; j < x_base_Queries.length; j++){
-				baseQueries[j][i] /= (empArray.size() );
+				baseQueries[j][i] /= (this.empArray.size() );
 				x_base_Queries[j] = HelperFunctions.incArray(maxquery);
 			}
 			
 			for (int c = 0; c < 9; c++) {
-				errors[c][i] /= (empArray.size());
+				errors[c][i] /= (this.empArray.size());
 				queries[c][i] = i;
 			}
 		}
@@ -374,7 +362,10 @@ public class Analysis {
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
 		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
 		
-		HelperFunctions.outputData(pltFolder + "QError_Rel_B_vs_N", "X:Sigma Y:|f(x)-fhat(x)|/max","", qjoint, Arrays.copyOfRange(errors,7,9) );
+		System.out.println( HelperFunctions.sumArray(errors[0]) );
+		System.out.println( HelperFunctions.sumArray(errors[2]) );
+
+		
 	}
 	
 	public HMM makeHMM(){
@@ -392,67 +383,18 @@ public class Analysis {
 		return h;
 	}
 	
-	public HMM makeShortLabyrinth(){
-		int states = 7;
-		double selfTransitionP = 0.05;
-		
+	public HMM makeLabyrinth(int loop1, int loop2 , double selfTransitionP){
+		int states = loop1 + loop2 - 1;
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
-		termStates.put(0, .6);
-		termStates.put(5, .4);
+		int door1 = 0;
+		int door2 = loop1/2 + loop2/2;
+		termStates.put(door1, .6);
+		termStates.put(door2, .4);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
-		changeTo.put(2, new int[]{3,0} );
-		changeTo.put(6, new int[]{2});
-		
-		double[][] p = new double[states][1];
-		p[0][0] = 1;
-		double[][] t = new double[states][states];
-		double[][] e = new double[states][1];
-		int[] v;
-		for (int i = 0; i < states; i++) {
-			if (changeTo.containsKey(i) ){	
-			 	v = changeTo.get(i);
-			 	for(int c=0;c<v.length;c++){
-				   t[v[c]][i] = 1.0/v.length;
-			 	}
-			} 
-			else if(termStates.containsKey(i)){
-				t[i+1][i] = 1 - termStates.get(i);
-				e[i][0] = termStates.get(i);
-			}
-			else{
-				t[i+1][i] = 1-selfTransitionP;
-				t[i][i] = selfTransitionP;
-			} 
-		}
-
-		double[][] o = new double[states][states];
-		for (int i = 0; i < states; i++) {
-			o[i][i] = 1;
-		}
-		
-		Matrix T = new Matrix( t ).transpose();
-		Matrix O = new Matrix( o );
-		Matrix P = new Matrix( p );
-		Matrix E = new Matrix( e );
-		
-		HMM l = new HMM(T, O, P, E, states);
-		
-		return l;
-	}
-	
-	public HMM makeLongLabyrinth(){
-		int states = 32;
-		double selfTransitionP = 0.05;
-		
-		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
-		termStates.put(0, .6);
-		termStates.put(13, .4);
-		
-		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
-		changeTo.put(7, new int[]{8,20} );
-		changeTo.put(31, new int[]{0});
-		changeTo.put(19, new int[]{7});
+		changeTo.put(loop1/2, new int[]{loop1/2 + 1, loop2 + loop1/2} );
+		changeTo.put(states-1, new int[]{0});
+		changeTo.put(loop2 + loop1/2 - 1, new int[]{loop1/2});
 
 		double[][] p = new double[states][1];
 		p[0][0] = 1;
@@ -493,10 +435,11 @@ public class Analysis {
 	}
 	
 	public double[] conditionalQuery(HashMap<String, Matrix> learned, int k, int maxAhead){
+		int maxpow = (int) Math.pow(2,learned.get("max").get(0, 0));
 		Matrix alpha_0 = learned.get("a0");
 		Matrix alpha_inf = learned.get("ainf");
 		//Matrix Ak = HelperFunctions.matrixQuery(learned, k, 2, true);
-		Matrix alpha_k = HelperFunctions.alphaKQuery(learned, alpha_0, k, this.maxPower, 2);//alpha_0.times(Ak);
+		Matrix alpha_k = HelperFunctions.alphaKQuery(learned, alpha_0, k, maxpow, 2);//alpha_0.times(Ak);
 		
 		int nstates = alpha_0.getArray()[0].length;
 		
