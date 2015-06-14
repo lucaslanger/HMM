@@ -54,6 +54,20 @@ public class Analysis {
 		for (int i = 0; i < trials; i++) {
 			empArray.add(h.singledataSpectralEmperical(hSize, trialSize, basisSize));
 		}
+
+		//Seperate
+		
+		h = this.makeShortLabyrinth();
+		tru = h.singledataSpectralTrue(hSize, basisSize);
+		this.plotBaseDifferences(tru, h, 1);
+		h = this.makeLongLabyrinth();
+		tru = h.singledataSpectralTrue(hSize, basisSize);
+		this.plotBaseDifferences(tru, h, 2);
+	
+	}
+	
+	
+	public void conditionalPlots(int trials, int type){
 		int traj, maxAhead;
 		if (type == 3){
 			traj = 3;
@@ -115,10 +129,6 @@ public class Analysis {
 		HelperFunctions.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
 		HelperFunctions.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
 		HelperFunctions.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
-	
-		//Seperate
-		
-		this.plotBaseDifferences();
 	}
 	
 	public void compareH_Hbar(){
@@ -157,7 +167,7 @@ public class Analysis {
 		
 	}
 	
-	public void plotBaseDifferences(){
+	public void plotBaseDifferences(HashMap<String, Matrix> d, HMM h, int id){
 		int[] sizes = new int[]{50,100,200};
 		HashMap<String, Matrix> emp;
 		
@@ -165,19 +175,20 @@ public class Analysis {
 		int repeats = 50;
 		int maxquery = 100;
 		
-		int maxExp = (int) tru.get("max").get(0,0);
+		int maxExp = (int) d.get("max").get(0,0);
 		
 		double[][] dataSize = new double[maxExp][trialsize];
 		double[][] errors = new double[maxExp][trialsize];
 		double error = 0, empProb, truProb;
+		int exp;
 		for (int j = 0; j < trialsize; j++){
 			for (int z = 0; z < repeats; z++){
 				emp = h.singledataSpectralEmperical(this.hSize, sizes[j], this.basisSize);	
 				for (int i = 0; i < maxExp; i++){
-					int exp = (int) Math.pow(2, i);
+					exp = (int) Math.pow(2, i);
 					dataSize[i][j] = sizes[j];
 					for (int j2 = 0; j2 < maxquery; j2++){
-						truProb = HelperFunctions.probabilityQuery(tru, tru.get("a0"), tru.get("ainf"), j2, exp, 2, true);
+						truProb = HelperFunctions.probabilityQuery(d, d.get("a0"), d.get("ainf"), j2, exp, 2, true);
 						empProb = HelperFunctions.probabilityQuery(emp, emp.get("a0"), emp.get("ainf"), j2, exp, 2, true);
 						error = Math.abs(truProb - empProb);
 						errors[i][j] += error;
@@ -191,7 +202,7 @@ public class Analysis {
 				errors[i][j] /= (repeats*maxquery*sizes[j]);
 			}
 		}
-		HelperFunctions.outputData(pltFolder + "BaseDifferences", "X:#Data Seen Y:Fnorm","", dataSize, errors );
+		HelperFunctions.outputData(pltFolder + "BaseDifferences_" + Integer.toString(id), "X:#Data Seen Y:Fnorm","", dataSize, errors );
 	}
 	
 	public void compareASigmas(){
