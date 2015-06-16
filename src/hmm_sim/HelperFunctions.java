@@ -306,12 +306,7 @@ public class HelperFunctions {
 			for (int j = 0; j < basisSize*l; j++) {
 				h = j/basisSize;
 				s = j%basisSize;
-				/*System.out.println(i);
-				System.out.println(j);
-				System.out.println(basisSize);
-				System.out.println(basisSize*l);
-				System.out.println(h);
-				System.out.println(s); */
+		
 				concatHankel[i][j] = counts[i + h + s ];
 			}
 		}
@@ -420,8 +415,6 @@ public class HelperFunctions {
 		}
 
 	}
-	
-	
 
-
+	
 }

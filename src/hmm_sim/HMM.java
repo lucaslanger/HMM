@@ -82,30 +82,22 @@ public class HMM {
 	}
 		
 	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples, int basisSize){
-		int[] counts = new int[size];
-		int  sequenceLength=0, j=0, c=0, total=0;
+		int[] counts = new int[2*size];
+		int  sequenceLength=0, j=0;
 		
 		for (int i = 0; i < samples; i++) {
 			sequenceLength = generateSequenceStreakCount();	
 			if(sequenceLength < size){
 				counts[sequenceLength]++;
-				total++;
 			}
-			
 		}
-		double[] probabilities = new double[size];
+
 		
-		for (int i = 0; i < size; i++) {
-			j = size - i - 1;
-			//counts[j] += c;
-			
-			probabilities[j] = ((double) counts[j])/samples;
-			
-			//c+=counts[j];							
-			// The variable c makes counting occurrences linear instead of quadratic
+		double[] probabilities = new double[counts.length];
+		
+		for (int i = 0; i < counts.length; i++) {
+			probabilities[i] = ((double) counts[i])/samples;
 		}
-		
-		//System.out.println( Arrays.toString(probabilities) );
 		
 		return singleObservationHankel(probabilities, basisSize, 2, states );
 	}
@@ -115,8 +107,8 @@ public class HMM {
 		
 		Matrix Asigma = O.times(T);
 		
-		double[][] p = new double[size][states];
-		double[][] s = new double[size][states];
+		double[][] p = new double[2*size][states];
+		double[][] s = new double[2*size][states];
 		
 		//System.out.println(states);
 		//Asigma.print(5, 5);
@@ -124,7 +116,7 @@ public class HMM {
 		Matrix runningProductPrefixes = P.transpose();
 		Matrix runningProductSuffixes = E;
 
-		for (int i = 0; i < size; i++){
+		for (int i = 0; i < s.length; i++){
 			p[i] = runningProductPrefixes.getArrayCopy()[0]; 
 			s[i] = runningProductSuffixes.transpose().getArrayCopy()[0];
 			runningProductPrefixes = runningProductPrefixes.times(Asigma);
@@ -168,22 +160,14 @@ public class HMM {
 		Matrix H = buildHankel(counts, 0, basisSize);
 
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
-		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));
-		
-		//SingularValueDecomposition SVD = H.svd();
-		
+		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
 		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
 		Matrix sinv = (SVD.get("VT")).transpose();
-		
-		//System.out.println("Real pinv");
-		//pinvc.print(5, 5);
-		
 						
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
 		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
-		//System.out.println((int) Math.floor(Math.log(counts.length )/Math.log(base)));
-		int maxDigit = (int) Math.floor((Math.log(counts.length )/Math.log(base))) ; //Too low fix later to allow higher powers
+		int maxDigit = (int) Math.floor((Math.log( (counts.length/2) - basisSize)/Math.log(base))) ; //Too low fix later to allow higher powers
 		//System.out.println(maxDigit);
 		int freq;
 		Matrix h;

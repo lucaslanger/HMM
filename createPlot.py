@@ -6,7 +6,7 @@ import math
 colors = {}
 for i in range(10):
 	r = 55 + 20*i
-	g = 55 + 20*i
+	g = 50
 	b = 55 + 20*i
 	colors[i] = '#%02x%02x%02x' % (r,g,b)
 
