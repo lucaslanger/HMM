@@ -50,19 +50,10 @@ public class HMM {
 		
 		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,5);
 		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,5);
-		
-		//System.out.println(emp.toString());
-		//System.out.println(tru.toString());
+
 		
 		Matrix H = tru.get("H");
 		Matrix Hbar = emp.get("H");	
-		
-		
-		H.print(5,5);
-		Hbar.print(5,5);
-		System.out.println("Error between H and Hbar");
-		System.out.println( H.minus(Hbar).normF() );
-		System.out.println(""); 
 		
 		Matrix temp1, temp2, r;
 		int pow;
@@ -73,10 +64,6 @@ public class HMM {
 			temp2 = emp.get( Integer.toString(pow*2) );
 			r = temp2.minus( temp1 ) ;	
 			
-			/*System.out.println("Error between consecutive Asigmas");
-			System.out.println(pow);
-			System.out.println(r.normF());
-			System.out.println("");*/
 		}
 		
 	}
@@ -168,7 +155,6 @@ public class HMM {
 		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
 		
 		int maxDigit = (int) Math.floor((Math.log( (counts.length/2) - basisSize)/Math.log(base))) ; //Too low fix later to allow higher powers
-		//System.out.println(maxDigit);
 		int freq;
 		Matrix h;
 		for (int l = 0; l <= maxDigit; l++) {
@@ -192,16 +178,10 @@ public class HMM {
 				
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
-		
-		//SVD.getU().times(SVD.getS()).times(alpha_inf).print(5, 5); //Tests that you get back h_L
-		
-		/*alpha_0.times(returnData.get("1")).times(alpha_inf).print(5, 5);
-		alpha_0.times(returnData.get("2")).times(alpha_inf).print(5, 5);
-		alpha_0.times(returnData.get("3")).times(alpha_inf).print(5, 5);
-		*/
-		returnData.put("H", H);
-		//System.out.println(H_Matrices.size());
+				
 		Matrix maX = new Matrix(new double[][]{{maxDigit}});
+		
+		returnData.put("H", H);
 		returnData.put("max", maX);
 		returnData.put("pinv", pinv);
 		returnData.put("sinv", sinv);

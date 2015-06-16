@@ -287,7 +287,6 @@ public class HelperFunctions {
 	    V.transpose().print(5, 5);
 	    
 	    System.out.println("After trunc");
-
 	    Utrunc.print(5, 5);
 	    Strunc.print(5, 5);
 	    Vtrunc.print(5, 5);
@@ -353,7 +352,9 @@ public class HelperFunctions {
 				p = p/base;
 			}
 			if (forward){
+				//System.out.println(p);
 				r = r.times( d.get(Integer.toString( p ) ) );
+				
 			}
 			else{
 				r = d.get(Integer.toString( p )).times(r);
