@@ -146,8 +146,8 @@ public class HMM {
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
 		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
 		
-		//System.out.println("TEST INVERSE PROBLEM");
-		//(SVD.get("U").times(SVD.get("S"))).print(5, 5);
+		System.out.println("TEST INVERSE PROBLEM");
+		(SVD.get("U").times(SVD.get("S"))).print(5, 5);
 		
 		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
 		Matrix sinv = (SVD.get("VT")).transpose();

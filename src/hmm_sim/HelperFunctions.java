@@ -397,6 +397,7 @@ public class HelperFunctions {
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
 			if (!init || max < a[i]){
+				init = true;
 				max = a[i];
 			}
 		}
@@ -409,6 +410,7 @@ public class HelperFunctions {
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
 			if (!init || max < a[i]){
+				init = true;
 				argmax = i;
 				max = a[i];
 			}
@@ -421,6 +423,7 @@ public class HelperFunctions {
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
 			if (!init || min > a[i]){
+				init = true;
 				min = a[i];
 			}
 		}
@@ -433,6 +436,7 @@ public class HelperFunctions {
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
 			if (!init || min > a[i]){
+				init = true;
 				argmin = i;
 				min = a[i];
 			}
