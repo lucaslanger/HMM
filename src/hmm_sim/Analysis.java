@@ -17,6 +17,7 @@ public class Analysis {
 	private int basisSize;
 	private int hSize;
 	private int maxQuery;
+	private int maxStates;
 
 	public static void main(String[] args){
 		int hSize = 80;
@@ -31,17 +32,24 @@ public class Analysis {
 				
 		int firstLoop = 18;
 		int secondLoop = 12;
+		this.maxStates = firstLoop + secondLoop - 1;
+		
 		double selfTransition = 0.05;
 		this.h = this.makeLabyrinth(firstLoop,secondLoop,selfTransition);
-		this.tru = h.singledataSpectralTrue(hSize, basisSize);
+		this.tru = h.singledataSpectralTrue(hSize, basisSize, this.maxStates);
 		this.maxQuery = (int) Math.pow(2,this.tru.get("max").get(0, 0));
 		
-		int trials = 1;
+		/*
+		int rep1 = 1;
 		int amountOfData = 70;
-		this.fixedSizePlots(trials, amountOfData);
+		this.fixedSizePlots(rep1, amountOfData);
 		
-		int repeats = 50;
-		this.plotBaseDifferences( h, hSize, 40 , repeats);
+		int rep2 = 50;
+		this.plotBaseDifferences( h, hSize, 40 , rep2);
+		*/
+		
+		int rep3 = 3;
+		this.sizeOfModelPlots(rep3, 4);
 		
 		/*
 		int[] dataAmount = new int[]{50,70,100,150,200,500,1000,10000};
@@ -56,7 +64,7 @@ public class Analysis {
 	
 	public void fixedSizePlots(int trials, int amountOfData){		
 		for (int i = 0; i < trials; i++) {
-			this.empArray.add(h.singledataSpectralEmperical(hSize, amountOfData, basisSize));
+			this.empArray.add(h.singledataSpectralEmperical(hSize, amountOfData, basisSize, this.maxStates));
 		}
 		
 		this.conditionalPlots(trials,1,50);
@@ -74,7 +82,7 @@ public class Analysis {
 	public void plotBaseDifferences( HMM hmm, int hankelSize, int basisSize, int repeats){
 		int[] dataAmount = new int[]{50,70,100,150,200,500,1000,10000};
 		
-		HashMap<String, Matrix> d = hmm.singledataSpectralTrue(hankelSize, basisSize);
+		HashMap<String, Matrix> d = hmm.singledataSpectralTrue(hankelSize, basisSize, this.maxStates);
 		HashMap<String, Matrix> emp;
 		
 		int maxExp = (int) d.get("max").get(0,0);
@@ -87,7 +95,7 @@ public class Analysis {
 		
 		for (int j = 0; j < dataAmount.length; j++){
 			for (int z = 0; z < repeats; z++){
-				emp = hmm.singledataSpectralEmperical(hankelSize, dataAmount[j], basisSize);	
+				emp = hmm.singledataSpectralEmperical(hankelSize, dataAmount[j], basisSize, this.maxStates);	
 				for (int i = 0; i <= maxExp; i++){
 					exp = (int) Math.pow(2, i);
 					dataSize[i][j] = dataAmount[j];
@@ -192,7 +200,7 @@ public class Analysis {
 		for (int i = 0; i < trialsize; i++) {
 			avgError = 0;
 			for (int j = 0; j < repeats; j++) {
-				emp = hmm.singledataSpectralEmperical(hSize, sizes[i], basisSize);
+				emp = hmm.singledataSpectralEmperical(hSize, sizes[i], basisSize, this.maxStates);
 				
 				H = this.tru.get("H");
 				Hbar = emp.get("H");
@@ -281,7 +289,8 @@ public class Analysis {
 		int maxexp = (int) this.tru.get("max").get(0,0); //same for tru by construction
 		int maxpow = (int) Math.pow(2, maxexp);
 		
-		int maxquery = maxpow +50;
+		int extraQuery = 50;
+		int maxquery = maxpow + extraQuery;
 		
 		double[][] queries = new double[9][maxquery];
 		double[][] errors = new double[9][maxquery];
@@ -394,7 +403,7 @@ public class Analysis {
 		Matrix P = new Matrix( p );
 		Matrix E = new Matrix( e );
 		
-		HMM h = new HMM(T,O,P,E,2);	
+		HMM h = new HMM(T,O,P,E);	
 		return h;
 	}
 	
@@ -443,7 +452,7 @@ public class Analysis {
 		Matrix P = new Matrix( p );
 		Matrix E = new Matrix( e );
 		
-		HMM l = new HMM(T, O, P, E, states);
+		HMM l = new HMM(T, O, P, E);
 		
 		return l;
 		
@@ -474,31 +483,44 @@ public class Analysis {
 		return pA;
 	}
 	
-	public void sizeOfModelPlots(int repeats, int baseSize, int maxModelSize){
-		HashMap<Integer, ArrayList<ArrayList<HashMap<String, Matrix> >>> data = null;
+	public void sizeOfModelPlots(int repeats, int baseSize){
+		//HashMap<Integer, ArrayList<ArrayList<HashMap<String, Matrix> >>> data = null;
 		
 		int[] dataAmount = new int[]{50,70,100,150,200,500,1000,10000};
-		double[][] errors = new double[dataAmount.length][maxModelSize];
+		double[][] errors = new double[dataAmount.length][this.maxStates];
 		double truQuery, empQuery, error;
 		
 		HashMap<String, Matrix> t;
 		for (int i = 0; i < dataAmount.length; i++){
-			for (int j = 0; j < maxModelSize; j++){	
+			for (int j = 1; j <= this.maxStates; j++){	
 				for (int z = 0; z < repeats; z++){
+					t = this.h.singledataSpectralEmperical(this.hSize, dataAmount[i], this.basisSize, j);
 					for (int q = 0; q < maxQuery; q++){
-						//t = data.get(i).get(j).get(z);
-						t = this.h.singledataSpectralEmperical(this.hSize, dataAmount[i], this.basisSize);
 						empQuery = HelperFunctions.probabilityQuery(t, t.get("a0"),  t.get("ainf"), q, baseSize, 2, true);
 						truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, baseSize, 2, true);
 						error = computeError(truQuery, empQuery);
-						errors[i][j] += error;
+						errors[i][j-1] += error;
 					}
 				}
+				errors[i][j-1] /= repeats;
 			}
 		}
 		
-		double[][] argMinArray = new double[dataAmount.length];
-		double[][] errorMinArray = new double[dataAmount.length];
+		Matrix printError = new Matrix(errors);
+		printError.print(5, 5);
+		
+		double[] argMinArray = new double[dataAmount.length];
+		double[] errorMinArray = new double[dataAmount.length];
+		
+		for (int i = 0; i < errorMinArray.length; i++) {
+			argMinArray[i] =  HelperFunctions.getMinValue( errors[i] );
+			errorMinArray[i] = HelperFunctions.getArgMin( errors[i] ); 
+			/*System.out.println("Max Errors");
+			System.out.println(errorMinArray[i]);
+			System.out.println(argMinArray[i]);
+			*/
+		}
+		
 	
 	}
 

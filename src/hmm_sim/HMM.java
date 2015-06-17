@@ -11,7 +11,6 @@ import hmm_sim.HelperFunctions;
 public class HMM {
 	
 	// T --> Transition, O --> Observation, P --> Prior
-	private int states;
 	
 	private Matrix T;
 	private Matrix O;
@@ -41,15 +40,15 @@ public class HMM {
 		
 		Matrix E = new Matrix( e );
 		
-		HMM h = new HMM(T,O,P,E,2);	
+		HMM h = new HMM(T,O,P,E);	
 		
 		//testEMGaussian();
 		//testHankel();
 		//h.testBaumWelch();
 		//h.testFullBaumWelch();
 		
-		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,5);
-		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,5);
+		HashMap<String, Matrix> emp = h.singledataSpectralEmperical(100,100000,5,2);
+		HashMap<String, Matrix> tru = h.singledataSpectralTrue(100,5,2);
 
 		
 		Matrix H = tru.get("H");
@@ -68,12 +67,12 @@ public class HMM {
 		
 	}
 		
-	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples, int basisSize){
+	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples, int basisSize, int states){
 		int[] counts = new int[2*size];
 		int  sequenceLength=0, j=0;
 		
 		for (int i = 0; i < samples; i++) {
-			sequenceLength = generateSequenceStreakCount();	
+			sequenceLength = generateSequenceStreakCount(states);	
 			if(sequenceLength < size){
 				counts[sequenceLength]++;
 			}
@@ -89,7 +88,7 @@ public class HMM {
 		return singleObservationHankel(probabilities, basisSize, 2, states );
 	}
 	
-	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize){
+	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize, int states){
 		Matrix P_True, S_True;
 		
 		Matrix Asigma = O.times(T);
@@ -118,19 +117,17 @@ public class HMM {
 		return singleObservationHankel(h.getArrayCopy()[0], basisSize, 2, states);
 	}
 
-	public HMM(Matrix T, Matrix O, Matrix P, Matrix E, int ns){
+	public HMM(Matrix T, Matrix O, Matrix P, Matrix E){
 		this.T = T;
 		this.O = O;
 		this.P = P;
 		this.E = E;
-		this.states = ns;
 	}
 	
-	public HMM(Matrix T, Matrix O, Matrix P,  int ns){
+	public HMM(Matrix T, Matrix O, Matrix P){
 		this.T = T;
 		this.O = O;
 		this.P = P;
-		this.states = ns;
 	}
 	
 	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
@@ -148,6 +145,10 @@ public class HMM {
 
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
 		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
+		
+		//System.out.println("TEST INVERSE PROBLEM");
+		//(SVD.get("U").times(SVD.get("S"))).print(5, 5);
+		
 		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
 		Matrix sinv = (SVD.get("VT")).transpose();
 						
@@ -401,7 +402,6 @@ public class HMM {
 		Matrix alpha0 = hls.times(sinv);	//alpha0 row
 		Matrix alphainf = pinv.times(hpl);	//alphainf column
 		
-		
 		Matrix test1 = alpha0.times(Aa).times(alphainf);
 		Matrix test2 = alpha0.times(Ab).times(alphainf);
 		Matrix test3 = alpha0.times(Aa).times(Ab).times(alphainf);
@@ -447,7 +447,7 @@ public class HMM {
 		Matrix O = new Matrix( o );
 		Matrix P = new Matrix( p );
 		
-		HMM h = new HMM(T,O,P,3);
+		HMM h = new HMM(T,O,P);
 		
 		int[] int_sequence = h.generateSequence(100);
 		double[] sequence = new double[100];
@@ -460,7 +460,7 @@ public class HMM {
 		System.out.println( s );
 	}
 	
-	public int generateSequenceStreakCount(){
+	public int generateSequenceStreakCount(int states){
 		
 		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
 		int c = 0;

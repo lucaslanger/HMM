@@ -392,6 +392,54 @@ public class HelperFunctions {
 		
 	}
 	
+	public static double getMaxValue( double[] a){
+		double max = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || max < a[i]){
+				max = a[i];
+			}
+		}
+		return max;
+	}
+	
+	public static double getArgMax( double[] a){
+		double max = 0;
+		double argmax = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || max < a[i]){
+				argmax = i;
+				max = a[i];
+			}
+		}
+		return argmax;
+	}
+	
+	public static double getMinValue( double[] a){
+		double min = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || min > a[i]){
+				min = a[i];
+			}
+		}
+		return min;
+	}
+	
+	public static double getArgMin( double[] a){
+		double min = 0;
+		double argmin = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || min > a[i]){
+				argmin = i;
+				min = a[i];
+			}
+		}
+		return argmin;
+	}
+	
 	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");
