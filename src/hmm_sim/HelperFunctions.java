@@ -444,6 +444,19 @@ public class HelperFunctions {
 		return argmin;
 	}
 	
+	public static Matrix pseudoInvDiagonal(Matrix m){
+		double[][] a = m.getArrayCopy();
+		for (int i = 0; i < a.length; i++) {
+			if (a[i][i] != 0){
+				a[i][i] = 1/a[i][i];
+			}
+			else{
+				a[i][i] = 0;
+			}
+		}
+		return new Matrix(a);
+	}
+	
 	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");

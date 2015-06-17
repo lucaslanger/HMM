@@ -69,7 +69,7 @@ public class HMM {
 		
 	public HashMap<String, Matrix> singledataSpectralEmperical(int size, int samples, int basisSize, int states){
 		int[] counts = new int[2*size];
-		int  sequenceLength=0, j=0;
+		int  sequenceLength=0;
 		
 		for (int i = 0; i < samples; i++) {
 			sequenceLength = generateSequenceStreakCount(states);	
@@ -77,7 +77,6 @@ public class HMM {
 				counts[sequenceLength]++;
 			}
 		}
-
 		
 		double[] probabilities = new double[counts.length];
 		
@@ -111,6 +110,12 @@ public class HMM {
 		
 		P_True = new Matrix(p);
 		S_True = new Matrix(s).transpose();
+		System.out.println("States");
+		System.out.println(states);
+		System.out.println("P's Rank:");
+		System.out.println(P_True.rank());
+		System.out.println("S's Rank:");
+		System.out.println(S_True.rank());
 		
 		Matrix h = P_True.times(S_True);	
 
@@ -143,13 +148,17 @@ public class HMM {
 		
 		Matrix H = buildHankel(counts, 0, basisSize);
 
+		
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
-		H = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
+		Matrix Htrunc = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
 		
-		System.out.println("TEST INVERSE PROBLEM");
-		(SVD.get("U").times(SVD.get("S"))).print(5, 5);
+		//System.out.println("TEST INVERSE PROBLEM");
+		//(SVD.get("U").times(SVD.get("S"))).print(5, 5);
 		
-		Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
+		//Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
+		
+		Matrix di = HelperFunctions.pseudoInvDiagonal(SVD.get("S"));
+		Matrix pinv = di.times(SVD.get("U").transpose());
 		Matrix sinv = (SVD.get("VT")).transpose();
 						
 		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
@@ -182,11 +191,11 @@ public class HMM {
 				
 		Matrix maX = new Matrix(new double[][]{{maxDigit}});
 		
-		returnData.put("H", H);
+		returnData.put("H", Htrunc);
 		returnData.put("max", maX);
 		returnData.put("pinv", pinv);
 		returnData.put("sinv", sinv);
-		returnData.put("s_values", SVD.get("S"));
+		returnData.put("S", SVD.get("S"));
 		returnData.put("U", SVD.get("U"));
 		returnData.put("VT", SVD.get("VT"));
 		returnData.put("a0", alpha_0);

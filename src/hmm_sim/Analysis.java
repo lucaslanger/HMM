@@ -31,9 +31,11 @@ public class Analysis {
 		this.hSize = hSize;
 		this.basisSize = basisSize;
 				
-		int firstLoop = 18;
+		int firstLoop = 15;
 		int secondLoop = 12;
 		this.maxStates = firstLoop + secondLoop - 1;
+		System.out.println("Max States:");
+		System.out.println(maxStates);
 		
 		double selfTransition = 0.05;
 		this.h = this.makeLabyrinth(firstLoop,secondLoop,selfTransition);
@@ -41,32 +43,33 @@ public class Analysis {
 		this.maxExp = (int) this.tru.get("max").get(0, 0);
 		this.maxQuery = (int) Math.pow(2,this.maxExp);
 		
-		/*
-		int rep1 = 1;
-		int amountOfData = 70;
-		this.fixedSizePlots(rep1, amountOfData);
 		
+		int rep1 = 1;
+		int amountOfData = 70000;
+		this.fixedSizePlots(rep1, amountOfData, this.maxStates);
+		/*
 		int rep2 = 50;
 		this.plotBaseDifferences( h, hSize, 40 , rep2);
-		*/
 		
-		int rep3 = 15;
+		
+		int rep3 = 3;
 		this.sizeOfModelPlots(rep3);
-		
-		/*
-		int[] dataAmount = new int[]{50,70,100,150,200,500,1000,10000};
-		for (int i = 0; i < dataAmount.length; i++) {
-			for (int j = 0; j < repeats; j++) {
-				//Take out redundencies if possible
-			}
-		}
 		*/
+
 		
 	}
 	
-	public void fixedSizePlots(int trials, int amountOfData){		
+	public void fixedSizePlots(int trials, int amountOfData, int nStates){		
+		HashMap<String, Matrix> emp;
 		for (int i = 0; i < trials; i++) {
-			this.empArray.add(h.singledataSpectralEmperical(hSize, amountOfData, basisSize, this.maxStates));
+			emp = h.singledataSpectralEmperical(hSize, amountOfData, basisSize, nStates);
+			
+			System.out.println("Rank comparison");
+			System.out.println(tru.get("S").rank());
+			System.out.println(emp.get("S").rank());
+			System.out.println(tru.get("H").minus(emp.get("H")).norm1());
+			
+			this.empArray.add(emp);
 		}
 		
 		this.conditionalPlots(trials,1,50);
@@ -386,7 +389,7 @@ public class Analysis {
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
 		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
 		
-		System.out.println("Highest Base = " + Integer.toString(maxpow));
+		System.out.println("Highest Max-Base = " + Integer.toString(maxpow));
 		System.out.println( HelperFunctions.sumArray(errors[0]) );
 		System.out.println("Naive Max-Base = 1");
 		System.out.println( HelperFunctions.sumArray(errors[2]) );
@@ -488,7 +491,7 @@ public class Analysis {
 	public void sizeOfModelPlots(int repeats){
 		//HashMap<Integer, ArrayList<ArrayList<HashMap<String, Matrix> >>> data = null;
 		
-		int[] dataAmount = new int[]{50,70,100,150,200,500,1000,2000,4000};
+		int[] dataAmount = new int[]{10,30,50,70,100,150,200,500,1000,2000,4000};
 		double[][] plotErrors = new double[this.maxExp+1][dataAmount.length];
 		double[][] plotArgForErrors = new double[this.maxExp+1][dataAmount.length];
 		
@@ -516,7 +519,7 @@ public class Analysis {
 						t = this.h.singledataSpectralEmperical(this.hSize, dataAmount[i], this.basisSize, j);
 						for (int q = 0; q < this.maxQuery; q++){
 							empQuery = HelperFunctions.probabilityQuery(t, t.get("a0"),  t.get("ainf"), q, baseSize, 2, true);
-							truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, baseSize, 2, true);
+							truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, 1, 2, true);
 							error = computeError(truQuery, empQuery);
 							errors[i][j-1] += error;
 						}
@@ -533,7 +536,7 @@ public class Analysis {
 			
 			for (int i = 0; i < errorMinArray.length; i++) {
 				argMinArray[i] =  HelperFunctions.getMinValue( errors[i] );
-				errorMinArray[i] = HelperFunctions.getArgMin( errors[i] ); 
+				errorMinArray[i] = HelperFunctions.getArgMin( errors[i] ) + 1; 	// + 1 because of indexing used in array
 				/*System.out.println("Min Errors");
 				System.out.println(errorMinArray[i]);
 				System.out.println(argMinArray[i]);
