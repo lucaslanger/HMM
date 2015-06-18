@@ -84,7 +84,7 @@ public class HMM {
 			probabilities[i] = ((double) counts[i])/samples;
 		}
 		
-		return singleObservationHankel(probabilities, basisSize, 2, states );
+		return singleObservationHankel(probabilities, basisSize, 2, states, samples);
 	}
 	
 	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize, int states){
@@ -109,25 +109,19 @@ public class HMM {
 		}
 		
 		P_True = new Matrix(p);
+		S_True = new Matrix(s).transpose();
 
+		/*
 		P_True.print(5, 5);
 		System.out.println("Test");
 		System.out.println(P_True.rank());
 		System.out.println(P_True.getArrayCopy().length);
 		System.out.println(P_True.getArrayCopy()[0].length);
-		S_True = new Matrix(s).transpose();
-		
-		/*System.out.println("States");
-		System.out.println(states);
-		System.out.println("P's Rank:");
-		System.out.println(P_True.rank());
-		System.out.println("S's Rank:");
-		System.out.println(S_True.rank());
 		*/
 		
 		Matrix h = P_True.times(S_True);	
 
-		return singleObservationHankel(h.getArrayCopy()[0], basisSize, 2, states);
+		return singleObservationHankel(h.getArrayCopy()[0], basisSize, 2, states, -1);
 	}
 
 	public HMM(Matrix T, Matrix O, Matrix P, Matrix E){
@@ -143,7 +137,7 @@ public class HMM {
 		this.P = P;
 	}
 	
-	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
+	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates, int dataAmount){
 		
 		Matrix H = buildHankel(counts, 0, basisSize);
 		
@@ -196,6 +190,9 @@ public class HMM {
 		returnData.put("VT", SVD.get("VT"));
 		returnData.put("a0", alpha_0);
 		returnData.put("ainf", alpha_inf);
+		
+		Matrix dA = new Matrix(new double[][]{{dataAmount}});
+		returnData.put("dataAmount", dA);
 
 		return returnData;
 	}

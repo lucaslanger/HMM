@@ -344,6 +344,7 @@ public class HelperFunctions {
 			}
 			if (forward){
 				//System.out.println(p);
+				//System.out.println(d.keySet());
 				r = r.times( d.get(Integer.toString( p ) ) );
 				
 			}
