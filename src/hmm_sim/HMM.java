@@ -72,7 +72,27 @@ public class HMM {
 		int  sequenceLength=0;
 		
 		for (int i = 0; i < samples; i++) {
-			sequenceLength = generateSequenceStreakCount(states);	
+			sequenceLength = generateSequenceStreakCount();	
+			if(sequenceLength < size){
+				counts[sequenceLength]++;
+			}
+		}
+		
+		double[] probabilities = new double[counts.length];
+		
+		for (int i = 0; i < counts.length; i++) {
+			probabilities[i] = ((double) counts[i])/samples;
+		}
+		return singleObservationHankel(probabilities, basisSize, 2, states, samples);
+	}
+	
+	
+	public HashMap<String, Matrix>[] singledataSpectralEmpericalALLMODELS(int size, int samples, int basisSize, int maxStates){
+		int[] counts = new int[2*size];
+		int  sequenceLength=0;
+		
+		for (int i = 0; i < samples; i++) {
+			sequenceLength = generateSequenceStreakCount();	
 			if(sequenceLength < size){
 				counts[sequenceLength]++;
 			}
@@ -84,8 +104,17 @@ public class HMM {
 			probabilities[i] = ((double) counts[i])/samples;
 		}
 		
-		return singleObservationHankel(probabilities, basisSize, 2, states, samples);
+		HashMap<String, Matrix>[] allModels = (HashMap<String, Matrix>[]) new HashMap[maxStates];
+		for (int i = 1; i <= allModels.length; i++) {
+			allModels[i-1] = singleObservationHankel(probabilities, basisSize, 2, i, samples);
+		}
+		
+		return allModels;
+		
 	}
+	
+	
+	
 	
 	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize, int states){
 		Matrix P_True, S_True;
@@ -98,7 +127,7 @@ public class HMM {
 		double[][] p = new double[2*size][states];
 		double[][] s = new double[2*size][states];
 		
-		Matrix runningProductPrefixes = P.transpose();
+		Matrix runningProductPrefixes = P;
 		Matrix runningProductSuffixes = E;
 
 		for (int i = 0; i < s.length; i++){
@@ -512,11 +541,13 @@ public class HMM {
 		System.out.println( s );
 	}
 	
-	public int generateSequenceStreakCount(int states){
+	public int generateSequenceStreakCount(){
 		
 		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
 		int c = 0;
 		double[] statesPossibilities;
+		int states = P.getArrayCopy()[0].length;
+		
 		while(true){
 			//System.out.println("HiddenState");
 			//System.out.println(hiddenState);

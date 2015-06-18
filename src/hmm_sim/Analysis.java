@@ -26,8 +26,8 @@ public class Analysis {
 	private int[] dataSizes;
 	
 	public static void main(String[] args){
-		int hSize = 50;
-		int basisSize = 15;
+		int hSize = 100;
+		int basisSize = 50;
  	
 		Analysis a = new Analysis(hSize, basisSize);
 	}
@@ -38,7 +38,7 @@ public class Analysis {
 		this.dataSizes = new int[]{50,70,100,150,200,500,1000,10000};
 				
 		int firstLoop = 4;
-		int secondLoop = 8;
+		int secondLoop = 3;
 		this.maxStates = firstLoop + secondLoop - 1;
 		
 		double selfTransition = 0.00;
@@ -55,16 +55,20 @@ public class Analysis {
 		this.maxQuery = (int) Math.pow(2,this.maxExp);
 		
 		int rep1 = 1;
-		int amountOfData = 700;
+		int amountOfData1 = 700;
 		int nStates = maxStates;
-		this.fixedSizePlots(rep1, amountOfData, nStates, false);
+		this.fixedSizePlots(rep1, amountOfData1, nStates, false);
 		
-		int rep2 = 1;
+		
+		int rep2 = 3;
 		this.plotBaseDifferences( hSize, basisSize, rep2);
 		
-		int rep3 = 1;
+		int rep3 = 3;
 		this.sizeOfModelPlots(rep3, false);
 		
+		int num_lines = 5;
+		int amountOfData2 = 1000;
+		this.plotTrialsModelSize(num_lines, amountOfData2);
 
 	}
 	
@@ -145,7 +149,6 @@ public class Analysis {
 	
 	private double computeError(double truProb, double empProb) {
 		double error =  Math.abs( truProb - empProb );
-		
 		return error;
 	}
 
@@ -267,15 +270,17 @@ public class Analysis {
 	
 	public void compareSigmaError(){
 		
-		double[][] sigmaNumber = new double[1][this.maxExp-1];
-		double[][] errors = new double[1][this.maxExp-1];
+		int maxExpSquareComparison = this.maxExp-1;
+		
+		double[][] sigmaNumber = new double[1][maxExpSquareComparison];
+		double[][] errors = new double[1][maxExpSquareComparison];
 		
 		Matrix temp1, temp2, r;
 		int pow;
 		
 		for (int j = 0; j < this.empArray.size(); j++) {
 				
-			for (int i = 0; i < this.maxExp-1; i++) {
+			for (int i = 0; i < maxExpSquareComparison; i++) {
 				pow = (int) Math.pow(2, i);
 				temp1 = this.empArray.get(j).get( Integer.toString( pow ) );
 				temp1 = HelperFunctions.matrixPower( temp1 , 2);
@@ -288,7 +293,7 @@ public class Analysis {
 		}
 		
 		Matrix h_sigma_true;
-		for (int i = 0; i < this.maxExp-1; i++) {
+		for (int i = 0; i < maxExpSquareComparison; i++) {
 			pow = (int) Math.pow(2, i+1);
 			h_sigma_true = this.tru.get( Integer.toString(pow) );
 			sigmaNumber[0][i] = pow;
@@ -425,8 +430,8 @@ public class Analysis {
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
 		int door1 = 0;
 		int door2 = loop1/2 + loop2/2;
-		termStates.put(door1, .5);
-		termStates.put(door2, .5);
+		termStates.put(door1, .6);
+		termStates.put(door2, .4);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
 		changeTo.put(loop1/2, new int[]{loop1/2 + 1, loop2 + loop1/2} );
@@ -480,11 +485,9 @@ public class Analysis {
 		}
 		
 		Matrix T = new Matrix( t ).transpose();
-		//System.out.println( Arrays.toString(T.getArrayCopy()[12]));
-		//System.out.println(T.getArrayCopy().length);
 		
 		Matrix O = new Matrix( o );
-		Matrix P = new Matrix( p );
+		Matrix P = new Matrix( p ).transpose();
 		Matrix E = new Matrix( e );
 		
 		HMM l = new HMM(T, O, P, E);
@@ -595,6 +598,34 @@ public class Analysis {
 	
 		HelperFunctions.outputData(pltFolder + "MinError_Dif_Bases", "X: Data, Y:Min_over_#states", "", xaxis, plotErrors);
 		HelperFunctions.outputData(pltFolder + "ArgMin_Dif_Bases", "X: Data, Y:ArgMin_over_#states", "", xaxis, plotArgForErrors);
+	}
+	
+	public void plotTrialsModelSize(int num_lines, int amountOfData){
+	
+		
+		double[][] xaxis = new double[num_lines][this.maxStates];
+		double[][] yaxis = new double[num_lines][this.maxStates];
+		
+		HashMap<String, Matrix>[] empModels;
+		HashMap<String, Matrix> emp;
+		double truQuery, empQuery, error;
+		for (int i = 0; i < num_lines; i++) {
+			empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, amountOfData, i, this.maxStates);
+			for (int j = 0; j < empModels.length; j++) {
+				emp = empModels[j];
+				error = 0;
+				for (int c = 0; c < this.maxQuery; c++) {
+					truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), c, 1, 2, true);
+					empQuery = HelperFunctions.probabilityQuery(emp, emp.get("a0"),  emp.get("ainf"), c, 1, 2, true);
+					error += computeError(truQuery, empQuery);
+				}
+				xaxis[i][j] = j+1;
+				yaxis[i][j] = error;
+			}
+			
+		}
+		
+		HelperFunctions.outputData(pltFolder + "Multiple_Trials_ModelError", "X: ModelSize Y:Error", "", xaxis, yaxis);
 	}
 
 	
