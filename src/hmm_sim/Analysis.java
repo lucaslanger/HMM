@@ -17,12 +17,16 @@ public class Analysis {
 	private int basisSize;
 	private int hSize;
 	private int maxQuery;
-	private int maxExp;
+	
+	private int maxExp; 
+	private int maxPower;
+
+	
 	private int maxStates;
 
 	public static void main(String[] args){
-		int hSize = 80;
-		int basisSize = 40;
+		int hSize = 50;
+		int basisSize = 15;
  	
 		Analysis a = new Analysis(hSize, basisSize);
 	}
@@ -31,43 +35,43 @@ public class Analysis {
 		this.hSize = hSize;
 		this.basisSize = basisSize;
 				
-		int firstLoop = 15;
-		int secondLoop = 12;
+		int firstLoop = 8;
+		int secondLoop = 4;
 		this.maxStates = firstLoop + secondLoop - 1;
-		System.out.println("Max States:");
-		System.out.println(maxStates);
 		
-		double selfTransition = 0.05;
+		double selfTransition = 0.00;
 		this.h = this.makeLabyrinth(firstLoop,secondLoop,selfTransition);
 		this.tru = h.singledataSpectralTrue(hSize, basisSize, this.maxStates);
+		
 		this.maxExp = (int) this.tru.get("max").get(0, 0);
+		this.maxPower = (int) Math.pow(2,this.maxExp);
 		this.maxQuery = (int) Math.pow(2,this.maxExp);
 		
-		
 		int rep1 = 1;
-		int amountOfData = 70000;
-		this.fixedSizePlots(rep1, amountOfData, this.maxStates);
+		int amountOfData = 70;
+		int nStates = maxStates;
+		this.fixedSizePlots(rep1, amountOfData, nStates);
 		/*
 		int rep2 = 50;
 		this.plotBaseDifferences( h, hSize, 40 , rep2);
-		
 		
 		int rep3 = 3;
 		this.sizeOfModelPlots(rep3);
 		*/
 
-		
 	}
 	
 	public void fixedSizePlots(int trials, int amountOfData, int nStates){		
 		HashMap<String, Matrix> emp;
 		for (int i = 0; i < trials; i++) {
 			emp = h.singledataSpectralEmperical(hSize, amountOfData, basisSize, nStates);
-			
-			System.out.println("Rank comparison");
+			/*System.out.println("Rank comparison");
+			System.out.print("True Rank: ");
 			System.out.println(tru.get("S").rank());
+			System.out.print("Emperical Rank: ");
 			System.out.println(emp.get("S").rank());
 			System.out.println(tru.get("H").minus(emp.get("H")).norm1());
+			*/
 			
 			this.empArray.add(emp);
 		}
@@ -78,7 +82,9 @@ public class Analysis {
 		//System.out.println("Power Sigma Done");
 		this.compareH_Hbar(h, 1);
 		//System.out.println("H Hbar Done");
-		this.compareASigmas();
+		if(this.maxStates == nStates){
+			this.compareASigmas();
+		}
 		//System.out.println("SigmaError Done");
 		this.compareQueryErrors();
 		//System.out.println("Query Done");
@@ -90,9 +96,8 @@ public class Analysis {
 		HashMap<String, Matrix> d = hmm.singledataSpectralTrue(hankelSize, basisSize, this.maxStates);
 		HashMap<String, Matrix> emp;
 		
-		int maxExp = (int) d.get("max").get(0,0);
-		double[][] dataSize = new double[maxExp+1][dataAmount.length];
-		double[][] errors = new double[maxExp+1][dataAmount.length];
+		double[][] dataSize = new double[this.maxExp+1][dataAmount.length];
+		double[][] errors = new double[this.maxExp+1][dataAmount.length];
 		
 		double error = 0, empProb, truProb;
 		int maxQuery = hankelSize;
@@ -101,7 +106,7 @@ public class Analysis {
 		for (int j = 0; j < dataAmount.length; j++){
 			for (int z = 0; z < repeats; z++){
 				emp = hmm.singledataSpectralEmperical(hankelSize, dataAmount[j], basisSize, this.maxStates);	
-				for (int i = 0; i <= maxExp; i++){
+				for (int i = 0; i <= this.maxExp; i++){
 					exp = (int) Math.pow(2, i);
 					dataSize[i][j] = dataAmount[j];
 					for (int j2 = 0; j2 < maxQuery; j2++){
@@ -114,7 +119,7 @@ public class Analysis {
 			}
 		}
 		
-		for (int i = 0; i <= maxExp; i++) {
+		for (int i = 0; i <= this.maxExp; i++) {
 			for (int j = 0; j < dataAmount.length; j++) {
 				errors[i][j] /= repeats;
 			}
@@ -225,30 +230,29 @@ public class Analysis {
 	public void compareASigmas(){
 		HashMap<String, Matrix> emp;
 		
-		int maxQuery = (int) (this.tru.get("max").get(0,0) ); 
+		double[][] sigmaNumber = new double[1][this.maxExp];
+		double[][] errors = new double[1][this.maxExp];
 		
-		double[][] sigmaNumber = new double[1][maxQuery];
-		double[][] errors = new double[1][maxQuery];
-		
-		Matrix h_sigma_true, h_sigma_exp, r;
+		Matrix a_sigma_true, a_sigma_exp, r;
 		int pow;
 		
 		for (int j = 0; j < this.empArray.size(); j++) {
 			emp = this.empArray.get(j);
-			for (int i = 0; i < maxQuery; i++) {
+			for (int i = 0; i < errors[0].length; i++) {
 				pow = (int) Math.pow(2, i);
-				h_sigma_true = this.tru.get( Integer.toString(pow) );
-				h_sigma_exp = emp.get( Integer.toString(pow) );
-				r = h_sigma_true.minus( h_sigma_exp );
+				a_sigma_true = this.tru.get( Integer.toString(pow) );
+				a_sigma_exp = emp.get( Integer.toString(pow) );
+
+				r = a_sigma_true.minus( a_sigma_exp );
 				errors[0][i] += r.normF();
 			}
 		}
 		
-		for (int i = 0; i < maxQuery; i++) {
+		for (int i = 0; i < errors[0].length; i++) {
 			pow = (int) Math.pow(2, i);
-			h_sigma_true = this.tru.get( Integer.toString(pow) );
+			a_sigma_true = this.tru.get( Integer.toString(pow) );
 			sigmaNumber[0][i] = pow;
-			errors[0][i] /= (this.empArray.size()*h_sigma_true.normF());
+			errors[0][i] /= (this.empArray.size()*a_sigma_true.normF());
 		}
 		
 		HelperFunctions.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
@@ -290,39 +294,36 @@ public class Analysis {
 
 	}
 	
-	public void compareQueryErrors(){
-		int maxexp = (int) this.tru.get("max").get(0,0); //same for tru by construction
-		int maxpow = (int) Math.pow(2, maxexp);
-		
+	public void compareQueryErrors(){		
 		int extraQuery = 50;
-		int maxquery = maxpow + extraQuery;
 		
-		double[][] queries = new double[9][maxquery];
-		double[][] errors = new double[9][maxquery];
+		double[][] queries = new double[9][this.maxQuery];
+		double[][] errors = new double[9][this.maxQuery];
 		
-		double[][] baseQueries = new double[maxexp][maxquery];
-		double[][] x_base_Queries = new double[maxexp][maxquery];
+		double[][] baseQueries = new double[this.maxExp][this.maxQuery];
+		double[][] x_base_Queries = new double[this.maxExp][this.maxQuery];
 		
 		Matrix a0emp, ainfemp, empQF, empQB;
 		Matrix a0tru, ainftru;
-		double truProbQF, truProbQB , empProbQF, empProbQB, empProbP;
+		double truProbQF, truProbQB, truProbP , empProbQF, empProbQB, empProbP;
 		
 		HashMap<String, Matrix> emp;
-		for (int i = 0; i < maxquery ; i++) {
-			//truF = HelperFunctions.matrixQuery(tru, i, this.maxPower, 2, true);
-			//truB = HelperFunctions.matrixQuery(tru, i, this.maxPower, 2, false);
+		for (int i = 0; i < this.maxQuery ; i++) {
+	
 			a0tru = tru.get("a0");
 			ainftru = tru.get("ainf");
 	
-			truProbQF = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, maxpow, 2, true);
-			truProbQB = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, maxpow, 2, false);
-			//truProbF.minus(truProbB).print(5, 5); //Always 0 which makes sense
+			truProbQF = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, this.maxPower, 2, true);
+			truProbQB = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, this.maxPower, 2, false);
+			truProbP = HelperFunctions.probabilityQuery(tru, a0tru, ainftru, i, 1, 2, false);
+			//System.out.println(truProbQF - truProbQB);//Always 0 which makes sense
+			//System.out.println(truProbP - truProbQF);
 			
 			for (int j = 0; j < this.empArray.size(); j++) {	
 				emp = this.empArray.get(j);
 		
-				empQF = HelperFunctions.matrixQuery(emp, i, maxpow, 2, true);
-				empQB = HelperFunctions.matrixQuery(emp, i, maxpow, 2, false);
+				empQF = HelperFunctions.matrixQuery(emp, i, this.maxPower, 2, true);
+				empQB = HelperFunctions.matrixQuery(emp, i, this.maxPower, 2, false);
 				//empP = HelperFunctions.matrixPower(emp.get("1"), i);										//inefficient, if slow optimize later
 				
 				a0emp = emp.get("a0");
@@ -333,8 +334,8 @@ public class Analysis {
 				empProbP = a0emp.times(empP).times(ainfemp);
 				*/
 				
-				empProbQF = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, maxpow, 2, true);
-				empProbQB = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, maxpow, 2, false);
+				empProbQF = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, this.maxPower, 2, true);
+				empProbQB = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, this.maxPower, 2, false);
 				empProbP = HelperFunctions.probabilityQuery(emp, a0emp, ainfemp, i, 1, 2, true);
 				
 				errors[0][i] += Math.abs(truProbQF - empProbQF);	//Tru v.s Base 
@@ -365,7 +366,7 @@ public class Analysis {
 			
 			for (int j = 0; j < x_base_Queries.length; j++){
 				baseQueries[j][i] /= (this.empArray.size() );
-				x_base_Queries[j] = HelperFunctions.incArray(maxquery);
+				x_base_Queries[j] = HelperFunctions.incArray(this.maxQuery);
 			}
 			
 			for (int c = 0; c < 9; c++) {
@@ -389,7 +390,7 @@ public class Analysis {
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
 		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
 		
-		System.out.println("Highest Max-Base = " + Integer.toString(maxpow));
+		System.out.println("Highest Max-Base = " + Integer.toString(this.maxPower));
 		System.out.println( HelperFunctions.sumArray(errors[0]) );
 		System.out.println("Naive Max-Base = 1");
 		System.out.println( HelperFunctions.sumArray(errors[2]) );
@@ -412,13 +413,16 @@ public class Analysis {
 		return h;
 	}
 	
+
 	public HMM makeLabyrinth(int loop1, int loop2 , double selfTransitionP){
+		boolean debug = false;
+		
 		int states = loop1 + loop2 - 1;
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
 		int door1 = 0;
 		int door2 = loop1/2 + loop2/2;
-		termStates.put(door1, .6);
-		termStates.put(door2, .4);
+		termStates.put(door1, .5);
+		termStates.put(door2, .5);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
 		changeTo.put(loop1/2, new int[]{loop1/2 + 1, loop2 + loop1/2} );
@@ -452,7 +456,29 @@ public class Analysis {
 			o[i][i] = 1;
 		}
 		
+		if (debug){
+			System.out.println("Door1: ");
+			System.out.println(door1);
+			System.out.println("Door2: ");
+			System.out.println(door2);
+			System.out.println("From");
+			System.out.println(loop1/2);
+			System.out.println("To");
+			System.out.println(loop1/2+1);
+			System.out.println(loop1/2 + loop2);
+			System.out.println("End");
+			System.out.println(states-1);
+			System.out.println("From");
+			System.out.println(loop2 + loop1/2 - 1);
+			System.out.println("To");
+			System.out.println(loop1/2);
+				
+		}
+		
 		Matrix T = new Matrix( t ).transpose();
+		//System.out.println( Arrays.toString(T.getArrayCopy()[12]));
+		//System.out.println(T.getArrayCopy().length);
+		
 		Matrix O = new Matrix( o );
 		Matrix P = new Matrix( p );
 		Matrix E = new Matrix( e );

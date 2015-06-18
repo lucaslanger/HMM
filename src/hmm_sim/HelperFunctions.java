@@ -241,6 +241,7 @@ public class HelperFunctions {
 
 	
 	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
+		boolean debug = false;
 		
 		SingularValueDecomposition svd = H.svd();
 	    Matrix U = svd.getU();
@@ -280,37 +281,27 @@ public class HelperFunctions {
 	    r.put("VT", Vtrunc);
 	    r.put("S", Strunc);
 	    
-	    /*
-	    System.out.println("Before trunc");
-	    U.print(5, 5);
-	    S.print(5, 5);
-	    V.transpose().print(5, 5);
+	    if (debug) {
+	    	System.out.println("Before trunc");
+	    	System.out.print("Size");
+	    	System.out.println(S.getArrayCopy()[0].length);
+	   	    //U.print(5, 5);
+	   	    S.print(5, 5);
+	   	    
+	   	    //V.transpose().print(5, 5);
+	   	    
+	   	    System.out.println("After trunc");
+	   	    System.out.print("Size");
+	    	System.out.println(Strunc.getArrayCopy()[0].length);
+	   	    //Utrunc.print(5, 5);
+	   	    Strunc.print(5, 5);
+	   	    //Vtrunc.print(5, 5);
+		}
+	 
 	    
-	    System.out.println("After trunc");
-	    Utrunc.print(5, 5);
-	    Strunc.print(5, 5);
-	    Vtrunc.print(5, 5);
-	    */
 	    
 	    return r;
 	    
-	}
-	
-	public static Matrix buildConcatHankel(double counts[], int basisSize){
-		int l = counts.length-2*basisSize;
-		double[][] concatHankel = new double[basisSize][basisSize*l];
-		
-		int h,s;
-		for (int i = 0; i < basisSize; i++) {
-			for (int j = 0; j < basisSize*l; j++) {
-				h = j/basisSize;
-				s = j%basisSize;
-		
-				concatHankel[i][j] = counts[i + h + s ];
-			}
-		}
-		return new Matrix(concatHankel);
-		
 	}
 	
 	//TODO add paramter "maxdigit" to limit the query

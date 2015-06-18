@@ -90,13 +90,13 @@ public class HMM {
 	public HashMap<String, Matrix> singledataSpectralTrue(int size, int basisSize, int states){
 		Matrix P_True, S_True;
 		
+		//Matrix Asigma = T.times(O);
 		Matrix Asigma = O.times(T);
+		
+		//System.out.println(O.times(T).minus(T.times(O)).norm1()); //The above commute
 		
 		double[][] p = new double[2*size][states];
 		double[][] s = new double[2*size][states];
-		
-		//System.out.println(states);
-		//Asigma.print(5, 5);
 		
 		Matrix runningProductPrefixes = P.transpose();
 		Matrix runningProductSuffixes = E;
@@ -109,13 +109,21 @@ public class HMM {
 		}
 		
 		P_True = new Matrix(p);
+
+		P_True.print(5, 5);
+		System.out.println("Test");
+		System.out.println(P_True.rank());
+		System.out.println(P_True.getArrayCopy().length);
+		System.out.println(P_True.getArrayCopy()[0].length);
 		S_True = new Matrix(s).transpose();
-		System.out.println("States");
+		
+		/*System.out.println("States");
 		System.out.println(states);
 		System.out.println("P's Rank:");
 		System.out.println(P_True.rank());
 		System.out.println("S's Rank:");
 		System.out.println(S_True.rank());
+		*/
 		
 		Matrix h = P_True.times(S_True);	
 
@@ -136,26 +144,14 @@ public class HMM {
 	}
 	
 	public static HashMap<String, Matrix> singleObservationHankel(double[] counts, int basisSize , int base, int numHiddenStates){
-			
-		/*Test of concatenation method 
-		Matrix cH = HelperFunctions.buildConcatHankel(counts, basisSize);
-		HashMap<String, Matrix> SVDc = HelperFunctions.truncateSVD(cH, numHiddenStates);
-		Matrix pinvc = (SVDc.get("U").times(SVDc.get("S"))).inverse();
-		Matrix sinvc = SVDc.get("VT").transpose();
-		System.out.println("Concat pinv");
-		pinvc.print(5, 5);
-		*/
 		
 		Matrix H = buildHankel(counts, 0, basisSize);
-
 		
 		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
 		Matrix Htrunc = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
 		
-		//System.out.println("TEST INVERSE PROBLEM");
-		//(SVD.get("U").times(SVD.get("S"))).print(5, 5);
-		
-		//Matrix pinv = (SVD.get("U").times(SVD.get("S"))).inverse();
+		//System.out.println(SVD.get("S").rank());
+		//SVD.get("S").print(5, 5);
 		
 		Matrix di = HelperFunctions.pseudoInvDiagonal(SVD.get("S"));
 		Matrix pinv = di.times(SVD.get("U").transpose());
@@ -203,6 +199,56 @@ public class HMM {
 
 		return returnData;
 	}
+	
+	/*
+	public HashMap<String, Matrix> truncateModel(SingularValueDecomposition SVD){
+		Matrix di = HelperFunctions.pseudoInvDiagonal(SVD.get("S"));
+		Matrix pinv = di.times(SVD.get("U").transpose());
+		Matrix sinv = (SVD.get("VT")).transpose();
+						
+		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
+		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
+		
+		int maxDigit = (int) Math.floor((Math.log( (counts.length/2) - basisSize)/Math.log(base))) ; //Too low fix later to allow higher powers
+		int freq;
+		Matrix h;
+		for (int l = 0; l <= maxDigit; l++) {
+			freq = (int) Math.pow(base,l);
+			h = buildHankel(counts, freq, freq+basisSize);
+			H_Matrices.add(h);
+		}
+		
+		Matrix m;
+		for (int i = 0; i < H_Matrices.size(); i++) {
+			m = pinv.times(H_Matrices.get(i)).times( sinv );
+			returnData.put(Integer.toString( (int) Math.pow(2, i) ), m );
+		}
+		
+		double[][] h_L = new double[basisSize][1];
+		for (int i = 0; i < basisSize; i++) {
+			h_L[i][0] = (double) counts[i];
+		}
+		Matrix h_LS = new Matrix( h_L ).transpose();
+		Matrix h_PL = h_LS.transpose();
+				
+		Matrix alpha_0 = h_LS.times(sinv);
+		Matrix alpha_inf = pinv.times(h_PL);
+				
+		Matrix maX = new Matrix(new double[][]{{maxDigit}});
+		
+		returnData.put("H", Htrunc);
+		returnData.put("max", maX);
+		returnData.put("pinv", pinv);
+		returnData.put("sinv", sinv);
+		returnData.put("S", SVD.get("S"));
+		returnData.put("U", SVD.get("U"));
+		returnData.put("VT", SVD.get("VT"));
+		returnData.put("a0", alpha_0);
+		returnData.put("ainf", alpha_inf);
+
+		return returnData;
+	}
+	*/
 
 	public static Matrix buildHankel(double[] counts, int startingindex, int endingindex){
 		int size = endingindex - startingindex;
