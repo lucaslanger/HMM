@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import javax.swing.RepaintManager;
+
 import Jama.Matrix;
 
 public class Analysis {
@@ -37,38 +39,43 @@ public class Analysis {
 		this.basisSize = basisSize;
 		this.dataSizes = new int[]{50,70,100,150,200,500,1000,10000};
 				
-		int firstLoop = 4;
-		int secondLoop = 3;
+		int firstLoop = 19;
+		int secondLoop = 12;
 		this.maxStates = firstLoop + secondLoop - 1;
 		
 		double selfTransition = 0.00;
 		this.h = this.makeLabyrinth(firstLoop,secondLoop,selfTransition);
 		this.tru = h.singledataSpectralTrue(hSize, basisSize, this.maxStates);
-		this.tru.get("S").print(5, 5);
-		System.out.print("Rank: ");
-	    System.out.println(this.tru.get("S").rank()); 
-	    System.out.println();
-
-		
 		this.maxExp = (int) this.tru.get("max").get(0, 0);
 		this.maxPower = (int) Math.pow(2,this.maxExp);
 		this.maxQuery = (int) Math.pow(2,this.maxExp);
 		
-		int rep1 = 1;
+		System.out.println("TRUE Rank: ");
+		System.out.println(tru.get("S").rank());
+		System.out.println("Singular Values:");
+		tru.get("S").print(5, 5);
+		
+
+		/*
+		int rep1 = 15;
 		int amountOfData1 = 700;
 		int nStates = maxStates;
 		this.fixedSizePlots(rep1, amountOfData1, nStates, false);
+		System.out.println("Done Fixed Plots");
 		
 		
-		int rep2 = 3;
+		int rep2 = 50;
 		this.plotBaseDifferences( hSize, basisSize, rep2);
-		
-		int rep3 = 3;
+		System.out.println("Done Base Differences");
+		*/
+		int rep3 = 10;
 		this.sizeOfModelPlots(rep3, false);
+		System.out.println("Done Model Differences");
 		
-		int num_lines = 5;
-		int amountOfData2 = 1000;
+		int num_lines = 10;
+		int amountOfData2 = 100;
 		this.plotTrialsModelSize(num_lines, amountOfData2);
+		System.out.println("Done Multiple Lines Model Error");
 
 	}
 	
@@ -138,13 +145,15 @@ public class Analysis {
 				errors[i][j] /= repeats;
 			}
 		}
+		HelperFunctions.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, errors );
+
+		/*
 		System.out.println("");
 		System.out.println("Base Comp Errors");
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		Matrix visualErrors = new Matrix(errors);
 		visualErrors.print(5, 5);
-		
-		HelperFunctions.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, errors );
+		*/
 	}
 	
 	private double computeError(double truProb, double empProb) {
@@ -399,11 +408,12 @@ public class Analysis {
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
 		HelperFunctions.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
 		
+		/*	//Print out area under curve between naive and base method
 		System.out.println("Highest Max-Base = " + Integer.toString(this.maxPower));
 		System.out.println( HelperFunctions.sumArray(errors[0]) );
 		System.out.println("Naive Max-Base = 1");
 		System.out.println( HelperFunctions.sumArray(errors[2]) );
-
+		*/
 		
 	}
 	
@@ -512,8 +522,6 @@ public class Analysis {
 		double[] pA = new double[maxAhead];
 		int maxbase = 1;
 		for (int i = 0; i < pA.length; i++) {
-			//Aquery = HelperFunctions.matrixQuery(learned, i, 2,true);				//Inefficient way to multiply fix to optimize if slow
-			//jointProb = alpha_k.times(Aquery).times(alpha_inf).get(0,0);
 			jointProb = HelperFunctions.probabilityQuery(learned, alpha_k, alpha_inf, i, maxbase ,2, true);
 			pA[i] = jointProb/normalizer;			
 		}
@@ -536,48 +544,41 @@ public class Analysis {
 		
 		int baseSize;
 		for (int c = 0; c <= maxExp; c++) {
-
 			baseSize = (int) Math.pow(2, c);
+			System.out.println("Base");
+			System.out.println(baseSize);
 			
-			double[][] errors = new double[this.dataSizes.length][this.maxStates];
-			double truQuery, empQuery, error;
-			
-			HashMap<String, Matrix> t;
-			for (int j = 1; j <= this.maxStates; j++){	
-				for (int i = 0; i < this.dataSizes.length; i++){	
-					for (int z = 0; z < repeats; z++){
-						t = this.h.singledataSpectralEmperical(this.hSize, this.dataSizes[i], this.basisSize, j);
-						
-						if (debug){
-							this.printHankelDifference(t);
-							System.out.print("DATA: ");
-							System.out.println(t.get("dataAmount").get(0, 0));
-							System.out.print("States: ");
-							System.out.println(j);
-						}
-						
-						for (int q = 0; q < this.maxQuery; q++){
-							empQuery = HelperFunctions.probabilityQuery(t, t.get("a0"),  t.get("ainf"), q, baseSize, 2, true);
-							truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, 1, 2, true);
-							error = computeError(truQuery, empQuery);
-							errors[i][j-1] += error;
-						}
-					}
-					errors[i][j-1] /= repeats;
-				}
-			}
-			
-			//Matrix printError = new Matrix(errors);
-			//System.out.println("Upwards: #DATA, SideWays: #STATES");
-			//printError.print(5, 5);
-			
+			double[][] errors;
 			double[] argMinArray = new double[this.dataSizes.length];
 			double[] errorMinArray = new double[this.dataSizes.length];
+			double truQuery, empQuery, error;
+			
+			HashMap<String, Matrix>[] empModels;
+			HashMap<String, Matrix> emp;
+			for (int z = 0; z < repeats; z++){
+				errors = new double[this.dataSizes.length][this.maxStates];
+				for (int i = 0; i < this.dataSizes.length; i++){
+					empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, this.dataSizes[i], this.basisSize, this.maxStates);
+					for (int j = 0; j < this.maxStates; j++){		
+						//emp = this.h.singledataSpectralEmperical(this.hSize, this.dataSizes[i], this.basisSize, j);
+						emp = empModels[j];
+						
+						for (int q = 0; q < this.maxQuery; q++){
+							empQuery = HelperFunctions.probabilityQuery(emp, emp.get("a0"),  emp.get("ainf"), q, baseSize, 2, true);
+							truQuery = HelperFunctions.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, 1, 2, true);
+							error = computeError(truQuery, empQuery);
+							errors[i][j] += error;
+						}
+					}
+					argMinArray[i] += HelperFunctions.getArgMin( errors[i] ) + 1;
+					errorMinArray[i] += HelperFunctions.getMinValue( errors[i] );
+				}
+				
+			}
 			
 			for (int i = 0; i < errorMinArray.length; i++) {
-				argMinArray[i] =  HelperFunctions.getArgMin( errors[i] ) + 1;
-				errorMinArray[i] = HelperFunctions.getMinValue( errors[i] ); 	// + 1 because of indexing used in array
-			
+				argMinArray[i] /= repeats;
+				errorMinArray[i] /= repeats; 	
 			}
 			
 			plotErrors[c] = errorMinArray;
@@ -610,7 +611,7 @@ public class Analysis {
 		HashMap<String, Matrix> emp;
 		double truQuery, empQuery, error;
 		for (int i = 0; i < num_lines; i++) {
-			empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, amountOfData, i, this.maxStates);
+			empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, amountOfData, this.basisSize, xaxis[0].length);
 			for (int j = 0; j < empModels.length; j++) {
 				emp = empModels[j];
 				error = 0;
