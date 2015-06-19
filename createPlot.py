@@ -83,4 +83,4 @@ def drawPlots(folder):
 	#plt.tight_layout()
 	plt.show()
 
-drawPlots("plotting")
+drawPlots("19_12_Plots")

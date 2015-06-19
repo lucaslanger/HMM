@@ -10,7 +10,7 @@ import Jama.Matrix;
 
 public class Analysis {
 	
-	public static final String pltFolder = "plotting/";
+	public String pltFolder;
 	
 	private ArrayList<HashMap<String, Matrix>> empArray = new ArrayList<HashMap<String,Matrix>>();
 	private HashMap<String, Matrix> tru;
@@ -37,10 +37,11 @@ public class Analysis {
 	public Analysis(int hSize, int basisSize){
 		this.hSize = hSize;
 		this.basisSize = basisSize;
-		this.dataSizes = new int[]{50,70,100,150,200,500,1000,10000};
+		this.dataSizes = new int[]{50,70,100,150,200,500,1000,10000,100000};
 				
-		int firstLoop = 19;
-		int secondLoop = 12;
+		int firstLoop = 4;
+		int secondLoop = 3;
+		this.pltFolder = Integer.toString(firstLoop) + "_" + Integer.toString(secondLoop)+ "_Plots/";
 		this.maxStates = firstLoop + secondLoop - 1;
 		
 		double selfTransition = 0.00;
@@ -53,10 +54,9 @@ public class Analysis {
 		System.out.println("TRUE Rank: ");
 		System.out.println(tru.get("S").rank());
 		System.out.println("Singular Values:");
-		tru.get("S").print(5, 5);
+		//tru.get("S").print(5, 5);
 		
-
-		/*
+		
 		int rep1 = 15;
 		int amountOfData1 = 700;
 		int nStates = maxStates;
@@ -64,13 +64,14 @@ public class Analysis {
 		System.out.println("Done Fixed Plots");
 		
 		
-		int rep2 = 50;
+		int rep2 = 100;
 		this.plotBaseDifferences( hSize, basisSize, rep2);
 		System.out.println("Done Base Differences");
-		*/
-		int rep3 = 10;
+		
+		int rep3 = 100;
 		this.sizeOfModelPlots(rep3, false);
 		System.out.println("Done Model Differences");
+		
 		
 		int num_lines = 10;
 		int amountOfData2 = 100;
@@ -147,13 +148,13 @@ public class Analysis {
 		}
 		HelperFunctions.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, errors );
 
-		/*
+		
 		System.out.println("");
-		System.out.println("Base Comp Errors");
+		System.out.println("Base Comp Errors Modelsize=" + Integer.toString(this.maxStates));
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		Matrix visualErrors = new Matrix(errors);
 		visualErrors.print(5, 5);
-		*/
+		
 	}
 	
 	private double computeError(double truProb, double empProb) {
@@ -545,8 +546,9 @@ public class Analysis {
 		int baseSize;
 		for (int c = 0; c <= maxExp; c++) {
 			baseSize = (int) Math.pow(2, c);
-			System.out.println("Base");
-			System.out.println(baseSize);
+			System.out.print("Base: ");
+			System.out.print(baseSize);
+			System.out.print(", ");
 			
 			double[][] errors;
 			double[] argMinArray = new double[this.dataSizes.length];
