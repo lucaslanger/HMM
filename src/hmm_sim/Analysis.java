@@ -28,19 +28,17 @@ public class Analysis {
 	private int[] dataSizes;
 	
 	public static void main(String[] args){
-		int hSize = 100;
-		int basisSize = 50;
  	
-		Analysis a = new Analysis(hSize, basisSize);
+		Analysis a = new Analysis();
 	}
 	
-	public Analysis(int hSize, int basisSize){
-		this.hSize = hSize;
-		this.basisSize = basisSize;
+	public Analysis(){
 		this.dataSizes = new int[]{50,70,100,150,200,500,1000,10000,100000};
-				
-		int firstLoop = 4;
-		int secondLoop = 3;
+			
+		this.hSize = 200;
+		this.basisSize = 50;
+		int firstLoop = 19;
+		int secondLoop = 12;
 		this.pltFolder = Integer.toString(firstLoop) + "_" + Integer.toString(secondLoop)+ "_Plots/";
 		this.maxStates = firstLoop + secondLoop - 1;
 		
@@ -50,11 +48,13 @@ public class Analysis {
 		this.maxExp = (int) this.tru.get("max").get(0, 0);
 		this.maxPower = (int) Math.pow(2,this.maxExp);
 		this.maxQuery = (int) Math.pow(2,this.maxExp);
+		System.out.println("MaxQuery:");
+		System.out.println(maxQuery);
 		
 		System.out.println("TRUE Rank: ");
 		System.out.println(tru.get("S").rank());
 		System.out.println("Singular Values:");
-		//tru.get("S").print(5, 5);
+		tru.get("S").print(5, 5);
 		
 		
 		int rep1 = 15;

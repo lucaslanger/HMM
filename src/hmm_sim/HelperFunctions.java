@@ -17,86 +17,6 @@ public class HelperFunctions {
 	
 	public static Random random = new Random();	
 	
-	public static Set<String> expectationMaximizationGaussian(double[] observationSequence, int clusters, int numIterations){
-		double overallMean = HelperFunctions.getMean(observationSequence);
-		double overallSD = HelperFunctions.getSd(observationSequence, overallMean);
-		
-		HashMap<String, ArrayList<Double>> emData = new HashMap<String, ArrayList<Double>>();
-		
-		double meanGuess, sdGuess;
-		for(int count = 0;count < clusters;count++){
-		    meanGuess = overallMean - overallSD + random.nextDouble()*4*overallSD;	//4 arbitary here
-			sdGuess = overallSD;
-			
-			String key = Double.toString(meanGuess) + "," + Double.toString(sdGuess);
-			emData.put(key, new ArrayList<Double>() ); 
-		}
-		
-		for(int iteration=0;iteration<numIterations;iteration++){
-			
-			expect(emData, observationSequence);
-			//Investigate: WHY is emData not mutable under maximize?
-			emData = maximize(emData);
-		}
-		
-		return emData.keySet();
-	}
-	
-	public static HashMap<String, ArrayList<Double>> expect(HashMap<String, ArrayList<Double>> emData, double[] observationSequence){
-		for (String k: emData.keySet()){
-			emData.put(k, new ArrayList<Double>());
-		}
-		
-		String maxKey = null;
-		double mean, sd, likelyhood, maxProbability = 0;
-		ArrayList<Double> currentData;
-		for(double datapoint: observationSequence){
-			for(String key: emData.keySet()){
-				mean = Double.parseDouble(key.split(",")[0]);
-				sd = Double.parseDouble(key.split(",")[1]);
-				likelyhood = HelperFunctions.getLikelyhood(mean, sd, datapoint);
-				if (maxKey == null || likelyhood > maxProbability ){
-					maxKey = key;
-					maxProbability = likelyhood;
-				}
-			}
-			currentData = emData.get(maxKey);
-			currentData.add(datapoint);
-			
-			emData.put(maxKey, currentData);
-			
-			maxProbability = 0;
-			maxKey = null;
-		}
-		
-		return emData;
-
-	}
-	
-	public static double[] incArray(int length){
-		double[] output = new double[length];
-		for (int i = 0; i < output.length; i++) {
-			output[i] = i;
-		}
-		return output;
-	}
-	
-	public static HashMap<String, ArrayList<Double>> maximize(HashMap<String, ArrayList<Double>> emData){
-		
-		//Reason for copy is to avoid overwriting 
-		HashMap<String, ArrayList<Double>> revisedEmData = new HashMap<String, ArrayList<Double>>();
-		double[] l;
-		double mean, sd;
-		for (String key: emData.keySet()){
-			l = HelperFunctions.doubleListToArray( emData.get(key));
-			mean = HelperFunctions.getMean(l);
-			sd = HelperFunctions.getSd(l, mean);
-			String newkey = Double.toString(mean) + "," + Double.toString(sd);
-			revisedEmData.put(newkey, new ArrayList<Double>());
-		}
-		return revisedEmData;
-	}
-	
 	//From Binomial Distribution
 	public static double[] generateBinomialVector(int length, double p){	
 		double[] result = new double[length]; 
@@ -151,17 +71,7 @@ public class HelperFunctions {
 			return -1*(index + 1);
 		}
 		
-	}	
-	
-	public static double[] doubleListToArray(List<Double> arr){   
-	    double[] result = new double[arr.size()];
-	    int i = 0;
-	    for(Double d : arr) {
-	        result[i++] = d.doubleValue();
-	    }
-	    return result;
 	}
-	
 	
 	public static double sumArray(double[] da){
 		double s = 0;
@@ -170,35 +80,7 @@ public class HelperFunctions {
 		}
 		return s;
 	}
-	
-	
-	//FIX ELSE STATEMENT to generalize
-	public static double getMean(double[] da){
-		double m = 0;
-		for (double d: da){
-			m += d;
-		}
-		if (da.length != 0){
-			return m/da.length;
-		}
-		else{
-			return random.nextDouble()*2;
-		}
-	}
-	
-	//FIX ELSE STATEMENT to generalize
-	public static double getSd(double[] da, double mean){
-		double sd = 0;
-		for (double d: da){
-			sd += Math.pow(d-mean, 2);
-		}
-		if (sd!=0){
-			return Math.sqrt(sd/da.length);
-		}
-		else{	//Quickfix to avoid 0 sd
-			return 0.01; 
-		}
-	}
+
 	
 	// Gaussian pdf
 	public static double getLikelyhood(double modelMean, double modelSd, double obs){
@@ -221,7 +103,7 @@ public class HelperFunctions {
 	
 	public static Matrix matrixPower(Matrix m, int exp){
 		
-		
+		int String = "Fix this slow procedure" + 111
 		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
 		Matrix T = I;
 		if (exp == 0){
