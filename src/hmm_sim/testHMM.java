@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -173,14 +174,14 @@ public class testHMM extends Environment{
 	
 	public int generateSequenceStreakCount(){
 		
-		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
+		int hiddenState = testHMM.generateState( P.getArrayCopy()[0] );		
 		int c = 0;
 		double[] statesPossibilities;
 		int states = P.getArrayCopy()[0].length;
 		
 		while(true){			
 			statesPossibilities = T.getArrayCopy()[hiddenState];
-			hiddenState = HelperFunctions.generateState( statesPossibilities );
+			hiddenState = testHMM.generateState( statesPossibilities );
 			if( hiddenState < states){
 				c++;
 			}
@@ -196,14 +197,36 @@ public class testHMM extends Environment{
 	public int[] generateSequence(int duration){
 		int[] oSeq = new int[duration];
 		
-		int hiddenState = HelperFunctions.generateState( P.getArrayCopy()[0] );		
+		int hiddenState = testHMM.generateState( P.getArrayCopy()[0] );		
 		
 		for(int t=0;t<duration;t++){
-			hiddenState = HelperFunctions.generateState( T.getArrayCopy()[hiddenState] );
-			oSeq[t] = HelperFunctions.generateState( O.getArrayCopy()[hiddenState] );
+			hiddenState = testHMM.generateState( T.getArrayCopy()[hiddenState] );
+			oSeq[t] = testHMM.generateState( O.getArrayCopy()[hiddenState] );
 		} 
 		
 		return oSeq;
+	}
+	
+	public static int generateState(double[] stateProbabilities){ 						
+		int l = stateProbabilities.length; 
+		double[] cumulativeSum = new double[l];
+		
+		cumulativeSum[0] = stateProbabilities[0];
+		for (int i = 1; i<l;i++){
+			cumulativeSum[i] = cumulativeSum[i-1] + stateProbabilities[i];
+		}
+
+		double r = random.nextDouble();
+		
+		int index = Arrays.binarySearch(cumulativeSum, r);
+
+		if (index >= 0){
+			return index;
+		}
+		else{
+			return -1*(index + 1);
+		}
+		
 	}
 
 	@Override

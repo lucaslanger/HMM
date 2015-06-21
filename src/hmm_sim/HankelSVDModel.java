@@ -1,9 +1,5 @@
 package hmm_sim;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -13,70 +9,92 @@ import Jama.SingularValueDecomposition;
 public class HankelSVDModel {
 	
 	private double[] probabilities;
-	
-	private Matrix Prefixes;
-	private Matrix Suffixes;
+	private SingularValueDecomposition svd;
+	private int basisSize;
 
 	
-	public HankelSVDModel(double[] probabilities){
-		this.probabilities = probabilities; 
+	public HankelSVDModel(double[] probabilities , int basisSize){
+		this.probabilities = probabilities;
+		this.basisSize = basisSize;
+		this.svd = takeSVD();
 	}
 	
-	public HashMap<String, Matrix> buildHankelBasedModel(int basisSize, int base, int numHiddenStates){
-		
-		Matrix H = buildH(0, basisSize);
-		
-		HashMap<String, Matrix> SVD = HelperFunctions.truncateSVD(H, numHiddenStates);
-		Matrix Htrunc = SVD.get("U").times(SVD.get("S")).times(SVD.get("VT"));	
+	public SingularValueDecomposition takeSVD(){
+		try{
+			Matrix H = buildH(0, basisSize);
+			SingularValueDecomposition svd = H.svd();
+			return svd;
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
-		Matrix di = HelperFunctions.pseudoInvDiagonal(SVD.get("S"));
-		Matrix pinv = di.times(SVD.get("U").transpose());
-		Matrix sinv = (SVD.get("VT")).transpose();
-						
-		ArrayList<Matrix> H_Matrices  = new ArrayList<Matrix>();
-		HashMap<String, Matrix> returnData  = new HashMap<String, Matrix>();
+	public HashMap<String, Matrix> buildHankelBasedModel(int basisSize, int base, int modelSize){
 		
-		int maxDigit = (int) Math.floor((Math.log( (counts.length/2) - basisSize)/Math.log(base))) ; //Too low fix later to allow higher powers
+		HashMap<String, Matrix> truncatedSVD = this.truncateSVD(modelSize);
+		
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+						
+		ArrayList<Matrix> H_Matrices = new ArrayList<Matrix>();
+		HashMap<String, Matrix> modelInformation = new HashMap<String, Matrix>();
+		
+		int maxDigit = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
 		int freq;
 		Matrix h;
 		for (int l = 0; l <= maxDigit; l++) {
 			freq = (int) Math.pow(base,l);
-			h = buildHankel(counts, freq, freq+basisSize);
-			H_Matrices.add(h);
+			try {
+				h = this.buildH(freq, freq+basisSize);
+				H_Matrices.add(h);
+			} catch (Exception e) {
+				System.out.println("Problem Building Model when creating Hankel");
+				e.printStackTrace();
+				return null;
+			}
 		}
 		
-		Matrix m;
+		Matrix AsigmaX;
 		for (int i = 0; i < H_Matrices.size(); i++) {
-			m = pinv.times(H_Matrices.get(i)).times( sinv );
-			returnData.put(Integer.toString( (int) Math.pow(2, i) ), m );
+			AsigmaX = pinv.times(H_Matrices.get(i)).times( sinv );
+			
+			int X = (int) Math.pow(2, i);
+			modelInformation.put( Integer.toString(X), AsigmaX);
 		}
 		
 		double[][] h_L = new double[basisSize][1];
 		for (int i = 0; i < basisSize; i++) {
-			h_L[i][0] = (double) counts[i];
+			h_L[i][0] = this.probabilities[i];
 		}
+		
 		Matrix h_LS = new Matrix( h_L ).transpose();
 		Matrix h_PL = h_LS.transpose();
 				
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
 				
-		Matrix maX = new Matrix(new double[][]{{maxDigit}});
+		Matrix maxExponent = new Matrix(new double[][]{{maxDigit}});
 		
-		returnData.put("H", Htrunc);
-		returnData.put("max", maX);
-		returnData.put("pinv", pinv);
-		returnData.put("sinv", sinv);
-		returnData.put("S", SVD.get("S"));
-		returnData.put("U", SVD.get("U"));
-		returnData.put("VT", SVD.get("VT"));
-		returnData.put("a0", alpha_0);
-		returnData.put("ainf", alpha_inf);
+		modelInformation.put("maxExponent", maxExponent);
+		modelInformation.put("a0", alpha_0);
+		modelInformation.put("ainf", alpha_inf);
 		
-		Matrix dA = new Matrix(new double[][]{{dataAmount}});
-		returnData.put("dataAmount", dA);
+		/*	//Only for debugging
+		 * 		
+		Matrix hTruncated = truncatedSVD.get("U").times(truncatedSVD.get("S")).times(truncatedSVD.get("VT"));
+		modelInformation.put("Htruncated", hTruncated);
+		modelInformation.put("pinv", pinv);
+		modelInformation.put("sinv", sinv);
+		modelInformation.put("S", truncatedSVD.get("S"));
+		modelInformation.put("U", truncatedSVD.get("U"));
+		modelInformation.put("VT", truncatedSVD.get("VT"));
+		*/
 
-		return returnData;
+		return modelInformation;
 	}
 	
 	public Matrix buildH(int startingIndex, int endingIndex) throws Exception{		
@@ -97,13 +115,12 @@ public class HankelSVDModel {
 		
 	}
 	
-	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
+	public HashMap<String, Matrix> truncateSVD(int nStates){
 		boolean debug = false;
 		
-		SingularValueDecomposition svd = H.svd();
-	    Matrix U = svd.getU();
-	    Matrix S = svd.getS();
-	    Matrix V = svd.getV();
+	    Matrix U = this.svd.getU();
+	    Matrix S = this.svd.getS();
+	    Matrix V = this.svd.getV();
 	    
 	    double[][] utemp = U.getArrayCopy();
 	    double[][] utrunc = new double[utemp.length][nStates];
@@ -159,10 +176,6 @@ public class HankelSVDModel {
 	    
 	}
 	
-	public void getTruncatedModel(int nStates){
-		
-	}
-	
 	public static void testHankel(){
 		Matrix Hbar = new Matrix( new double[][]{ {0,0.2,0.14}, {0.2,0.22,0.15}, {0.14,0.45,0.31} }).transpose();
 		
@@ -199,6 +212,19 @@ public class HankelSVDModel {
 		test4.print(5,5);
 		test5.print(5,5);
 		test6.print(5,5);
+	}
+	
+	public static Matrix pseudoInvDiagonal(Matrix m){
+		double[][] a = m.getArrayCopy();
+		for (int i = 0; i < a.length; i++) {
+			if (a[i][i] != 0){
+				a[i][i] = 1/a[i][i];
+			}
+			else{
+				a[i][i] = 0;
+			}
+		}
+		return new Matrix(a);
 	}
 		
 
