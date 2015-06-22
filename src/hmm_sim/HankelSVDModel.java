@@ -31,7 +31,7 @@ public class HankelSVDModel {
 		}
 	}
 	
-	public HashMap<String, Matrix> buildHankelBasedModel(int basisSize, int base, int modelSize){
+	public QueryEngine buildHankelBasedModel(int basisSize, int base, int modelSize){
 		
 		HashMap<String, Matrix> truncatedSVD = this.truncateSVD(modelSize);
 		
@@ -41,12 +41,11 @@ public class HankelSVDModel {
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 						
 		ArrayList<Matrix> H_Matrices = new ArrayList<Matrix>();
-		HashMap<String, Matrix> modelInformation = new HashMap<String, Matrix>();
-		
-		int maxDigit = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
+				
+		int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
 		int freq;
 		Matrix h;
-		for (int l = 0; l <= maxDigit; l++) {
+		for (int l = 0; l <= maxExponent; l++) {
 			freq = (int) Math.pow(base,l);
 			try {
 				h = this.buildH(freq, freq+basisSize);
@@ -58,12 +57,11 @@ public class HankelSVDModel {
 			}
 		}
 		
-		Matrix AsigmaX;
-		for (int i = 0; i < H_Matrices.size(); i++) {
-			AsigmaX = pinv.times(H_Matrices.get(i)).times( sinv );
-			
-			int X = (int) Math.pow(2, i);
-			modelInformation.put( Integer.toString(X), AsigmaX);
+		Matrix Asigmas[] = new Matrix[maxExponent];
+		Matrix t;
+		for (int i = 0; i < maxExponent; i++) {
+			t = pinv.times(H_Matrices.get(i)).times( sinv );
+			Asigmas[i] = t;
 		}
 		
 		double[][] h_L = new double[basisSize][1];
@@ -76,25 +74,13 @@ public class HankelSVDModel {
 				
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
-				
-		Matrix maxExponent = new Matrix(new double[][]{{maxDigit}});
+	
+		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base);
 		
-		modelInformation.put("maxExponent", maxExponent);
-		modelInformation.put("a0", alpha_0);
-		modelInformation.put("ainf", alpha_inf);
-		
-		/*	//Only for debugging
-		 * 		
-		Matrix hTruncated = truncatedSVD.get("U").times(truncatedSVD.get("S")).times(truncatedSVD.get("VT"));
-		modelInformation.put("Htruncated", hTruncated);
-		modelInformation.put("pinv", pinv);
-		modelInformation.put("sinv", sinv);
-		modelInformation.put("S", truncatedSVD.get("S"));
-		modelInformation.put("U", truncatedSVD.get("U"));
-		modelInformation.put("VT", truncatedSVD.get("VT"));
-		*/
+		//If Debugging Wanted
+		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 
-		return modelInformation;
+		return q;
 	}
 	
 	public Matrix buildH(int startingIndex, int endingIndex) throws Exception{		
@@ -174,6 +160,18 @@ public class HankelSVDModel {
 	    
 	    return r;
 	    
+	}
+	
+	public int getRank(){
+		return this.svd.getS().rank();
+	}
+	
+	public static void printModelsToFile(String dataset, String outputfile){
+		double[][] data = Environment.readData(dataset);
+		for (int i = 0; i < data.length; i++) {
+			
+		}
+		
 	}
 	
 	public static void testHankel(){
