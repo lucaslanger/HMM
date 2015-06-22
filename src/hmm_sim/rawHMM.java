@@ -14,21 +14,22 @@ public class rawHMM extends Environment{
 	private Matrix E;
 	public static Random random = new Random();
 	private int automatonStates;
-	private int desiredHankelSize;
-	private String desciption;
 	
 	public static void main(String[] args){
-		rawHMM h = rawHMM.make2StateHMM();
+		int[] trajectorySizes = new int[]{25,50,100,200};
+		int repetitions = 100;
+		rawHMM r = rawHMM.makeLabyrinth(19, 12, 0, 200);
+		r.generateData(trajectorySizes, repetitions);
 	}
 	
-	public rawHMM(String description, Matrix T, Matrix O, Matrix P, Matrix E, int desiredHankelSize){
-		this.desciption = description;
+	public rawHMM(String description, int desiredHankelSize, Matrix T, Matrix O, Matrix P, Matrix E){
+		super(description, desiredHankelSize);
+		
 		this.T = T;
 		this.O = O;
 		this.P = P;
 		this.E = E;
-		this.automatonStates = P.getArray().length;
-		this.desiredHankelSize = desiredHankelSize;
+		this.automatonStates = P.getArray()[0].length;
 		System.out.println("Automaton");
 		System.out.println(this.automatonStates);
 	}
@@ -45,7 +46,7 @@ public class rawHMM extends Environment{
 		Matrix E = new Matrix( e );
 		
 		int hSize = 100;
-		rawHMM h = new rawHMM("2_State_HMM",T,O,P,E,hSize);	
+		rawHMM h = new rawHMM("2_State_HMM",hSize,T,O,P,E);	
 		return h;
 	}
 	
@@ -109,15 +110,13 @@ public class rawHMM extends Environment{
 			System.out.println(loop1/2);
 				
 		}
-		
-		Matrix T = new Matrix( t ).transpose();
-		
-		Matrix O = new Matrix( o );
 		Matrix P = new Matrix( p ).transpose();
+		Matrix T = new Matrix( t ).transpose();
+		Matrix O = new Matrix( o );
 		Matrix E = new Matrix( e );
 		
 		String d = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth";
-		rawHMM l = new rawHMM(d, T, O, P, E, hSize);
+		rawHMM l = new rawHMM(d,hSize, T, O, P, E );
 		
 		return l;
 		
@@ -125,7 +124,7 @@ public class rawHMM extends Environment{
 	
 	@Override
 	public double[] generateEmpericalProbabilities(int samples) {
-		int[] counts = new int[2*this.desiredHankelSize];
+		int[] counts = new int[2*this.getDesiredHankelSize()];
 		int  sequenceLength=0;
 		
 		for (int i = 0; i < samples; i++) {
@@ -148,15 +147,15 @@ public class rawHMM extends Environment{
 	public double[][] generateTrueProbabilities() {
 		Matrix P_True, S_True;
 		
-		Matrix Asigma = O.times(T);
-		Matrix Asigma2 = O.times(T);
+		Matrix Asigma = this.O.times(this.T);
 		
-		double[][] p = new double[2*this.desiredHankelSize][this.automatonStates];
-		double[][] s = new double[2*this.desiredHankelSize][this.automatonStates];
+		double[][] p = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
+		double[][] s = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
 		
-		Matrix runningProductPrefixes = P;
-		Matrix runningProductSuffixes = E;
+		Matrix runningProductPrefixes = this.P;
+		Matrix runningProductSuffixes = this.E;
 
+		
 		for (int i = 0; i < s.length; i++){
 			p[i] = runningProductPrefixes.getArrayCopy()[0]; 
 			s[i] = runningProductSuffixes.transpose().getArrayCopy()[0];
@@ -228,15 +227,8 @@ public class rawHMM extends Environment{
 		}
 		
 	}
-
-	@Override
-	public String getDescription() {
-		return this.desciption;
+	
+	public int getAutomatonStates(){
+		return this.automatonStates;
 	}
-
-	@Override
-	public int getDesiredHankelSize() {
-		return this.desiredHankelSize;
-	}
-
 }

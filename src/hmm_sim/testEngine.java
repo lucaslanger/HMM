@@ -15,14 +15,20 @@ import Jama.Matrix;
 public class testEngine{
 	
 	public String pltFolder;
-	
-	private int maxQuery;
-	private int maxStates;
+	private String fileNameOfDataSet;
 
 	private HashMap<Integer, HankelSVDModel[]> empericalModels;
+	private QueryEngine[][] fixedSizeQueryEngines;
+	private QueryEngine[][][] anySizeQueryEngines;
 	
 	private HankelSVDModel trueModel;
 	private QueryEngine trueQueryEngine;
+
+	private int base;
+	private int basisSize;
+	private int maxQuery;
+	private int maxStates;
+
 	
 	
 	public static void main(String[] args){
@@ -31,36 +37,59 @@ public class testEngine{
 	}
 	
 	public testEngine(String fileNameOfDataSet, int basisSize, int base, int numberPerTrajectorySize){
+		this.fileNameOfDataSet = fileNameOfDataSet;
+		this.basisSize = basisSize;
+		this.base = base;
 		
 		this.trueModel = this.readTrueModel(fileNameOfDataSet);
-		this.trueQueryEngine = trueModel.buildHankelBasedModel(basisSize, base, trueModel.getRank());
+		this.maxStates = this.trueModel.getRank();
+		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(basisSize, base, this.maxStates);
 		
 		this.empericalModels = this.readEmpericalModels(fileNameOfDataSet, numberPerTrajectorySize);
+				
+		this.anySizeQueryEngines = this.getAllSizesQueryEngines(100);
 		
-		
-		int rep1 = 15;
-		int amountOfData1 = 700;
-		int nStates = maxStates;
-		this.fixedSizePlots(rep1, amountOfData1, nStates, false);
+		this.fixedSizePlots();
 		System.out.println("Done Fixed Plots");
 		
-		
-		int rep2 = 100;
-		this.plotBaseDifferences( hSize, basisSize, rep2);
+		this.plotBaseDifferences( );
 		System.out.println("Done Base Differences");
 		
-		int rep3 = 100;
-		this.sizeOfModelPlots(rep3, false);
+		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
 		
-		
-		int num_lines = 10;
-		int amountOfData2 = 100;
-		this.plotTrialsModelSize(num_lines, amountOfData2);
-		System.out.println("Done Multiple Lines Model Error");
 
 	}
 	
+	private HashMap<Integer, QueryEngine[][]> getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
+		String[] files;
+		HankelSVDModel h;
+		HashMap<Integer, QueryEngine[][]> dataSizeToModels = null;
+		QueryEngine[][] Q;
+		QueryEngine q;
+
+		try{
+			for (String file: files) {
+				int trajectoryLength = Integer.parseInt(file);
+				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
+				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
+					h = (HankelSVDModel) ois.readObject();
+					for (int j = 0; j < this.maxStates; j++) {
+						q = h.buildHankelBasedModel(i, numberOfTrajectoriesFromEachSize, j);
+						Q[i][j] = q;
+					}
+				}
+				dataSizeToModels.put(trajectoryLength, Q);
+			}
+			return dataSizeToModels;
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}
+		
+	}
+
 	public HankelSVDModel readTrueModel(String f){
 		HankelSVDModel t;
 		//Search for file with True model
@@ -100,38 +129,27 @@ public class testEngine{
 		
 	}
 	
-	public void fixedSizePlots(int trials, int amountOfData, int nStates, boolean debug){		
-		HashMap<String, Matrix> emp;
-		for (int i = 0; i < trials; i++) {
-			emp = this.h.singledataSpectralEmperical(hSize, amountOfData, basisSize, nStates);
-	
-			if (debug) {		
-				System.out.println("Rank comparison");
-				System.out.println("");
-				System.out.print("True Rank: ");
-				System.out.println(tru.get("S").rank());
-				tru.get("H").print(5, 5);
-				System.out.print("Emperical Rank: ");
-				System.out.println(emp.get("S").rank());
-				emp.get("H").print(5, 5);
-			}
-			
-			this.empArray.add(emp);
-		}
+	public void fixedSizePlots(){		
 		
-		int reps = 1, maxAhead = 50;
-		this.conditionalPlots(trials,reps,maxAhead);
-		//System.out.println("Conditional Done");
+		int maxAhead = 50;
+		this.conditionalPlots(maxAhead);
+		
 		this.compareSigmaError();
-		//System.out.println("Power Sigma Done");
+		
 		this.compareH_Hbar(5);
-		//System.out.println("H Hbar Done");
+		
 		if(this.maxStates == nStates){
 			this.compareASigmas();
 		}
-		//System.out.println("SigmaError Done");
+		
+		System.out.println("SigmaError Done");
 		this.compareQueryErrors();
-		//System.out.println("Query Done");
+		System.out.println("Query Done");
+		
+		int num_lines = 10;
+		int amountOfData2 = 100;
+		this.plotTrialsModelSize(num_lines, amountOfData2);
+		System.out.println("Done Multiple Lines Model Error");
 	}
 	
 	public void plotBaseDifferences( int hankelSize, int basisSize, int repeats){
@@ -182,7 +200,7 @@ public class testEngine{
 		return error;
 	}
 
-	public void conditionalPlots(int trials, int traj, int maxAhead){
+	public void conditionalPlots(int maxAhead){
 		
 		double[][] xaxis = new double[traj][maxAhead];
 		double[][] queryArrayTru = new double[traj][maxAhead];
@@ -232,9 +250,9 @@ public class testEngine{
 		avgError = avgError.times(1.0/trials);
 		queryEmpAvg = queryEmpAvg.times(1.0/trials);
 		
-		Analysis.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
-		Analysis.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
-		Analysis.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
+		testEngine.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
+		testEngine.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
+		testEngine.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
 	}
 	
 	public void compareH_Hbar(int repeats){
