@@ -16,7 +16,7 @@ public class rawHMM extends Environment{
 	private int automatonStates;
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{25,50,100,200};
+		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000};
 		int repetitions = 100;
 		rawHMM r = rawHMM.makeLabyrinth(19, 12, 0, 200);
 		r.generateData(trajectorySizes, repetitions);
@@ -30,8 +30,6 @@ public class rawHMM extends Environment{
 		this.P = P;
 		this.E = E;
 		this.automatonStates = P.getArray()[0].length;
-		System.out.println("Automaton");
-		System.out.println(this.automatonStates);
 	}
 	
 	public static rawHMM make2StateHMM(){

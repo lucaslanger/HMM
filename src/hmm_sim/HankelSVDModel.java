@@ -1,5 +1,7 @@
 package hmm_sim;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -12,6 +14,12 @@ public class HankelSVDModel {
 	private SingularValueDecomposition svd;
 	private int basisSize;
 
+	
+	public static void main(String[] args){
+		for (int i = 0; i < args.length; i++) {
+			ObjectInputStream ois = new ObjectInputStream( new FileInputStream("Emperical_19_12_Toy_Labyrinth") );
+		}
+	}
 	
 	public HankelSVDModel(double[] probabilities , int basisSize){
 		this.probabilities = probabilities;
