@@ -1,6 +1,5 @@
 package hmm_sim;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,13 +18,13 @@ public abstract class Environment {
 		this.desiredHankelSize = desiredHankelSize;
 		this.empericalFolder = "Emperical_" + this.getDescription() + "/";
 	}
-	
+		
 	public abstract double[] generateEmpericalProbabilities(int samples);
 	
 	public abstract double[][] generateTrueProbabilities();
 	
 	public void generateData(int[] trajectorySizes, int repetitions){
-		this.createEmpericalFolder();
+		FlowControl.createFolder(this.empericalFolder);
 		this.printTrueProbabilities();
 		for (int i = 0; i < trajectorySizes.length; i++) {
 			this.printEmpericalTrials(trajectorySizes[i], repetitions);
@@ -35,11 +34,6 @@ public abstract class Environment {
 	public void printTrueProbabilities(){
 		double[][] t = this.generateTrueProbabilities();
 		this.outputData( "TrueModel_", t);
-	}
-	
-	public void createEmpericalFolder(){
-		File dir = new File(this.empericalFolder);
-		dir.mkdir();
 	}
 	
 	public void printEmpericalTrials(int trajectoryLength, int repetitions){
@@ -76,7 +70,6 @@ public abstract class Environment {
 			return null;
 		}
 	}
-	
 
 
 	public String getDescription() {

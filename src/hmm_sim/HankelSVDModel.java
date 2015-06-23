@@ -1,14 +1,16 @@
 package hmm_sim;
 
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
-public class HankelSVDModel {
+public class HankelSVDModel{
 	
 	private double[] probabilities;
 	private SingularValueDecomposition svd;
@@ -16,15 +18,31 @@ public class HankelSVDModel {
 
 	
 	public static void main(String[] args){
-		for (int i = 0; i < args.length; i++) {
-			ObjectInputStream ois = new ObjectInputStream( new FileInputStream("Emperical_19_12_Toy_Labyrinth") );
-		}
 	}
+
 	
+	public double[] getProbabilities() {
+		return probabilities;
+	}
+
+	public SingularValueDecomposition getSvd() {
+		return svd;
+	}
+
+	public int getBasisSize() {
+		return basisSize;
+	}
+
 	public HankelSVDModel(double[] probabilities , int basisSize){
 		this.probabilities = probabilities;
 		this.basisSize = basisSize;
 		this.svd = takeSVD();
+	}
+	
+	public HankelSVDModel(double[] probabilities , int basisSize, SingularValueDecomposition s){
+		this.probabilities = probabilities;
+		this.basisSize = basisSize;
+		this.svd = s;
 	}
 	
 	public SingularValueDecomposition takeSVD(){

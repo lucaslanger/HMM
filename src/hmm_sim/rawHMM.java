@@ -16,10 +16,7 @@ public class rawHMM extends Environment{
 	private int automatonStates;
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000};
-		int repetitions = 100;
-		rawHMM r = rawHMM.makeLabyrinth(19, 12, 0, 200);
-		r.generateData(trajectorySizes, repetitions);
+	
 	}
 	
 	public rawHMM(String description, int desiredHankelSize, Matrix T, Matrix O, Matrix P, Matrix E){
