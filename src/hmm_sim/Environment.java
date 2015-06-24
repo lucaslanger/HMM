@@ -1,11 +1,5 @@
 package hmm_sim;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 public abstract class Environment {
 	
 	
@@ -33,7 +27,7 @@ public abstract class Environment {
 	
 	public void printTrueProbabilities(){
 		double[][] t = this.generateTrueProbabilities();
-		this.outputData( "TrueModel_", t);
+		FlowControl.outputData( "TrueModel_", t);
 	}
 	
 	public void printEmpericalTrials(int trajectoryLength, int repetitions){
@@ -41,34 +35,7 @@ public abstract class Environment {
 		for (int i = 0; i < repetitions; i++) {
 			data[i] = generateEmpericalProbabilities(trajectoryLength);
 		}
-		this.outputData(this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength), data );
-	}
-	
-	public void outputData(String s, double[][] data){
-		ObjectOutputStream out;
-		try {
-			out = new ObjectOutputStream( new FileOutputStream( s ) );
-			out.writeObject( data );
-			out.close();
-		} catch (IOException e) {
-			System.out.println("Problem writing data");
-			e.printStackTrace();
-		}
-		
-	}
-	
-	public static double[][] readData(String filename){
-		double[][] data;
-		try{
-			ObjectInputStream ois = new ObjectInputStream( new FileInputStream(filename) );
-			data = (double[][]) ois.readObject();
-			ois.close();
-			return data;
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			return null;
-		}
+		FlowControl.outputData(this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength), data );
 	}
 
 

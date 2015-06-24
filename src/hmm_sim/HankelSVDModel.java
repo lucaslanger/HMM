@@ -192,14 +192,6 @@ public class HankelSVDModel{
 		return this.svd.getS().rank();
 	}
 	
-	public static void printModelsToFile(String dataset, String outputfile){
-		double[][] data = Environment.readData(dataset);
-		for (int i = 0; i < data.length; i++) {
-			
-		}
-		
-	}
-	
 	public static void testHankel(){
 		Matrix Hbar = new Matrix( new double[][]{ {0,0.2,0.14}, {0.2,0.22,0.15}, {0.14,0.45,0.31} }).transpose();
 		

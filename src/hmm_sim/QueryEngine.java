@@ -64,6 +64,16 @@ public class QueryEngine {
 		return maxPower;
 	}
 	
+	public Matrix getH(){
+		if (originalSVD == null) {
+			System.out.println("Only non-debug QueryEngine instantiated");
+			return null;
+		}
+		else{
+			return originalSVD.getU().times(originalSVD.getS()).times(originalSVD.getV().transpose());
+		}
+	}
+	
 	/*public void debugHComparisons(){
 		
 		System.out.println("H differences");
