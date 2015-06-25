@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
@@ -65,17 +67,17 @@ public class HankelSVDModel{
 		
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
-						
-		ArrayList<Matrix> H_Matrices = new ArrayList<Matrix>();
-				
 		int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
+
+		Matrix[] H_Matrices = new Matrix[maxExponent+1];
+				
 		int freq;
 		Matrix h;
 		for (int l = 0; l <= maxExponent; l++) {
 			freq = (int) Math.pow(base,l);
 			try {
 				h = this.buildH(freq, freq+basisSize);
-				H_Matrices.add(h);
+				H_Matrices[l] = h;
 			} catch (Exception e) {
 				System.out.println("Problem Building Model when creating Hankel");
 				e.printStackTrace();
@@ -83,10 +85,10 @@ public class HankelSVDModel{
 			}
 		}
 		
-		Matrix Asigmas[] = new Matrix[maxExponent];
+		Matrix Asigmas[] = new Matrix[maxExponent+1];
 		Matrix t;
-		for (int i = 0; i < maxExponent; i++) {
-			t = pinv.times(H_Matrices.get(i)).times( sinv );
+		for (int i = 0; i <= maxExponent; i++) {
+			t = pinv.times(H_Matrices[i]).times( sinv );
 			Asigmas[i] = t;
 		}
 		

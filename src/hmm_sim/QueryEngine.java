@@ -157,6 +157,7 @@ public class QueryEngine {
 				p = p/base;
 			}
 			int exponent = (int)( Math.log(p)/Math.log(base));
+			
 			if (forward){
 				//System.out.println(p);
 				//System.out.println(d.keySet());
@@ -191,6 +192,7 @@ public class QueryEngine {
 			}
 		
 			int exponent = (int)( Math.log(p)/Math.log(base));
+		
 			r = r.times( this.Asigmas[ exponent ] );
 			power -= p;
 		}
