@@ -153,7 +153,6 @@ public class testEngine{
 	public void fixedSize_Plots(){		
 		
 		this.plotTrialsModelSize( this.fixedSizeQueryEngines );
-
 		
 		int modelSize = this.trueQueryEngine.getAsigmas()[0].getArrayCopy().length;	//Rank of True Model
 		QueryEngine[] fixedModelSizeEngine = this.fixedSizeQueryEngines[modelSize-1];
@@ -215,11 +214,11 @@ public class testEngine{
 		return error;
 	}
 
-	public void conditionalPlots(QueryEngine[] chosenSizeQueryEngine, int maxK,int maxAhead){
+	public void conditionalPlots(QueryEngine[] chosenSizeQueryEngine, int maxK, int maxAhead){
 				
 		double[][] xaxis = new double[maxK][maxAhead];
 		double[][] queryArrayTru = new double[maxK][maxAhead];
-		for (int i = 0; i < maxK; i=i++) {
+		for (int i = 0; i < maxK; i++) {
 			queryArrayTru[i] = this.conditionalQuery(this.trueQueryEngine ,i, maxAhead);
 			xaxis[i] = testEngine.incArray(maxAhead);
 		}
@@ -318,14 +317,14 @@ public class testEngine{
 				a_sigma_exp = empericalSigmas[j];
 
 				r = a_sigma_true.minus( a_sigma_exp );
-				errors[0][i] += r.norm1();
+				errors[0][j] += r.norm1();
 			}
 		}
 		
-		for (int i = 0; i < this.trueQueryEngine.getMaxExponent(); i++) {
-			int pow = (int) Math.pow(this.base, i);
-			sigmaNumber[0][i] = pow;
-			errors[0][i] /= (chosenSizeQueryEngine.length*trueSigmas[i].normF());
+		for (int j = 0; j < this.trueQueryEngine.getMaxExponent(); j++) {
+			int pow = (int) Math.pow(this.base, j);
+			sigmaNumber[0][j] = pow;
+			errors[0][j] /= (chosenSizeQueryEngine.length*trueSigmas[j].normF());
 		}
 		
 		testEngine.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.norm1","", sigmaNumber, errors );
@@ -347,7 +346,7 @@ public class testEngine{
 			for (int j = 0; j < maxExpSquareComparison; j++) {
 				pow = (int) Math.pow(2, j);
 				temp1 = QueryEngine.matrixPower( experimentalSigmas[j] , this.base);
-				temp2 = experimentalSigmas[i+1];
+				temp2 = experimentalSigmas[j+1];
 				r = temp2.minus( temp1 );	
 				errors[0][j] += r.norm1();
 			}
