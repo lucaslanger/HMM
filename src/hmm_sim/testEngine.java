@@ -38,10 +38,10 @@ public class testEngine{
 	
 	public static void main(String[] args){
  	
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", 100, 40, 2, 50);
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 50);
 	}
 	
-	public testEngine(String fileNameOfDataSet, int fixedDataSize ,int basisSize, int base, int numberPerTrajectorySize){
+	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int fixedDataSize, int basisSize, int base, int numberPerTrajectorySize){
 		this.fileNameOfDataSet = fileNameOfDataSet;
 		File[] f = FlowControl.getFiles(this.fileNameOfDataSet);
 		this.fileNames = new String[f.length];
@@ -51,7 +51,7 @@ public class testEngine{
 		
 		this.basisSize = basisSize;
 		this.base = base;
-		this.trueModel = this.readTrueModel(this.fileNameOfDataSet);
+		this.trueModel = this.readTrueModel(fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
 		this.maxQuery = this.trueQueryEngine.getMaxPower() * base;
@@ -135,7 +135,10 @@ public class testEngine{
 		ObjectInputStream ois;
 		try {
 			ois = new ObjectInputStream(new FileInputStream(f));
-			t = (HankelSVDModel) ois.readObject();
+			double[] p = (double[]) ois.readObject();
+			int i = (int) ois.readObject();
+			SingularValueDecomposition s = (SingularValueDecomposition) ois.readObject();
+			t = new HankelSVDModel(p, i, s);
 			ois.close();
 			return t;
 		} catch (IOException e) {
