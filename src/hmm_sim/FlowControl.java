@@ -34,6 +34,10 @@ public class FlowControl {
 		File dir = new File(outFolder);
 		dir.mkdir();
 		
+		String inFile = "TrueModel_19_12_Toy_Labyrinth";
+		String TrueIn = "Models_" + inFile;
+		FlowControl.createModelsFromFile("", "", inFile, TrueIn, basisSize);
+		
 		File[] files = FlowControl.getFiles(inFolder);
 		for (File file : files) {
 			FlowControl.createModelsFromFile(inFolder, outFolder, file.getName(), "Models_" + file.getName(), basisSize);
@@ -74,6 +78,7 @@ public class FlowControl {
 		int repetitions = 100;
 		rawHMM r = rawHMM.makeLabyrinth(19, 12, 0, 200);
 		r.generateData(trajectorySizes, repetitions);
+		r.printTrueProbabilities();
 	}
 	
 	public static void outputData(String s, double[][] data){

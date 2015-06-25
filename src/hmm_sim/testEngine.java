@@ -7,12 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
-
-import javax.management.Query;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -38,7 +35,7 @@ public class testEngine{
 	
 	public static void main(String[] args){
  	
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 50);
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 20);
 	}
 	
 	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int fixedDataSize, int basisSize, int base, int numberPerTrajectorySize){
@@ -93,28 +90,28 @@ public class testEngine{
 	
 	private HashMap<Integer, QueryEngine[][]> getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
 		
-		HashMap<Integer, QueryEngine[][]> dataSizeToModels = null;
-		QueryEngine[][] Q = new QueryEngine[numberOfTrajectoriesFromEachSize][this.maxStates];
+		HashMap<Integer, QueryEngine[][]> dataSizeToModels = new HashMap<Integer, QueryEngine[][]>();
+		QueryEngine[][] Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];
 		QueryEngine q;
 
 		try{
-			for (String file: this.fileNames) {
+			for (String f: this.fileNames) {
+				String file = this.fileNameOfDataSet + f;
 				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
 				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
-				int numberOfLinesToRead = numberOfTrajectoriesFromEachSize*3;
 				double[] probabilities;
 				int basisSize; 
 				SingularValueDecomposition svd;
 				HankelSVDModel h;
 				
-				for (int i = 0; i < numberOfLinesToRead; i++) {
+				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
 					probabilities = (double[]) ois.readObject();
 					basisSize = (int) ois.readObject();
 					svd = (SingularValueDecomposition) ois.readObject();
 					h = new HankelSVDModel(probabilities, basisSize, svd);
 					for (int j = 0; j < this.maxStates; j++) {
-						q = h.buildHankelBasedModel(i, numberOfTrajectoriesFromEachSize, j);
-						Q[i][j] = q;
+						q = h.buildHankelBasedModel(this.basisSize, this.base, j+1);
+						Q[j][i] = q;
 					}
 				}
 				dataSizeToModels.put(trajectoryLength, Q);
