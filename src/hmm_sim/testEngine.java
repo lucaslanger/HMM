@@ -67,8 +67,8 @@ public class testEngine{
 		this.fixedSize_Plots();
 		System.out.println("Done Fixed Plots");
 		
-		this.compareH_Hbar(5);
-		System.out.println("Done H, Hbar comparisons");
+		//this.compareH_Hbar(5);
+		//System.out.println("Done H, Hbar comparisons");
 		
 		this.plotBaseDifferences( );
 		System.out.println("Done Base Differences");
@@ -168,23 +168,24 @@ public class testEngine{
 	}
 	
 	public void plotBaseDifferences(){
-				
-		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()][this.anySizeQueryEngines.size()];
-		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()][this.anySizeQueryEngines.size()];
+		int modelSize = this.maxStates;		
+		
+		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
+		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
 		
 		double error = 0, empProb, truProb;
 		int maxQuery = this.trueQueryEngine.getMaxPower();
-		int maxExponent;
+		int maxPower;
 		
 		for (int c = 0; c < this.keySetSorted.length; c++) {
-			QueryEngine[][] qe = this.anySizeQueryEngines.get(keySetSorted[c]);
+			QueryEngine[] qe = this.anySizeQueryEngines.get(keySetSorted[c])[modelSize-1];
 			for (int i = 0; i < this.REPEATS; i++){
-				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; i++){
-					maxExponent = (int) Math.pow(this.base, i);
+				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; j++){
+					maxPower = (int) Math.pow(this.base, j);
 					dataSize[j][c] = this.keySetSorted[c];
 					for (int query = 0; query < maxQuery; query++){
-						truProb = this.trueQueryEngine.probabilityQuery(query, maxExponent, this.base, true);
-						empProb = qe[i][j].probabilityQuery(query, maxExponent, this.base, true);
+						truProb = this.trueQueryEngine.probabilityQuery(query, maxPower, this.base, true);
+						empProb = qe[i].probabilityQuery(query, maxPower, this.base, true);
 						error = computeError(truProb, empProb);
 						errors[j][c] += error;
 					}
@@ -194,7 +195,7 @@ public class testEngine{
 		}
 		
 		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
-			for (int j = 0; j < this.anySizeQueryEngines.size(); j++) {
+			for (int j = 0; j < keySetSorted.length; j++) {
 				errors[i][j] /= REPEATS;
 			}
 		}
@@ -273,8 +274,8 @@ public class testEngine{
 		Matrix H = this.trueQueryEngine.getH();
 		Matrix Hbar;
 		
-		double[][] dataSize = new double[1][this.anySizeQueryEngines.size()];
-		double[][] error = new double[1][this.anySizeQueryEngines.size()];
+		double[][] dataSize = new double[1][keySetSorted.length];
+		double[][] error = new double[1][keySetSorted.length];
 		double avgError, e;
 	
 		int c = 0;
@@ -470,9 +471,9 @@ public class testEngine{
 	
 	public void sizeOfModelPlots(){
 		
-		double[][] plotErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
-		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
-		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
+		double[][] plotErrors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
+		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
+		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
 		
 		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
 			for (int j = 0; j < this.keySetSorted.length; j++) {
@@ -483,9 +484,6 @@ public class testEngine{
 		int baseSize;
 		for (int c = 0; c <= this.trueQueryEngine.getMaxExponent(); c++) {
 			baseSize = (int) Math.pow(2, c);
-			System.out.print("Base: ");
-			System.out.print(baseSize);
-			System.out.print(", ");
 			
 			double[][] errors;
 			double[] argMinArray = new double[this.keySetSorted.length];
@@ -496,7 +494,7 @@ public class testEngine{
 			for (int i = 0; i < this.keySetSorted.length; i++){
 				for (int j = 0; j < this.maxStates; j++){	
 					for (int z = 0; z < this.REPEATS; z++){		
-						QueryEngine q = this.anySizeQueryEngines.get(i)[j][z];
+						QueryEngine q = this.anySizeQueryEngines.get(this.keySetSorted[i])[j][z];
 						for (int k = 0; k < this.maxQuery; k++){
 							empQuery = q.probabilityQuery(k, baseSize, 2, true);
 							truQuery = q.probabilityQuery(k, 1, 2, true);
