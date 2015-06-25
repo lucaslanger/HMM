@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
+import javax.management.Query;
+
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
@@ -21,7 +23,6 @@ public class testEngine{
 	private String fileNameOfDataSet;
 	private String[] fileNames;
 
-	private HashMap<Integer, HankelSVDModel[]> empericalModels;
 	private QueryEngine[][] fixedSizeQueryEngines;
 	private HashMap<Integer,QueryEngine[][]> anySizeQueryEngines;
 	private int[] keySetSorted;
@@ -37,12 +38,12 @@ public class testEngine{
 	
 	public static void main(String[] args){
  	
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", 40, 2, 50);
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", 100, 40, 2, 50);
 	}
 	
-	public testEngine(String fileNameOfDataSet, int basisSize, int base, int numberPerTrajectorySize){
+	public testEngine(String fileNameOfDataSet, int fixedDataSize ,int basisSize, int base, int numberPerTrajectorySize){
 		this.fileNameOfDataSet = fileNameOfDataSet;
-		File[] f = FlowControl.getFiles(fileNameOfDataSet);
+		File[] f = FlowControl.getFiles(this.fileNameOfDataSet);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
@@ -50,16 +51,36 @@ public class testEngine{
 		
 		this.basisSize = basisSize;
 		this.base = base;
-		
-		this.trueModel = this.readTrueModel(fileNameOfDataSet);
+		this.trueModel = this.readTrueModel(this.fileNameOfDataSet);
 		this.maxStates = this.trueModel.getRank();
-		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(basisSize, base, this.maxStates);
+		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
 		this.maxQuery = this.trueQueryEngine.getMaxPower() * base;
+		this.REPEATS = numberPerTrajectorySize;
 		
-		this.empericalModels = this.readEmpericalModels(fileNameOfDataSet, numberPerTrajectorySize);
+		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
+		this.makeKeySetSorted();
 				
-		this.anySizeQueryEngines = this.getAllSizesQueryEngines(100);
+		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(fixedDataSize);
 		
+		this.makePlots();
+
+	}
+	
+	private void makePlots(){
+		this.fixedSize_Plots();
+		System.out.println("Done Fixed Plots");
+		
+		this.compareH_Hbar(5);
+		System.out.println("Done H, Hbar comparisons");
+		
+		this.plotBaseDifferences( );
+		System.out.println("Done Base Differences");
+		
+		this.sizeOfModelPlots( );
+		System.out.println("Done Model Differences");
+	}
+	
+	private void makeKeySetSorted(){
 		this.keySetSorted = new int[this.anySizeQueryEngines.size()];
 		Set<Integer> ks = this.anySizeQueryEngines.keySet();
 		int c = 0;
@@ -68,22 +89,6 @@ public class testEngine{
 			c++;
 		} 
 		Arrays.sort(this.keySetSorted);
-		
-		for (QueryEngine[][] q: this.anySizeQueryEngines.values()) {
-			REPEATS = q.length;
-			break;
-		}
-		
-		this.fixedSizePlots();
-		System.out.println("Done Fixed Plots");
-		
-		this.plotBaseDifferences( );
-		System.out.println("Done Base Differences");
-		
-		this.sizeOfModelPlots( );
-		System.out.println("Done Model Differences");
-		
-
 	}
 	
 	private HashMap<Integer, QueryEngine[][]> getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
@@ -113,6 +118,7 @@ public class testEngine{
 					}
 				}
 				dataSizeToModels.put(trajectoryLength, Q);
+				ois.close();
 			}
 			return dataSizeToModels;
 		}
@@ -130,6 +136,7 @@ public class testEngine{
 		try {
 			ois = new ObjectInputStream(new FileInputStream(f));
 			t = (HankelSVDModel) ois.readObject();
+			ois.close();
 			return t;
 		} catch (IOException e) {
 			System.out.println("Problem fetching true Model");
@@ -143,50 +150,22 @@ public class testEngine{
 		
 	}
 	
-	public HashMap<Integer, HankelSVDModel[]> readEmpericalModels(String f, int numberPerTrajectorySize){
-		HashMap<Integer, HankelSVDModel[]> h = new HashMap<Integer, HankelSVDModel[]>();
+	public void fixedSize_Plots(){		
 		
-		HankelSVDModel[] empericalModelsFixedTrajectories;
-		try{
-			for (String file: fileNames) {	//
-				int numberOfTrajectories = testEngine.getTrajectoryLengthFromFileName(file);
-				ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-				
-				empericalModelsFixedTrajectories = new HankelSVDModel[numberPerTrajectorySize];
-				for (int i = 0; i < empericalModelsFixedTrajectories.length; i++) {
-					empericalModelsFixedTrajectories[i] = (HankelSVDModel) ois.readObject();
-				}
-				h.put(numberOfTrajectories, empericalModelsFixedTrajectories);
-			}
-			return h;
-		}
-		catch(Exception e){
-			System.out.println("Problem reading Emperical Models");
-			e.printStackTrace();
-			return null;
-		}
+		this.plotTrialsModelSize( this.fixedSizeQueryEngines );
+
 		
-	}
-	
-	public void fixedSizePlots(){		
+		int modelSize = this.trueQueryEngine.getAsigmas()[0].getArrayCopy().length;	//Rank of True Model
+		QueryEngine[] fixedModelSizeEngine = this.fixedSizeQueryEngines[modelSize-1];
 		
-		int maxAhead = 50;
-		this.conditionalPlots(maxAhead);
+		int maxAhead = 50, l = 5;
+		this.conditionalPlots(fixedModelSizeEngine, l, maxAhead);
 		
-		this.compareSigmaError();
+		this.compareSquareSigmaError(fixedModelSizeEngine);
+			
+		this.compareASigmas(fixedModelSizeEngine);
 		
-		this.compareH_Hbar(5);
-		
-		this.compareASigmas();
-		
-		System.out.println("SigmaError Done");
-		this.compareQueryErrors();
-		System.out.println("Query Done");
-		
-		int num_lines = 10;
-		int amountOfData2 = 100;
-		this.plotTrialsModelSize(num_lines, amountOfData2);
-		System.out.println("Done Multiple Lines Model Error");
+		this.compareQueryErrors(fixedModelSizeEngine);
 	}
 	
 	public void plotBaseDifferences(){
@@ -241,7 +220,7 @@ public class testEngine{
 		double[][] xaxis = new double[maxK][maxAhead];
 		double[][] queryArrayTru = new double[maxK][maxAhead];
 		for (int i = 0; i < maxK; i=i++) {
-			queryArrayTru[i] = this.trueQueryEngine.conditionalQuery(i, maxAhead);
+			queryArrayTru[i] = this.conditionalQuery(this.trueQueryEngine ,i, maxAhead);
 			xaxis[i] = testEngine.incArray(maxAhead);
 		}
 		Matrix truPredictions = new Matrix(queryArrayTru);
@@ -253,7 +232,7 @@ public class testEngine{
 		
 		for (int i = 0; i < this.REPEATS; i++) {
 			for (int j = 0; j < maxK; j++) {
-				queryArrayEmp[j] = chosenSizeQueryEngine[i].conditionalQuery(j, maxAhead);
+				queryArrayEmp[j] = this.conditionalQuery(chosenSizeQueryEngine[i], j, maxAhead);
 			}
 			qE = new Matrix(queryArrayEmp);
 			if (queryEmpAvg != null){
@@ -300,7 +279,8 @@ public class testEngine{
 		double avgError, e;
 	
 		int c = 0;
-		for (Integer key: this.anySizeQueryEngines.keySet()) {
+		for (int i = 0; i < this.keySetSorted.length; i++) {
+			int key = this.keySetSorted[i]; 
 			QueryEngine[][] q = this.anySizeQueryEngines.get(key);
 			avgError = 0;
 			for (int j = 0; j < this.REPEATS; j++) {
@@ -334,7 +314,6 @@ public class testEngine{
 			q = chosenSizeQueryEngine[i];
 			Matrix[] empericalSigmas = q.getAsigmas();
 			for (int j = 0; j < this.trueQueryEngine.getMaxExponent(); j++) {
-				int pow = (int) Math.pow(this.base, j);
 				a_sigma_true = trueSigmas[j];
 				a_sigma_exp = empericalSigmas[j];
 
@@ -343,7 +322,6 @@ public class testEngine{
 			}
 		}
 		
-		Matrix[] sigmas = this.trueQueryEngine.getAsigmas();
 		for (int i = 0; i < this.trueQueryEngine.getMaxExponent(); i++) {
 			int pow = (int) Math.pow(this.base, i);
 			sigmaNumber[0][i] = pow;
@@ -368,7 +346,7 @@ public class testEngine{
 			Matrix[] experimentalSigmas = chosenSizeQueryEngine[i].getAsigmas();
 			for (int j = 0; j < maxExpSquareComparison; j++) {
 				pow = (int) Math.pow(2, j);
-				temp1 = testEngine.matrixPower( experimentalSigmas[j] , this.base);
+				temp1 = QueryEngine.matrixPower( experimentalSigmas[j] , this.base);
 				temp2 = experimentalSigmas[i+1];
 				r = temp2.minus( temp1 );	
 				errors[0][j] += r.norm1();
@@ -396,15 +374,11 @@ public class testEngine{
 		double[][] baseQueries = new double[this.trueQueryEngine.getMaxExponent()][this.maxQuery];
 		double[][] x_base_Queries = new double[this.trueQueryEngine.getMaxExponent()][this.maxQuery];
 		
-		Matrix a0emp, ainfemp, empQF, empQB;
-		Matrix a0tru, ainftru;
+		Matrix empQF, empQB;
 		double truProbQF, truProbQB, truProbP , empProbQF, empProbQB, empProbP;
 		
 		HashMap<String, Matrix> emp;
 		for (int i = 0; i < this.maxQuery ; i++) {
-	
-			a0tru = this.trueQueryEngine.getA0();
-			ainftru = this.trueQueryEngine.getAinf();
 	
 			truProbQF = this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, true);
 			truProbQB =  this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, false);
@@ -417,9 +391,6 @@ public class testEngine{
 		
 				empQF = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, true);
 				empQB = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
-				
-				a0emp = emp.get("a0");
-				ainfemp = emp.get("ainf");
 				
 				empProbQF = q.probabilityQuery( i, this.trueQueryEngine.getMaxPower(), this.base, true);
 				empProbQB =  q.probabilityQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
@@ -478,67 +449,58 @@ public class testEngine{
 		
 	}
 	
-	public double[] conditionalQuery(HashMap<String, Matrix> learned, int k, int maxAhead){
-		int maxpow = (int) Math.pow(2,learned.get("max").get(0, 0));
-		Matrix alpha_0 = learned.get("a0");
-		Matrix alpha_inf = learned.get("ainf");
-		//Matrix Ak = testEngine.matrixQuery(learned, k, 2, true);
-		Matrix alpha_k = testEngine.alphaKQuery(learned, alpha_0, k, maxpow, 2);//alpha_0.times(Ak);
+	public double[] conditionalQuery(QueryEngine q, int k, int maxAhead){
+		int maxpow = (int) Math.pow(this.base,q.getMaxExponent());
+		Matrix alpha_k = q.alphaKQuery( k, maxpow, 2);
 		
-		int nstates = alpha_0.getArray()[0].length;
+		int nstates = q.getA0().getArray()[0].length;
 		
-		Matrix mid = Matrix.identity(nstates, nstates).minus(learned.get("1") );
-		double normalizer = alpha_k.times( mid.inverse() ).times( alpha_inf ).get(0,0);
+		Matrix mid = Matrix.identity(nstates, nstates).minus(q.getAsigmas()[0] );
+		double normalizer = alpha_k.times( mid.inverse() ).times( q.getAinf() ).get(0,0);
 		double jointProb;
 		
 		double[] pA = new double[maxAhead];
 		int maxbase = 1;
 		for (int i = 0; i < pA.length; i++) {
-			jointProb = testEngine.probabilityQuery(learned, alpha_k, alpha_inf, i, maxbase ,2, true);
+			jointProb = q.probabilityQuery( i+k, maxbase ,2, true);
 			pA[i] = jointProb/normalizer;			
 		}
 		
 		return pA;
 	}
 	
-	public void sizeOfModelPlots(int repeats, boolean debug){
+	public void sizeOfModelPlots(){
 		
 		double[][] plotErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
 		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
 		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.anySizeQueryEngines.size()];
 		
-		for (int i = 0; i < xaxis.length; i++) {
-			for (Integer key :) {
-				xaxis[i][c] = key;
-				
+		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
+			for (int j = 0; j < this.keySetSorted.length; j++) {
+				xaxis[i][j] = this.keySetSorted[j];
 			}
 		}
 		
 		int baseSize;
-		for (int c = 0; c <= maxExp; c++) {
+		for (int c = 0; c <= this.trueQueryEngine.getMaxExponent(); c++) {
 			baseSize = (int) Math.pow(2, c);
 			System.out.print("Base: ");
 			System.out.print(baseSize);
 			System.out.print(", ");
 			
 			double[][] errors;
-			double[] argMinArray = new double[this.dataSizes.length];
-			double[] errorMinArray = new double[this.dataSizes.length];
+			double[] argMinArray = new double[this.keySetSorted.length];
+			double[] errorMinArray = new double[this.keySetSorted.length];
 			double truQuery, empQuery, error;
 			
-			HashMap<String, Matrix>[] empModels;
-			HashMap<String, Matrix> emp;
-			for (int z = 0; z < repeats; z++){
-				errors = new double[this.dataSizes.length][this.maxStates];
-				for (int i = 0; i < this.dataSizes.length; i++){
-					empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, this.dataSizes[i], this.basisSize, this.maxStates);
-					for (int j = 0; j < this.maxStates; j++){		
-						//emp = this.h.singledataSpectralEmperical(this.hSize, this.dataSizes[i], this.basisSize, j);
-						emp = empModels[j];
-						
-						for (int q = 0; q < this.maxQuery; q++){
-							empQuery = testEngine.probabilityQuery(emp, emp.get("a0"),  emp.get("ainf"), q, baseSize, 2, true);
-							truQuery = testEngine.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), q, 1, 2, true);
+			errors = new double[this.keySetSorted.length][this.maxStates];
+			for (int i = 0; i < this.keySetSorted.length; i++){
+				for (int j = 0; j < this.maxStates; j++){	
+					for (int z = 0; z < this.REPEATS; z++){		
+						QueryEngine q = this.anySizeQueryEngines.get(i)[j][z];
+						for (int k = 0; k < this.maxQuery; k++){
+							empQuery = q.probabilityQuery(k, baseSize, 2, true);
+							truQuery = q.probabilityQuery(k, 1, 2, true);
 							error = computeError(truQuery, empQuery);
 							errors[i][j] += error;
 						}
@@ -550,8 +512,8 @@ public class testEngine{
 			}
 			
 			for (int i = 0; i < errorMinArray.length; i++) {
-				argMinArray[i] /= repeats;
-				errorMinArray[i] /= repeats; 	
+				argMinArray[i] /= this.REPEATS;
+				errorMinArray[i] /= this.REPEATS; 	
 			}
 			
 			plotErrors[c] = errorMinArray;
@@ -574,23 +536,20 @@ public class testEngine{
 		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: Data, Y:ArgMin_over_#states", "", xaxis, plotArgForErrors);
 	}
 	
-	public void plotTrialsModelSize(int num_lines, int amountOfData){
+	public void plotTrialsModelSize(QueryEngine[][] chosenSizeQueryEngine ){
 	
 		
-		double[][] xaxis = new double[num_lines][this.maxStates];
-		double[][] yaxis = new double[num_lines][this.maxStates];
+		double[][] xaxis = new double[this.REPEATS][this.maxStates];
+		double[][] yaxis = new double[this.REPEATS][this.maxStates];
 		
-		HashMap<String, Matrix>[] empModels;
-		HashMap<String, Matrix> emp;
 		double truQuery, empQuery, error;
-		for (int i = 0; i < num_lines; i++) {
-			empModels = this.h.singledataSpectralEmpericalALLMODELS(this.hSize, amountOfData, this.basisSize, xaxis[0].length);
-			for (int j = 0; j < empModels.length; j++) {
-				emp = empModels[j];
+		for (int i = 0; i < this.REPEATS; i++) {
+			for (int j = 0; j < this.maxStates; j++) {
+				QueryEngine q = chosenSizeQueryEngine[j][i];
 				error = 0;
 				for (int c = 0; c < this.maxQuery; c++) {
-					truQuery = testEngine.probabilityQuery(this.tru, this.tru.get("a0"),  this.tru.get("ainf"), c, 1, 2, true);
-					empQuery = testEngine.probabilityQuery(emp, emp.get("a0"),  emp.get("ainf"), c, 1, 2, true);
+					truQuery = q.probabilityQuery( c, 1, 2, true);
+					empQuery = q.probabilityQuery( c, 1, 2, true);
 					error += computeError(truQuery, empQuery);
 				}
 				xaxis[i][j] = j+1;
@@ -603,7 +562,7 @@ public class testEngine{
 	}
 	
 	
-	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
+	private static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");
 			
@@ -622,13 +581,12 @@ public class testEngine{
 			writer.close();
 			
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 	}
 	
-	public static double getMinValue( double[] a){
+	private static double getMinValue( double[] a){
 		double min = 0;
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
@@ -640,7 +598,7 @@ public class testEngine{
 		return min;
 	}
 	
-	public static double getArgMin( double[] a){
+	private static double getArgMin( double[] a){
 		double min = 0;
 		double argmin = 0;
 		boolean init = false;
@@ -654,7 +612,7 @@ public class testEngine{
 		return argmin;
 	}
 	
-	public static double getMaxValue( double[] a){
+	private static double getMaxValue( double[] a){
 		double max = 0;
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
@@ -666,7 +624,7 @@ public class testEngine{
 		return max;
 	}
 	
-	public static double getArgMax( double[] a){
+	private static double getArgMax( double[] a){
 		double max = 0;
 		double argmax = 0;
 		boolean init = false;
@@ -680,104 +638,7 @@ public class testEngine{
 		return argmax;
 	}
 	
-	public static Matrix matrixPower(Matrix m, int exp){
-		
-		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
-		if (exp == 0){
-			return I;
-		}
-		else{
-			if (exp % 2 == 1) {
-				return m.times( matrixPower(m, (exp-1)/2) );
-			}
-			else{
-				return matrixPower(m, exp/2);
-			}
-		}
-	}
-	
-	public static Matrix matrixQuery(HashMap<String, Matrix> d, int power, int maxPower, int base, boolean forward){	
-		int p = maxPower;
-	
-		int size = d.get( Integer.toString(p) ).getArrayCopy().length;
-		Matrix r = Matrix.identity(size,size);
-		while(power != 0){
-	
-			while (p > power){
-				p = p/base;
-			}
-			if (forward){
-				r = r.times( d.get(Integer.toString( p ) ) );
-			}
-			else{
-				r = d.get(Integer.toString( p )).times(r);
-			}
-			power -= p;
-		}
-		
-		return r;
-	}
-	
-	public static double probabilityQuery(HashMap<String, Matrix> d, Matrix ao, Matrix ainf,  int power, int maxPower, int base, boolean forward){
-		int p = maxPower;
-		Matrix r;
-		if (forward){
-			r = ao;
-		}
-		else{
-			r = ainf;
-		}
-		while(power != 0){
-			
-			while (p > power){
-				p = p/base;
-			}
-			if (forward){
-				//System.out.println(p);
-				//System.out.println(d.keySet());
-				r = r.times( d.get(Integer.toString( p ) ) );
-				
-			}
-			else{
-				r = d.get(Integer.toString( p )).times(r);
-			}
-			power -= p;
-		}
-		if (forward){
-			r = r.times(ainf);
-		}
-		else{
-			r = ao.times(r);
-		}
-		return r.get(0,0);
-		
-	}
-	
-	public static int getTrajectoryLengthFromFileName(String filename){
-		return Integer.parseInt(filename.split(":")[1]);
-	}
-	
-	
-	public static Matrix alphaKQuery(HashMap<String, Matrix> d, Matrix ao, int power, int maxPower, int base){	//Always forward for now
-		
-		int p = maxPower;
-		
-		Matrix r = ao;
-		while(power != 0){
-			
-			while (p > power){
-				p = p/base;
-			}
-		
-			r = r.times( d.get(Integer.toString( p ) ) );
-			power -= p;
-		}
-		
-		return r;
-		
-	}
-	
-	public static double sumArray(double[] da){
+	private static double sumArray(double[] da){
 		double s = 0;
 		for(double d: da){
 			s += d;
@@ -786,12 +647,16 @@ public class testEngine{
 	}
 	
 	
-	public static double[] incArray(int length){
+	private static double[] incArray(int length){
 		double[] output = new double[length];
 		for (int i = 0; i < output.length; i++) {
 			output[i] = i;
 		}
 		return output;
+	}
+	
+	private static int getTrajectoryLengthFromFileName(String filename){
+		return Integer.parseInt(filename.split(":")[1]);
 	}
 
 }

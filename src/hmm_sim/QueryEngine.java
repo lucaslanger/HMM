@@ -101,4 +101,102 @@ public class QueryEngine {
 		machine.get("1").minus(tru.get("1")).print(5,5);
 	}*/
 
+
+	public static Matrix matrixPower(Matrix m, int exp){
+		
+		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
+		if (exp == 0){
+			return I;
+		}
+		else{
+			if (exp % 2 == 1) {
+				return m.times( matrixPower(m, (exp-1)/2) );
+			}
+			else{
+				return matrixPower(m, exp/2);
+			}
+		}
+	}
+	
+	public Matrix matrixQuery(int power, int maxPower, int base, boolean forward){	
+		int p = maxPower;
+	
+		int size = this.Asigmas[0].getArrayCopy().length;
+		Matrix r = Matrix.identity(size,size);
+		while(power != 0){
+	
+			while (p > power){
+				p = p/base;
+			}
+			int exponent = (int)( Math.log(p)/Math.log(base));
+
+			if (forward){
+				r = r.times( this.Asigmas[exponent] );
+			}
+			else{
+				r = this.Asigmas[exponent].times(r);
+			}
+			power -= p;
+		}
+		
+		return r;
+	}
+	
+	public double probabilityQuery(int power, int maxPower, int base, boolean forward){
+		int p = maxPower;
+		Matrix r;
+		if (forward){
+			r = this.a0;
+		}
+		else{
+			r = ainf;
+		}
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+			int exponent = (int)( Math.log(p)/Math.log(base));
+			if (forward){
+				//System.out.println(p);
+				//System.out.println(d.keySet());
+				r = r.times( this.Asigmas[exponent] );
+				
+			}
+			else{
+				r = this.Asigmas[exponent].times(r);
+			}
+			power -= p;
+		}
+		if (forward){
+			r = r.times(this.ainf);
+		}
+		else{
+			r = this.a0.times(r);
+		}
+		return r.get(0,0);
+		
+	}
+	
+	
+	public Matrix alphaKQuery(int power, int maxPower, int base){	//Always forward for now
+		
+		int p = maxPower;
+		
+		Matrix r = this.a0;
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+		
+			int exponent = (int)( Math.log(p)/Math.log(base));
+			r = r.times( this.Asigmas[ exponent ] );
+			power -= p;
+		}
+		
+		return r;
+		
+	}
+	
 }
