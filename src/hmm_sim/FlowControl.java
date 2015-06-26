@@ -16,7 +16,7 @@ public class FlowControl {
 		*/
 		//FlowControl.readDataIntoModels();
 		
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_True_19_12_Toy_Labyrinth", 100, 40, 2, 500);
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_True_19_12_Toy_Labyrinth", 16000, 40, 2, 100);
 		
 	}
 	
@@ -70,9 +70,6 @@ public class FlowControl {
 			System.out.println(outfolder + fileOut);
 			for (int i = 0; i < h.length; i++) {
 				oos.writeObject(h[i]);
-				//oos.writeObject(h[i].getProbabilities());
-				//oos.writeObject(h[i].getBasisSize());
-				//oos.writeObject(h[i].getSvd());
 			}
 			oos.close();
 		}

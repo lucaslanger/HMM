@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Set;
 
 import Jama.Matrix;
-import Jama.SingularValueDecomposition;
 
 public class testEngine{
 	
@@ -32,6 +31,9 @@ public class testEngine{
 	private int maxQuery;
 	private int maxStates;
 	private int REPEATS;
+	private int lowModelSize;
+	private int upperModelSize;
+	private int numberOfModels;
 	
 	public static void main(String[] args){}
 	
@@ -41,7 +43,7 @@ public class testEngine{
 		testEngine.createFolder(this.pltFolder);
 		File[] f = testEngine.getFiles(this.fileNameOfDataSet);
 		this.fileNames = new String[f.length];
-		for (int i = 0; i < fileNames.length; i++) {
+		for (int i = 0; i < this.fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
 		}
 		
@@ -49,11 +51,20 @@ public class testEngine{
 		this.base = base;
 		this.trueModel = this.readTrueModel(fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
+		this.lowModelSize = this.trueModel.getRank()-2;
+		this.upperModelSize = this.trueModel.getRank()+2;
+		this.numberOfModels = this.upperModelSize - this.lowModelSize;
 		System.out.println("True Learned Model Size");
-		System.out.println(this.maxStates);
+		System.out.println(this.trueModel.getRank());
+		System.out.println("Model Range:");
+		System.out.print(this.lowModelSize);
+		System.out.print("-");
+		System.out.println(this.upperModelSize);
 		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
 		this.maxQuery = this.trueQueryEngine.getMaxPower(); //* base;
+		System.out.println("MaxQuery:");
+		System.out.println(this.maxQuery);
 		this.REPEATS = numberPerTrajectorySize;
 		
 		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
@@ -78,19 +89,18 @@ public class testEngine{
 	}
 
 	private void makePlots(){
-		this.fixedSize_Plots();
-		System.out.println("Done Fixed Plots");
+		//this.fixedSize_Plots();
+		//System.out.println("Done Fixed Plots");
 		
 		//this.compareH_Hbar(5);
 		//System.out.println("Done H, Hbar comparisons");
 		
-		this.plotBaseDifferences( );
-		System.out.println("Done Base Differences");
+		//this.plotBaseDifferences( );
+		//System.out.println("Done Base Differences");
 		
-		/*
 		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
-		*/
+		
 	}
 	
 	private void makeKeySetSorted(){
@@ -107,12 +117,12 @@ public class testEngine{
 	private HashMap<Integer, QueryEngine[][]> getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
 		
 		HashMap<Integer, QueryEngine[][]> dataSizeToModels = new HashMap<Integer, QueryEngine[][]>();
-		QueryEngine[][] Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];;
+		QueryEngine[][] Q = new QueryEngine[this.numberOfModels][numberOfTrajectoriesFromEachSize];;
 		QueryEngine q;
 
 		try{
 			for (String f: this.fileNames) {
-				Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];	//Weird bug
+				Q = new QueryEngine[this.numberOfModels][numberOfTrajectoriesFromEachSize];	//Weird bug
 				String file = this.fileNameOfDataSet + f;
 				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
 				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
@@ -120,8 +130,8 @@ public class testEngine{
 				
 				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
 					h = (HankelSVDModel) ois.readObject();
-					for (int j = 0; j < this.maxStates; j++) {
-						q = h.buildHankelBasedModel(this.basisSize, this.base, j+1);
+					for (int j = 0; j < this.numberOfModels; j++) {
+						q = h.buildHankelBasedModel(this.basisSize, this.base, this.lowModelSize + j);
 						Q[j][i] = q;
 					}
 				}
@@ -506,10 +516,10 @@ public class testEngine{
 			double[] errorMinArray = new double[this.keySetSorted.length];
 			double truQuery, empQuery, error;
 			
-			errors = new double[this.keySetSorted.length][this.maxStates];
+			errors = new double[this.keySetSorted.length][this.numberOfModels];
 			for (int i = 0; i < this.keySetSorted.length; i++){
-				for (int j = 0; j < this.maxStates; j++){	
-					for (int z = 0; z < this.REPEATS; z++){		
+				for (int z = 0; z < this.REPEATS; z++){		
+					for (int j = 0; j < this.numberOfModels; j++){			
 						QueryEngine q = this.anySizeQueryEngines.get(this.keySetSorted[i])[j][z];
 						for (int k = 0; k < this.maxQuery; k++){
 							empQuery = q.probabilityQuery(k, baseSize, this.base, true);
@@ -518,10 +528,10 @@ public class testEngine{
 							errors[i][j] += error;
 						}
 					}
-					argMinArray[i] += testEngine.getArgMin( errors[i] ) + 1;
+					argMinArray[i] += testEngine.getArgMin( errors[i] ) + this.lowModelSize;
 					errorMinArray[i] += testEngine.getMinValue( errors[i] );
 				}
-				
+					
 			}
 			
 			for (int i = 0; i < errorMinArray.length; i++) {
@@ -550,28 +560,31 @@ public class testEngine{
 	}
 	
 	public void plotTrialsModelSize(QueryEngine[][] chosenSizeQueryEngine ){
-	
 		
-		double[][] xaxis = new double[this.REPEATS][this.maxStates];
-		double[][] yaxis = new double[this.REPEATS][this.maxStates];
+		double[][] xaxis = new double[this.numberOfModels][this.REPEATS];
+		double[][] yaxis = new double[this.numberOfModels][this.REPEATS];
 		
 		double truQuery, empQuery, error;
-		for (int i = 0; i < this.REPEATS; i++) {
-			for (int j = 0; j < this.maxStates; j++) {
-				QueryEngine q = chosenSizeQueryEngine[j][i];
+		
+		for (int i = 0; i < this.numberOfModels; i++) {
+			for (int j = 0; j < this.REPEATS; j++) {
+				QueryEngine q = chosenSizeQueryEngine[i][j];
 				error = 0;
 				for (int c = 0; c < this.maxQuery; c++) {
-					truQuery = q.probabilityQuery( c, 1, 2, true);
+					truQuery = this.trueQueryEngine.probabilityQuery( c, 1, 2, true);
 					empQuery = q.probabilityQuery( c, 1, 2, true);
 					error += computeError(truQuery, empQuery);
 				}
-				xaxis[i][j] = j+1;
+				xaxis[i][j] = i+this.lowModelSize;
 				yaxis[i][j] = error;
 			}
 			
 		}
-		
+		xaxis = new Matrix(xaxis).transpose().getArrayCopy();
+		yaxis = new Matrix(yaxis).transpose().getArrayCopy();
 		testEngine.outputData(pltFolder + "Multiple_Trials_ModelError", "X: ModelSize Y:Error", "", xaxis, yaxis);
+		System.out.println("Fixed Size repeated trial plots");
+		new Matrix(yaxis).print(5, 5);
 	}
 	
 	
@@ -616,12 +629,13 @@ public class testEngine{
 		double argmin = 0;
 		boolean init = false;
 		for (int i = 0; i < a.length; i++) {
-			if (!init || min > a[i]){
+			if (init == false || min > a[i]){
 				init = true;
 				argmin = i;
 				min = a[i];
 			}
 		}
+		
 		return argmin;
 	}
 	
