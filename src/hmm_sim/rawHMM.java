@@ -45,15 +45,15 @@ public class rawHMM extends Environment{
 		return h;
 	}
 	
-	public static rawHMM makeLabyrinth(int loop1, int loop2 , double selfTransitionP, int hSize){
+	public static rawHMM makeLabyrinth(int loop1, int loop2 , double selfTransitionP, int hSize, double exit1p, double exit2p){
 		boolean debug = false;
 		
 		int states = loop1 + loop2 - 1;
 		HashMap<Integer, Double> termStates = new HashMap<Integer, Double>();
 		int door1 = 0;
 		int door2 = loop1/2 + loop2/2;
-		termStates.put(door1, .6);
-		termStates.put(door2, .4);
+		termStates.put(door1, exit1p);
+		termStates.put(door2, exit2p);
 		
 		HashMap<Integer, int[]> changeTo = new HashMap<Integer, int[]>();
 		changeTo.put(loop1/2, new int[]{loop1/2 + 1, loop2 + loop1/2} );

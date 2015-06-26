@@ -27,7 +27,7 @@ public abstract class Environment {
 	
 	public void printTrueProbabilities(){
 		double[][] t = this.generateTrueProbabilities();
-		FlowControl.outputData( "TrueModel_", t);
+		FlowControl.outputData( "True_" + this.getDescription(), t);
 	}
 	
 	public void printEmpericalTrials(int trajectoryLength, int repetitions){
@@ -35,7 +35,8 @@ public abstract class Environment {
 		for (int i = 0; i < repetitions; i++) {
 			data[i] = generateEmpericalProbabilities(trajectoryLength);
 		}
-		FlowControl.outputData(this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength), data );
+		String f = this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength);
+		FlowControl.outputData(f, data );
 	}
 
 

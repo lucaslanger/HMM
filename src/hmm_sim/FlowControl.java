@@ -10,7 +10,14 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		FlowControl.readDataIntoModels();
+		/*int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000};
+		int repetitions = 1000;
+		FlowControl.generateLabyrinthData(trajectorySizes, repetitions, 19, 12, 0, 200, .6, .4);
+		*/
+		//FlowControl.readDataIntoModels();
+		
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_True_19_12_Toy_Labyrinth", 100, 40, 2, 500);
+		
 	}
 	
 	public FlowControl(){
@@ -34,9 +41,9 @@ public class FlowControl {
 		File dir = new File(outFolder);
 		dir.mkdir();
 		
-		String inFile = "TrueModel_19_12_Toy_Labyrinth";
-		String TrueIn = "Models_" + inFile;
-		FlowControl.createModelsFromFile("", "", inFile, TrueIn, basisSize);
+		String inFile = "True_19_12_Toy_Labyrinth";
+		String TrueOut = "Models_" + inFile;
+		FlowControl.createModelsFromFile("", "", inFile, TrueOut, basisSize);
 		
 		File[] files = FlowControl.getFiles(inFolder);
 		for (File file : files) {
@@ -74,12 +81,9 @@ public class FlowControl {
 		}
 	}
 	
-	public static void generateLabyrinthData(){
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000};
-		int repetitions = 100;
-		rawHMM r = rawHMM.makeLabyrinth(19, 12, 0, 200);
+	public static void generateLabyrinthData(int[] trajectorySizes, int repetitions, int loop1, int loop2, double selfTransitionP , int hSize, double exit1P, double exit2P){
+		rawHMM r = rawHMM.makeLabyrinth(loop1, loop2, selfTransitionP, hSize, exit1P, exit2P);
 		r.generateData(trajectorySizes, repetitions);
-		r.printTrueProbabilities();
 	}
 	
 	public static void outputData(String s, double[][] data){
@@ -92,6 +96,8 @@ public class FlowControl {
 			System.out.println("Problem writing data");
 			e.printStackTrace();
 		}
+		
+		System.out.println("Done generating data for " + s);
 		
 	}
 	

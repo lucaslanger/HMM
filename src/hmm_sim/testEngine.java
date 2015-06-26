@@ -33,16 +33,13 @@ public class testEngine{
 	private int maxStates;
 	private int REPEATS;
 	
-	public static void main(String[] args){
- 	
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 50);
-	}
+	public static void main(String[] args){}
 	
-	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int fixedDataSize, int basisSize, int base, int numberPerTrajectorySize){
+	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int numberPerTrajectorySize){
 		this.fileNameOfDataSet = fileNameOfDataSet;
 		this.pltFolder = "Plotting_" + fileNameOfDataSet + "/";
-		FlowControl.createFolder(this.pltFolder);
-		File[] f = FlowControl.getFiles(this.fileNameOfDataSet);
+		testEngine.createFolder(this.pltFolder);
+		File[] f = testEngine.getFiles(this.fileNameOfDataSet);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
@@ -62,12 +59,24 @@ public class testEngine{
 		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
 		this.makeKeySetSorted();
 				
-		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(fixedDataSize);
+		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(dataSizeForFixedPlots);
 		
 		this.makePlots();
 
 	}
 	
+
+	private static File[] getFiles(String folder) {
+		File dir = new File(folder);
+		return dir.listFiles();
+	}
+
+	private static void createFolder(String folder) {
+		File dir = new File(folder);
+		dir.mkdir();
+		
+	}
+
 	private void makePlots(){
 		this.fixedSize_Plots();
 		System.out.println("Done Fixed Plots");
@@ -107,9 +116,6 @@ public class testEngine{
 				String file = this.fileNameOfDataSet + f;
 				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
 				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
-				double[] probabilities;
-				int basisSize; 
-				SingularValueDecomposition svd;
 				HankelSVDModel h;
 				
 				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
@@ -214,7 +220,7 @@ public class testEngine{
 		System.out.println("Base Comp Errors Modelsize=" + Integer.toString(this.maxStates));
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		Matrix visualErrors = new Matrix(errors);
-		visualErrors.print(5, 5);
+		visualErrors.print(5, 15);
 		System.out.println("Variances");
 		new Matrix(variances).print(5, 15);
 		
