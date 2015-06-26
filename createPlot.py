@@ -60,27 +60,31 @@ def drawPlots(folder):
 	s = math.ceil(l**0.5)
 	L = ''
 	for n in names:
-		d = getDataFromFile(folder+"/" + n)
-		plt.subplot(s,s,i)
-		for j in range(len(d[2])):
-			if j == 0:
-				L = 'Abs'
-			else:
-				L = 'Non-Abs'
-			
-			plt.plot(d[2][j],d[3][j], colorsOther[j%4], label=L)
+		try:
+			d = getDataFromFile(folder+"/" + n)
+			plt.subplot(s,s,i)
+			for j in range(len(d[2])):
+				if j == 0:
+					L = 'Abs'
+				else:
+					L = 'Non-Abs'
+				
+				plt.plot(d[2][j],d[3][j], colorsOther[j%4], label=L)
 
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-		#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-        #   ncol=2, mode="expand", borderaxespad=0.)
+			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+			#plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+	        #   ncol=2, mode="expand", borderaxespad=0.)
 
-		plt.xlabel(d[0])
-		plt.ylabel(d[1])
-		plt.title(n)
-		i += 1
+			plt.xlabel(d[0])
+			plt.ylabel(d[1])
+			plt.title(n)
+			i += 1
+		except:
+			print "Trouble plotting ",n  
 
 	plt.subplots_adjust( hspace=0.88 )
 	#plt.tight_layout()
 	plt.show()
 
-drawPlots("4_3_Plots")
+datafile = sys.argv[1]
+drawPlots(datafile)

@@ -35,11 +35,13 @@ public class testEngine{
 	
 	public static void main(String[] args){
  	
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 20);
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_TrueModel_19_12_Toy_Labyrinth", 100, 40, 2, 50);
 	}
 	
 	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int fixedDataSize, int basisSize, int base, int numberPerTrajectorySize){
 		this.fileNameOfDataSet = fileNameOfDataSet;
+		this.pltFolder = "Plotting_" + fileNameOfDataSet + "/";
+		FlowControl.createFolder(this.pltFolder);
 		File[] f = FlowControl.getFiles(this.fileNameOfDataSet);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < fileNames.length; i++) {
@@ -50,8 +52,11 @@ public class testEngine{
 		this.base = base;
 		this.trueModel = this.readTrueModel(fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
+		System.out.println("True Learned Model Size");
+		System.out.println(this.maxStates);
+		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
-		this.maxQuery = this.trueQueryEngine.getMaxPower() * base;
+		this.maxQuery = this.trueQueryEngine.getMaxPower(); //* base;
 		this.REPEATS = numberPerTrajectorySize;
 		
 		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
@@ -73,8 +78,10 @@ public class testEngine{
 		this.plotBaseDifferences( );
 		System.out.println("Done Base Differences");
 		
+		/*
 		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
+		*/
 	}
 	
 	private void makeKeySetSorted(){
@@ -91,11 +98,12 @@ public class testEngine{
 	private HashMap<Integer, QueryEngine[][]> getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
 		
 		HashMap<Integer, QueryEngine[][]> dataSizeToModels = new HashMap<Integer, QueryEngine[][]>();
-		QueryEngine[][] Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];
+		QueryEngine[][] Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];;
 		QueryEngine q;
 
 		try{
 			for (String f: this.fileNames) {
+				Q = new QueryEngine[this.maxStates][numberOfTrajectoriesFromEachSize];	//Weird bug
 				String file = this.fileNameOfDataSet + f;
 				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
 				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
@@ -109,6 +117,7 @@ public class testEngine{
 					basisSize = (int) ois.readObject();
 					svd = (SingularValueDecomposition) ois.readObject();
 					h = new HankelSVDModel(probabilities, basisSize, svd);
+		
 					for (int j = 0; j < this.maxStates; j++) {
 						q = h.buildHankelBasedModel(this.basisSize, this.base, j+1);
 						Q[j][i] = q;
@@ -170,43 +179,51 @@ public class testEngine{
 	public void plotBaseDifferences(){
 		int modelSize = this.maxStates;		
 		
-		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
-		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
+		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] squareErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] exponentialMeanErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] variances = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		
 		double error = 0, empProb, truProb;
-		int maxQuery = this.trueQueryEngine.getMaxPower();
 		int maxPower;
 		
 		for (int c = 0; c < this.keySetSorted.length; c++) {
-			QueryEngine[] qe = this.anySizeQueryEngines.get(keySetSorted[c])[modelSize-1];
+			QueryEngine[] qe = this.anySizeQueryEngines.get(this.keySetSorted[c])[modelSize-1];
 			for (int i = 0; i < this.REPEATS; i++){
 				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; j++){
 					maxPower = (int) Math.pow(this.base, j);
-					dataSize[j][c] = this.keySetSorted[c];
-					for (int query = 0; query < maxQuery; query++){
+					dataSize[j][c] = Math.log(this.keySetSorted[c]);
+					for (int query = 0; query < this.maxQuery; query++){
 						truProb = this.trueQueryEngine.probabilityQuery(query, maxPower, this.base, true);
 						empProb = qe[i].probabilityQuery(query, maxPower, this.base, true);
-						error = computeError(truProb, empProb);
+						error = this.computeError(truProb, empProb);
 						errors[j][c] += error;
+						squareErrors[j][c] += Math.pow(error,2);
 					}
 				}
 			}
-			c++;
 		}
 		
-		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
-			for (int j = 0; j < keySetSorted.length; j++) {
-				errors[i][j] /= REPEATS;
+		for (int j = 0; j <= this.trueQueryEngine.getMaxExponent(); j++) {
+			for (int c = 0; c < keySetSorted.length; c++) {
+				errors[j][c] /= this.REPEATS*this.maxQuery;
+				squareErrors[j][c] /= this.REPEATS*this.maxQuery;
+				variances[j][c] = squareErrors[j][c] - Math.pow(errors[j][c],2);
+				
+				exponentialMeanErrors[j][c] = Math.log(errors[j][c]);
 			}
 		}
-		testEngine.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, errors );
-
+		
+		testEngine.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, exponentialMeanErrors );
 		
 		System.out.println("");
 		System.out.println("Base Comp Errors Modelsize=" + Integer.toString(this.maxStates));
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		Matrix visualErrors = new Matrix(errors);
 		visualErrors.print(5, 5);
+		System.out.println("Variances");
+		new Matrix(variances).print(5, 15);
 		
 	}
 	
@@ -471,9 +488,9 @@ public class testEngine{
 	
 	public void sizeOfModelPlots(){
 		
-		double[][] plotErrors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
-		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
-		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][keySetSorted.length];
+		double[][] plotErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		
 		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
 			for (int j = 0; j < this.keySetSorted.length; j++) {
@@ -496,8 +513,8 @@ public class testEngine{
 					for (int z = 0; z < this.REPEATS; z++){		
 						QueryEngine q = this.anySizeQueryEngines.get(this.keySetSorted[i])[j][z];
 						for (int k = 0; k < this.maxQuery; k++){
-							empQuery = q.probabilityQuery(k, baseSize, 2, true);
-							truQuery = q.probabilityQuery(k, 1, 2, true);
+							empQuery = q.probabilityQuery(k, baseSize, this.base, true);
+							truQuery = this.trueQueryEngine.probabilityQuery(k, 1, this.base, true);
 							error = computeError(truQuery, empQuery);
 							errors[i][j] += error;
 						}
