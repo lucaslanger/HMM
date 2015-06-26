@@ -113,11 +113,7 @@ public class testEngine{
 				HankelSVDModel h;
 				
 				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
-					probabilities = (double[]) ois.readObject();
-					basisSize = (int) ois.readObject();
-					svd = (SingularValueDecomposition) ois.readObject();
-					h = new HankelSVDModel(probabilities, basisSize, svd);
-		
+					h = (HankelSVDModel) ois.readObject();
 					for (int j = 0; j < this.maxStates; j++) {
 						q = h.buildHankelBasedModel(this.basisSize, this.base, j+1);
 						Q[j][i] = q;
@@ -141,10 +137,7 @@ public class testEngine{
 		ObjectInputStream ois;
 		try {
 			ois = new ObjectInputStream(new FileInputStream(f));
-			double[] p = (double[]) ois.readObject();
-			int i = (int) ois.readObject();
-			SingularValueDecomposition s = (SingularValueDecomposition) ois.readObject();
-			t = new HankelSVDModel(p, i, s);
+			t = (HankelSVDModel) ois.readObject();
 			ois.close();
 			return t;
 		} catch (IOException e) {

@@ -62,9 +62,10 @@ public class FlowControl {
 			ObjectOutputStream oos = new ObjectOutputStream( new FileOutputStream(outfolder + fileOut) );
 			System.out.println(outfolder + fileOut);
 			for (int i = 0; i < h.length; i++) {
-				oos.writeObject(h[i].getProbabilities());
-				oos.writeObject(h[i].getBasisSize());
-				oos.writeObject(h[i].getSvd());
+				oos.writeObject(h[i]);
+				//oos.writeObject(h[i].getProbabilities());
+				//oos.writeObject(h[i].getBasisSize());
+				//oos.writeObject(h[i].getSvd());
 			}
 			oos.close();
 		}

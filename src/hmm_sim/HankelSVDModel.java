@@ -1,18 +1,14 @@
 package hmm_sim;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
-public class HankelSVDModel{
+public class HankelSVDModel implements Serializable{
 	
 	private double[] probabilities;
 	private SingularValueDecomposition svd;
@@ -34,6 +30,10 @@ public class HankelSVDModel{
 	public int getBasisSize() {
 		return basisSize;
 	}
+
+	public HankelSVDModel(){
+	}
+
 
 	public HankelSVDModel(double[] probabilities , int basisSize){
 		this.probabilities = probabilities;
@@ -192,6 +192,26 @@ public class HankelSVDModel{
 	
 	public int getRank(){
 		return this.svd.getS().rank();
+	}
+	
+	private synchronized void writeObject(java.io.ObjectOutputStream stream) throws java.io.IOException{
+		stream.writeInt(this.probabilities.length);
+		for (int i=0; i<this.probabilities.length; i++){
+			stream.writeObject(this.probabilities[i]);
+		}
+		stream.writeInt(this.basisSize);
+		stream.writeObject(this.svd);
+	}
+	
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException{
+		int l = in.readInt();
+		double[] probabilities = new double[l];
+		for (int i = 0; i < l; i++) {
+			probabilities[i] = (double) in.readObject();
+		}
+		this.probabilities = probabilities;
+		this.basisSize = in.readInt();
+		this.svd = (SingularValueDecomposition) in.readObject();
 	}
 	
 	public static void testHankel(){
