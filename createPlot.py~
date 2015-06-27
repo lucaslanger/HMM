@@ -52,7 +52,7 @@ def getDataFromFile(datafile):
 		return (xaxisLabel,yaxisLabel,xvals,yvals)
 
 def takeLogOfArray(a):
-	return [math.log(i) for i in a]
+	return [Math.log(i) for i in a]
 
 def drawPlots(folder, names):	
 	l = len(names)
@@ -73,7 +73,7 @@ def drawPlots(folder, names):
 				if name[2] == 'log':
 					ydata = takeLogOfArray(ydata)
 				
-				plt.plot(xdata,ydata, colorsOther[j%4])
+plt.plot(d[2][j],d[3][j], colorsOther[j%4])
 
 			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
@@ -81,8 +81,7 @@ def drawPlots(folder, names):
 			plt.ylabel(d[1])
 			plt.title(n)
 			i += 1
-		except Exception,e:
-			print str(e)
+		except:
 			print "Trouble plotting ",n  
 
 	plt.subplots_adjust( hspace=0.88 )
@@ -94,7 +93,7 @@ datafile = sys.argv[1]
 temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
 initialTests = [(i,'normal','normal') for i in temp]
 
-modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','log'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal')]
+modelBased = ['BaseComp_Area', 'log','log', ("MinError_Dif_Bases", 'log','log'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'log','log')]
 
-#drawPlots(datafile, initialTests)
+drawPlots(datafile, initialTests)
 drawPlots(datafile, modelBased)
