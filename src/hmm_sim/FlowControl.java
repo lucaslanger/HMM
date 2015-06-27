@@ -14,9 +14,11 @@ public class FlowControl {
 		int repetitions = 1000;
 		FlowControl.generateLabyrinthData(trajectorySizes, repetitions, 19, 12, 0, 200, .6, .4);
 		*/
-		//FlowControl.readDataIntoModels();
 		
-		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_True_19_12_Toy_Labyrinth", 16000, 40, 2, 100);
+		int basisSize = 40;
+		//FlowControl.readDataIntoModels(basisSize);
+		
+		testEngine a = new testEngine("Models_Emperical_19_12_Toy_Labyrinth/", "Models_True_19_12_Toy_Labyrinth", 16000, basisSize, 2, 8);
 		
 	}
 	
@@ -34,8 +36,7 @@ public class FlowControl {
 		return dir.listFiles();
 	}
 	
-	public static void readDataIntoModels(){
-		int basisSize = 40;
+	public static void readDataIntoModels(int basisSize){
 		String inFolder = "Emperical_19_12_Toy_Labyrinth/";
 		String outFolder = "Models_" + inFolder;
 		File dir = new File(outFolder);

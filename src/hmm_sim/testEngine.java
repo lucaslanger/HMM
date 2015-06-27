@@ -95,8 +95,8 @@ public class testEngine{
 		//this.compareH_Hbar(5);
 		//System.out.println("Done H, Hbar comparisons");
 		
-		//this.plotBaseDifferences( );
-		//System.out.println("Done Base Differences");
+		this.plotBaseDifferences( );
+		System.out.println("Done Base Differences");
 		
 		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
@@ -186,53 +186,55 @@ public class testEngine{
 	}
 	
 	public void plotBaseDifferences(){
-		int modelSize = this.maxStates;		
+		int modelSize = this.numberOfModels/2;		
 		
 		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] squareErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
-		double[][] exponentialMeanErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] variances = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] standardDeviations = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+
 		
 		double error = 0, empProb, truProb;
 		int maxPower;
 		
 		for (int c = 0; c < this.keySetSorted.length; c++) {
-			QueryEngine[] qe = this.anySizeQueryEngines.get(this.keySetSorted[c])[modelSize-1];
+			QueryEngine[] qe = this.anySizeQueryEngines.get(this.keySetSorted[c])[modelSize];
 			for (int i = 0; i < this.REPEATS; i++){
 				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; j++){
 					maxPower = (int) Math.pow(this.base, j);
-					dataSize[j][c] = Math.log(this.keySetSorted[c]);
+					dataSize[j][c] = this.keySetSorted[c];
+					
+					double errorBefore = errors[j][c];
 					for (int query = 0; query < this.maxQuery; query++){
 						truProb = this.trueQueryEngine.probabilityQuery(query, maxPower, this.base, true);
 						empProb = qe[i].probabilityQuery(query, maxPower, this.base, true);
 						error = this.computeError(truProb, empProb);
-						errors[j][c] += error;
-						squareErrors[j][c] += Math.pow(error,2);
+						errors[j][c] += error;	
 					}
+					squareErrors[j][c] += Math.pow(errors[j][c] - errorBefore,2);
 				}
 			}
 		}
 		
 		for (int j = 0; j <= this.trueQueryEngine.getMaxExponent(); j++) {
 			for (int c = 0; c < keySetSorted.length; c++) {
-				errors[j][c] /= this.REPEATS*this.maxQuery;
-				squareErrors[j][c] /= this.REPEATS*this.maxQuery;
+				errors[j][c] /= this.REPEATS;
+				squareErrors[j][c] /= this.REPEATS;
 				variances[j][c] = squareErrors[j][c] - Math.pow(errors[j][c],2);
-				
-				exponentialMeanErrors[j][c] = Math.log(errors[j][c]);
+				standardDeviations[j][c] = Math.sqrt(variances[j][c]);
 			}
 		}
 		
-		testEngine.outputData(pltFolder + "BaseComp_Area", "X:#Data Seen Y:Fnorm","", dataSize, exponentialMeanErrors );
+		testEngine.outputData(pltFolder + "BaseComp_Area", "X:log(Data) Y:log(Error)","", dataSize, errors );
 		
 		System.out.println("");
 		System.out.println("Base Comp Errors Modelsize=" + Integer.toString(this.maxStates));
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		Matrix visualErrors = new Matrix(errors);
 		visualErrors.print(5, 15);
-		System.out.println("Variances");
-		new Matrix(variances).print(5, 15);
+		System.out.println("Standard Deviations");
+		new Matrix(standardDeviations).print(5, 15);
 		
 	}
 	
@@ -401,14 +403,14 @@ public class testEngine{
 		double[][] x_base_Queries = new double[this.trueQueryEngine.getMaxExponent()][this.maxQuery];
 		
 		Matrix empQF, empQB;
-		double truProbQF, truProbQB, truProbP , empProbQF, empProbQB, empProbP;
-		
-		HashMap<String, Matrix> emp;
+		double truProbQF,  empProbQF, empProbQB, empProbP;
+		//double truProbQB, truProbP;
+
 		for (int i = 0; i < this.maxQuery ; i++) {
 	
 			truProbQF = this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, true);
-			truProbQB =  this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, false);
-			truProbP = this.trueQueryEngine.probabilityQuery(i, 1, this.base, true);
+			//truProbQB =  this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, false);
+			//truProbP = this.trueQueryEngine.probabilityQuery(i, 1, this.base, true);
 			//System.out.println(truProbQF - truProbQB);//Always 0 which makes sense
 			//System.out.println(truProbP - truProbQF);
 			
@@ -501,6 +503,10 @@ public class testEngine{
 		double[][] plotArgForErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] xaxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		
+		double[][] squareErrorMin = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] variances = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		double[][] standardDeviations = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
+		
 		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
 			for (int j = 0; j < this.keySetSorted.length; j++) {
 				xaxis[i][j] = this.keySetSorted[j];
@@ -514,11 +520,12 @@ public class testEngine{
 			double[][] errors;
 			double[] argMinArray = new double[this.keySetSorted.length];
 			double[] errorMinArray = new double[this.keySetSorted.length];
-			double truQuery, empQuery, error;
+			double truQuery, empQuery, error, minValue;
 			
 			errors = new double[this.keySetSorted.length][this.numberOfModels];
 			for (int i = 0; i < this.keySetSorted.length; i++){
 				for (int z = 0; z < this.REPEATS; z++){		
+					errors[i] = new double[this.numberOfModels];
 					for (int j = 0; j < this.numberOfModels; j++){			
 						QueryEngine q = this.anySizeQueryEngines.get(this.keySetSorted[i])[j][z];
 						for (int k = 0; k < this.maxQuery; k++){
@@ -529,14 +536,20 @@ public class testEngine{
 						}
 					}
 					argMinArray[i] += testEngine.getArgMin( errors[i] ) + this.lowModelSize;
-					errorMinArray[i] += testEngine.getMinValue( errors[i] );
-				}
 					
+					minValue = testEngine.getMinValue( errors[i] );
+					errorMinArray[i] += minValue;
+					squareErrorMin[c][i] += Math.pow(minValue,2);
+				}
 			}
 			
 			for (int i = 0; i < errorMinArray.length; i++) {
 				argMinArray[i] /= this.REPEATS;
-				errorMinArray[i] /= this.REPEATS; 	
+				
+				errorMinArray[i] /= this.REPEATS;
+				squareErrorMin[c][i] /= this.REPEATS;
+				variances[c][i] = squareErrorMin[c][i] - Math.pow(errorMinArray[i],2);
+				standardDeviations[c][i] = Math.sqrt(variances[c][i]);
 			}
 			
 			plotErrors[c] = errorMinArray;
@@ -552,11 +565,13 @@ public class testEngine{
 		System.out.println();
 		System.out.println("Downwards: BASE, SideWays: #DATA");
 		printBestBaseErrors.print(5, 5);
-		System.out.println("Downwards: BASE, SideWays: #DATA");
+		System.out.println("Averaged Best Model Sizes");
 		printBestBaseArg.print(5, 5);
+		System.out.println("Standard Deviations");
+		new Matrix(standardDeviations).print(5, 10);
 	
-		testEngine.outputData(pltFolder + "MinError_Dif_Bases", "X: Data, Y:Min_over_#states", "", xaxis, plotErrors);
-		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: Data, Y:ArgMin_over_#states", "", xaxis, plotArgForErrors);
+		testEngine.outputData(pltFolder + "MinError_Dif_Bases", "X: log(Data) Y:log(Min_over_#states)", "", xaxis, plotErrors);
+		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: log(Data) Y:ArgMin_over_#states", "", xaxis, plotArgForErrors);
 	}
 	
 	public void plotTrialsModelSize(QueryEngine[][] chosenSizeQueryEngine ){
