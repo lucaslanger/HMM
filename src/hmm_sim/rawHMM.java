@@ -110,8 +110,8 @@ public class rawHMM extends Environment{
 		Matrix O = new Matrix( o );
 		Matrix E = new Matrix( e );
 		
-		String d = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth";
-		rawHMM l = new rawHMM(workingFolder, d, hSize, T, O, P, E );
+		//String d = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth";
+		rawHMM l = new rawHMM(workingFolder, workingFolder, hSize, T, O, P, E );
 		
 		return l;
 		
