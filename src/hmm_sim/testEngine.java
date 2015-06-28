@@ -16,7 +16,7 @@ import Jama.Matrix;
 public class testEngine{
 	
 	public String pltFolder;
-	private String fileNameOfDataSet;
+	private String fileNameOfEmpericalModels;
 	private String[] fileNames;
 
 	private QueryEngine[][] fixedSizeQueryEngines;
@@ -37,11 +37,11 @@ public class testEngine{
 	
 	public static void main(String[] args){}
 	
-	public testEngine(String fileNameOfDataSet, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int numberPerTrajectorySize){
-		this.fileNameOfDataSet = fileNameOfDataSet;
-		this.pltFolder = "Plotting_" + fileNameOfDataSet + "/";
+	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int numberPerTrajectorySize){
+		this.fileNameOfEmpericalModels = workingFolder + empModels;
+		this.pltFolder = workingFolder + "Plotting_" + empModels + "/";
 		testEngine.createFolder(this.pltFolder);
-		File[] f = testEngine.getFiles(this.fileNameOfDataSet);
+		File[] f = testEngine.getFiles(fileNameOfEmpericalModels);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < this.fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
@@ -123,7 +123,7 @@ public class testEngine{
 		try{
 			for (String f: this.fileNames) {
 				Q = new QueryEngine[this.numberOfModels][numberOfTrajectoriesFromEachSize];	//Weird bug
-				String file = this.fileNameOfDataSet + f;
+				String file = this.fileNameOfEmpericalModels + f;
 				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
 				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
 				HankelSVDModel h;

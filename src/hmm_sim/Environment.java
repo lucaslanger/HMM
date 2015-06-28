@@ -4,13 +4,17 @@ public abstract class Environment {
 	
 	
 	private String desciption;
-	public String empericalFolder; 
+	private String empericalFolder;
+	private String workingFolder;
+	private String trueFile;
 	private int desiredHankelSize;
 
-	public Environment(String description, int desiredHankelSize){
+	public Environment(String workingFolder, String description, int desiredHankelSize){
+		this.workingFolder = workingFolder;
 		this.desciption = description;
 		this.desiredHankelSize = desiredHankelSize;
-		this.empericalFolder = "Emperical_" + this.getDescription() + "/";
+		this.empericalFolder = workingFolder + "Emperical_" + this.getDescription() + "/";
+		this.trueFile = workingFolder + "True_" + this.getDescription();
 	}
 		
 	public abstract double[] generateEmpericalProbabilities(int samples);
@@ -27,7 +31,7 @@ public abstract class Environment {
 	
 	public void printTrueProbabilities(){
 		double[][] t = this.generateTrueProbabilities();
-		FlowControl.outputData( "True_" + this.getDescription(), t);
+		FlowControl.outputData( this.getTrueFile(), t);
 	}
 	
 	public void printEmpericalTrials(int trajectoryLength, int repetitions){
@@ -43,10 +47,19 @@ public abstract class Environment {
 	public String getDescription() {
 		return this.desciption;
 	}
+	
+	public String getWorkingFolder(){
+		return this.workingFolder;
+	}
+	
+	public String getTrueFile(){
+		return this.trueFile;
+	}
 
 	public int getDesiredHankelSize() {
 		return this.desiredHankelSize;
 	}
+	
 
 
 	

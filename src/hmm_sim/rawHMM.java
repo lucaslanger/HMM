@@ -19,8 +19,8 @@ public class rawHMM extends Environment{
 	
 	}
 	
-	public rawHMM(String description, int desiredHankelSize, Matrix T, Matrix O, Matrix P, Matrix E){
-		super(description, desiredHankelSize);
+	public rawHMM(String workingFolder, String description, int desiredHankelSize, Matrix T, Matrix O, Matrix P, Matrix E){
+		super(workingFolder, description, desiredHankelSize);
 		
 		this.T = T;
 		this.O = O;
@@ -29,7 +29,7 @@ public class rawHMM extends Environment{
 		this.automatonStates = P.getArray()[0].length;
 	}
 	
-	public static rawHMM make2StateHMM(){
+	public static rawHMM make2StateHMM(String workingFolder){
 		double[][] p = { {1}, {0}};
 		double[][] t = { {0.5,0.45}, {0.3,0.67} };
 		double[][] o = { {0,1}, {0,1} };
@@ -41,11 +41,11 @@ public class rawHMM extends Environment{
 		Matrix E = new Matrix( e );
 		
 		int hSize = 100;
-		rawHMM h = new rawHMM("2_State_HMM",hSize,T,O,P,E);	
+		rawHMM h = new rawHMM(workingFolder, "2_State_HMM",hSize,T,O,P,E);	
 		return h;
 	}
 	
-	public static rawHMM makeLabyrinth(int loop1, int loop2 , double selfTransitionP, int hSize, double exit1p, double exit2p){
+	public static rawHMM makeLabyrinth(String workingFolder, int loop1, int loop2 , double selfTransitionP, int hSize, double exit1p, double exit2p){
 		boolean debug = false;
 		
 		int states = loop1 + loop2 - 1;
@@ -111,7 +111,7 @@ public class rawHMM extends Environment{
 		Matrix E = new Matrix( e );
 		
 		String d = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth";
-		rawHMM l = new rawHMM(d,hSize, T, O, P, E );
+		rawHMM l = new rawHMM(workingFolder, d, hSize, T, O, P, E );
 		
 		return l;
 		
