@@ -91,7 +91,7 @@ public class testEngine{
 	}
 
 	private void makePlots(){
-		//this.fixedSize_Plots();
+		this.fixedSize_Plots();
 		//System.out.println("Done Fixed Plots");
 		
 		//this.compareH_Hbar(5);

@@ -1,5 +1,8 @@
 package hmm_sim;
 
+import java.util.Arrays;
+import java.util.Random;
+
 public abstract class Environment {
 	
 	
@@ -8,6 +11,7 @@ public abstract class Environment {
 	private String workingFolder;
 	private String trueFile;
 	private int desiredHankelSize;
+	private double[] trueProbabilities;
 
 	public Environment(String workingFolder, String description, int desiredHankelSize){
 		this.workingFolder = workingFolder;
@@ -15,11 +19,57 @@ public abstract class Environment {
 		this.desiredHankelSize = desiredHankelSize;
 		this.empericalFolder = workingFolder + "Emperical_" + this.getDescription() + "/";
 		this.trueFile = workingFolder + "True_" + this.getDescription();
+		this.trueProbabilities = generateTrueProbabilities();
 	}
 		
-	public abstract double[] generateEmpericalProbabilities(int samples);
+	public abstract double[] generateTrueProbabilities();
 	
-	public abstract double[][] generateTrueProbabilities();
+	public double[] generateEmpericalProbabilities(int samples){
+		double[] p = new double[this.desiredHankelSize/2];
+		for (int i = 0; i < samples; i++) {
+			int d = this.generateDuration();
+			p[d] += 1;
+		}
+		
+		for (int i = 0; i < p.length; i++) {
+			p[i] /= samples;
+		}
+		return p;
+	}
+	
+	private int generateDuration(){ 						
+		int l = this.trueProbabilities.length; 
+		double[] cumulativeSum = new double[l];
+		
+		cumulativeSum[0] = this.trueProbabilities[0];
+		for (int i = 1; i<l;i++){
+			cumulativeSum[i] = cumulativeSum[i-1] + this.trueProbabilities[i];
+		}
+
+		Random random = new Random();
+		double r = random.nextDouble();
+		
+		int index = Arrays.binarySearch(cumulativeSum, r);
+
+		if (index >= 0){
+			return index;
+		}
+		else{
+			return -1*(index + 1);
+		}
+		
+	}
+
+	
+	private double[][] makeHankel(){
+		double[][] hankel = new double[this.desiredHankelSize][this.desiredHankelSize];
+		for (int i = 0; i < this.trueProbabilities.length; i++) {
+			for (int j = 0; j < this.trueProbabilities.length; j++) {
+				hankel[i][j] = this.trueProbabilities[i+j];
+			}
+		}
+		return hankel;
+	}
 	
 	public void generateData(int[] trajectorySizes, int repetitions){
 		FlowControl.createFolder(this.empericalFolder);
@@ -30,7 +80,7 @@ public abstract class Environment {
 	}
 	
 	public void printTrueProbabilities(){
-		double[][] t = this.generateTrueProbabilities();
+		double[][] t = this.makeHankel();
 		FlowControl.outputData( this.getTrueFile(), t);
 	}
 	
@@ -59,9 +109,6 @@ public abstract class Environment {
 	public int getDesiredHankelSize() {
 		return this.desiredHankelSize;
 	}
-	
-
-
 	
 	
 }

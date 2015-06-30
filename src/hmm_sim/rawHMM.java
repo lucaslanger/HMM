@@ -117,8 +117,7 @@ public class rawHMM extends Environment{
 		
 	}
 	
-	@Override
-	public double[] generateEmpericalProbabilities(int samples) {
+	/*public double[] generateEmpericalProbabilities(int samples) {
 		int[] counts = new int[2*this.getDesiredHankelSize()];
 		int  sequenceLength=0;
 		
@@ -136,10 +135,10 @@ public class rawHMM extends Environment{
 		}
 		
 		return probabilities;
-	}
+	}*/
 
 	@Override
-	public double[][] generateTrueProbabilities() {
+	public double[] generateTrueProbabilities() {
 		Matrix P_True, S_True;
 		
 		Matrix Asigma = this.O.times(this.T);
@@ -163,7 +162,7 @@ public class rawHMM extends Environment{
 		
 		Matrix h = P_True.times(S_True);	
 
-		return h.getArrayCopy();
+		return h.getArrayCopy()[0];
 	}
 	
 	public int generateSequenceStreakCount(){
