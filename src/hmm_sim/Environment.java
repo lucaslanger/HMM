@@ -11,21 +11,30 @@ public abstract class Environment {
 	private String workingFolder;
 	private String trueFile;
 	private int desiredHankelSize;
+	private int probabilityArraySize;
 	private double[] trueProbabilities;
 
 	public Environment(String workingFolder, String description, int desiredHankelSize){
 		this.workingFolder = workingFolder;
 		this.desciption = description;
 		this.desiredHankelSize = desiredHankelSize;
+		this.probabilityArraySize = 2*desiredHankelSize;
 		this.empericalFolder = workingFolder + "Emperical_" + this.getDescription() + "/";
 		this.trueFile = workingFolder + "True_" + this.getDescription();
-		this.trueProbabilities = generateTrueProbabilities();
 	}
 		
-	public abstract double[] generateTrueProbabilities();
+	public abstract double[] computeTrueProbabilities();
+	
+	public void initializeProbabilities(){
+		this.trueProbabilities  = this.computeTrueProbabilities();
+	}
+	
+	public double[] generateTrueProbabilities(){
+		return this.trueProbabilities;
+	}
 	
 	public double[] generateEmpericalProbabilities(int samples){
-		double[] p = new double[this.desiredHankelSize/2];
+		double[] p = new double[this.desiredHankelSize*2];
 		for (int i = 0; i < samples; i++) {
 			int d = this.generateDuration();
 			p[d] += 1;
@@ -59,12 +68,11 @@ public abstract class Environment {
 		}
 		
 	}
-
 	
 	private double[][] makeHankel(){
 		double[][] hankel = new double[this.desiredHankelSize][this.desiredHankelSize];
-		for (int i = 0; i < this.trueProbabilities.length; i++) {
-			for (int j = 0; j < this.trueProbabilities.length; j++) {
+		for (int i = 0; i < this.desiredHankelSize; i++) {
+			for (int j = 0; j < this.desiredHankelSize; j++) {
 				hankel[i][j] = this.trueProbabilities[i+j];
 			}
 		}
@@ -106,8 +114,12 @@ public abstract class Environment {
 		return this.trueFile;
 	}
 
-	public int getDesiredHankelSize() {
+	protected int getDesiredHankelSize() {
 		return this.desiredHankelSize;
+	}
+	
+	protected int getProbabilityArraySize() {
+		return this.probabilityArraySize;
 	}
 	
 	

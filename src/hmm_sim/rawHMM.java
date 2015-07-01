@@ -27,6 +27,8 @@ public class rawHMM extends Environment{
 		this.P = P;
 		this.E = E;
 		this.automatonStates = P.getArray()[0].length;
+		
+		super.initializeProbabilities();
 	}
 	
 	public static rawHMM make2StateHMM(String workingFolder){
@@ -136,34 +138,6 @@ public class rawHMM extends Environment{
 		
 		return probabilities;
 	}*/
-
-	@Override
-	public double[] generateTrueProbabilities() {
-		Matrix P_True, S_True;
-		
-		Matrix Asigma = this.O.times(this.T);
-		
-		double[][] p = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
-		double[][] s = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
-		
-		Matrix runningProductPrefixes = this.P;
-		Matrix runningProductSuffixes = this.E;
-
-		
-		for (int i = 0; i < s.length; i++){
-			p[i] = runningProductPrefixes.getArrayCopy()[0]; 
-			s[i] = runningProductSuffixes.transpose().getArrayCopy()[0];
-			runningProductPrefixes = runningProductPrefixes.times(Asigma);
-			runningProductSuffixes = Asigma.times(runningProductSuffixes);
-		}
-		
-		P_True = new Matrix(p);
-		S_True = new Matrix(s).transpose();
-		
-		Matrix h = P_True.times(S_True);	
-
-		return h.getArrayCopy()[0];
-	}
 	
 	public int generateSequenceStreakCount(){
 		
@@ -224,5 +198,34 @@ public class rawHMM extends Environment{
 	
 	public int getAutomatonStates(){
 		return this.automatonStates;
+	}
+
+	@Override
+	public double[] computeTrueProbabilities() {
+		Matrix P_True, S_True;
+		
+		Matrix Asigma = this.O.times(this.T);
+		
+		double[][] p = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
+		double[][] s = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
+		
+		Matrix runningProductPrefixes = this.P;
+		Matrix runningProductSuffixes = this.E;
+
+		
+		for (int i = 0; i < s.length; i++){
+			p[i] = runningProductPrefixes.getArrayCopy()[0]; 
+			s[i] = runningProductSuffixes.transpose().getArrayCopy()[0];
+			runningProductPrefixes = runningProductPrefixes.times(Asigma);
+			runningProductSuffixes = Asigma.times(runningProductSuffixes);
+		}
+		
+		P_True = new Matrix(p);
+		S_True = new Matrix(s).transpose();
+		
+		Matrix h = P_True.times(S_True);	
+
+		return h.getArrayCopy()[0];
+		
 	}
 }
