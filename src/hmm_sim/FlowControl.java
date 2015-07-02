@@ -16,22 +16,22 @@ public class FlowControl {
 		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000};
 		int repetitions = 100;
 		
-		/*
+		
 		String workingFolder = "testLargeLabyrinth/";
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, 400);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, 400);
 		l.generateData(trajectorySizes, repetitions);
-		*/
+		/*
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
 		
 		
 		FlowControl.createFolder(workingFolder);
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, 200, .6, .4);
 		r.generateData(trajectorySizes, repetitions);
-		
-		int basisSize = 70;
+		*/
+		int basisSize = 150;
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 5, 5 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 5 );
 		
 	}
 	

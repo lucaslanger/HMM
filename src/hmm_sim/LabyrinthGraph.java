@@ -1,5 +1,7 @@
 package hmm_sim;
 
+import java.util.Random;
+
 import Jama.Matrix;
 
 
@@ -39,6 +41,11 @@ public class LabyrinthGraph extends Environment{
 		Matrix p = new Matrix( new double[][]{ prior } ).transpose() ;
 		Matrix r = n.times( p );
 		
+		System.out.println("Probabilities:");
+		r.transpose().print(5, 5);
+		System.out.println("Sum");
+		System.out.println(LabyrinthGraph.sumArray(r.transpose().getArrayCopy()[0]));
+		System.out.println();
 		return r.transpose().getArrayCopy()[0];
 	}
 	
@@ -66,6 +73,13 @@ public class LabyrinthGraph extends Environment{
 		
 	}
 	
+	private static double sumArray(double[] da){
+		double s = 0;
+		for(double d: da){
+			s += d;
+		}
+		return s;
+	}
 
 	private static double[] shiftContribution(int transitionDuration, double transitionProbability, double[] durationProbabilities) {
 		double[] rDurations = new double[durationProbabilities.length];
@@ -83,6 +97,86 @@ public class LabyrinthGraph extends Environment{
 		return d3;
 	}
 	
+	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize ){
+		 int stretchFactor = 5;
+			
+		 int[][] graph = new int[][]{   
+				 {},
+				 {2,0},
+				 {3,0},
+				 {4,13},
+				 {5,13},
+				 {6,15},
+				 {0,7},
+				 {0,8,16},
+				 {9,16},
+				 {0,10},
+				 {0,11},
+				 {12,14},
+				 {0,13},
+				 {0,3,4},
+				 {11,15,16},
+				 {5,14},
+				 {7,8}
+		 };
+		 int[][] edges = new int[][]{
+				 {},
+				 {1,0},
+				 {1,0},
+				 {2,3},
+				 {1,2},
+				 {1,2},
+				 {0,1},
+				 {0,2,1},
+				 {1,1},
+				 {0,1},
+				 {0,3},
+				 {2,2},
+				 {0,1},
+				 {0,1,2},
+				 {1,1,2},
+				 {2,3},
+				 {2,1}
+		 };
+		 
+		 LabyrinthGraph.stretchEdges(edges, stretchFactor);
+
+		 double[][] transitions = new double[edges.length][];
+		 for (int i = 0; i < edges.length; i++) {
+			transitions[i] = LabyrinthGraph.equalVector(edges[i].length);
+								//LabyrinthGraph.randomVector(edges[i].length);
+		}
+		 
+		 
+		 double[] prior = new double[edges.length];
+		 prior[1] = 1;
+
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior);
+		 return l;
+	}
+	
+	private static double[] equalVector(int length) {
+		double[] d = new double[length];
+		for (int i = 0; i < d.length; i++) {
+			d[i] = 1.0/ d.length;
+		}
+		return d;
+	}
+
+	private static double[] randomVector(int length) {
+		double[] d = new double[length];
+		Random r = new Random();
+		double sum = 0;
+		for (int i = 0; i < d.length; i++) {
+			d[i] = r.nextDouble();
+			sum += d[i];
+		}
+		for (int i = 0; i < d.length; i++) {
+			d[i] /= sum;
+		}
+		return d;
+	}
+
 	public static LabyrinthGraph testLabyrinth(String workingFolder, int desiredHankelSize ){
 		 int stretchFactor = 5;
 		
@@ -101,7 +195,6 @@ public class LabyrinthGraph extends Environment{
 				 {0, 2}
 		 };
 		 
-		 System.out.println(edges[1][1]);
 		 LabyrinthGraph.stretchEdges(edges, stretchFactor);
 
 		 double[][] transitions = new double[][]{

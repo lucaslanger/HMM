@@ -66,6 +66,8 @@ public class testEngine{
 		System.out.println(this.upperModelSize);
 		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
+		this.checkTrueEngine();
+		
 		this.maxQuery = this.trueQueryEngine.getMaxPower(); //* base;
 		System.out.println("MaxQuery:");
 		System.out.println(this.maxQuery);
@@ -88,6 +90,17 @@ public class testEngine{
 		}
 	}
 	
+
+	private void checkTrueEngine() {
+		double[] r = new double[this.trueModel.getProbabilities().length];
+		for (int i = 0; i < r.length; i++) {
+			r[i] = Math.abs(this.trueModel.getProbabilities()[i] - this.trueQueryEngine.probabilityQuery(i, 1, this.base, true));
+		}
+		System.out.println();
+		System.out.println("True Queries v.s True Probabilities");
+		System.out.println(testEngine.sumArray(r));
+		System.out.println();
+	}
 
 	private static File[] getFiles(String folder) {
 		File dir = new File(folder);
