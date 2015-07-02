@@ -206,9 +206,9 @@ public class rawHMM extends Environment{
 		
 		Matrix Asigma = this.O.times(this.T);
 		
-		double[][] p = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
-		double[][] s = new double[2*this.getDesiredHankelSize()][this.getAutomatonStates()];
-		
+		double[][] p = new double[super.getProbabilityArraySize()][this.getAutomatonStates()];
+		double[][] s = new double[super.getProbabilityArraySize()][this.getAutomatonStates()];
+	
 		Matrix runningProductPrefixes = this.P;
 		Matrix runningProductSuffixes = this.E;
 
@@ -224,8 +224,8 @@ public class rawHMM extends Environment{
 		S_True = new Matrix(s).transpose();
 		
 		Matrix h = P_True.times(S_True);	
-
 		return h.getArrayCopy()[0];
 		
 	}
+
 }

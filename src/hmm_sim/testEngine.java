@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -35,6 +36,7 @@ public class testEngine{
 	private int upperModelSize;
 	private int numberOfModels;
 	private int digitsToPrint;
+	private int chosenModelIndex;
 	
 	public static void main(String[] args){}
 	
@@ -55,6 +57,7 @@ public class testEngine{
 		this.lowModelSize = this.trueModel.getRank()-rangeOnModelSize;
 		this.upperModelSize = this.trueModel.getRank()+rangeOnModelSize;
 		this.numberOfModels = this.upperModelSize - this.lowModelSize;
+		this.chosenModelIndex = 0 ;
 		System.out.println("True Learned Model Size");
 		System.out.println(this.trueModel.getRank());
 		System.out.println("Model Range:");
@@ -66,6 +69,8 @@ public class testEngine{
 		this.maxQuery = this.trueQueryEngine.getMaxPower(); //* base;
 		System.out.println("MaxQuery:");
 		System.out.println(this.maxQuery);
+		
+		
 		this.REPEATS = numberPerTrajectorySize;
 		
 		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
@@ -74,8 +79,13 @@ public class testEngine{
 		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(dataSizeForFixedPlots);
 		
 		this.digitsToPrint = 7;
-		this.makePlots();
-
+		
+		if (this.maxQuery < 100){
+			System.out.println("Something wrong with MAXQUERY");
+		}
+		else{
+			this.makePlots();
+		}
 	}
 	
 
@@ -97,7 +107,8 @@ public class testEngine{
 		//this.compareH_Hbar(5);
 		//System.out.println("Done H, Hbar comparisons");
 		
-		this.plotBaseDifferences( );
+		System.out.println("Chosen Model = " + Integer.toString(this.chosenModelIndex + this.lowModelSize));
+		this.plotBaseDifferences( this.chosenModelIndex );
 		//System.out.println("Done Base Differences");
 		
 		this.sizeOfModelPlots( );
@@ -143,6 +154,7 @@ public class testEngine{
 			return dataSizeToModels;
 		}
 		catch(Exception e){
+			System.out.println("Trouble making emperical models");
 			e.printStackTrace();
 			return null;
 		}
@@ -175,27 +187,27 @@ public class testEngine{
 		this.plotTrialsModelSize( this.fixedSizeQueryEngines );
 		
 		int modelSize = this.trueQueryEngine.getAsigmas()[0].getArrayCopy().length;	//Rank of True Model
-		QueryEngine[] fixedModelSizeEngine = this.fixedSizeQueryEngines[this.numberOfModels/2];
+		QueryEngine[] fixedModelSizeEngine = this.fixedSizeQueryEngines[this.chosenModelIndex];
 		
 		int maxAhead = 50, l = 5;
 		this.conditionalPlots(fixedModelSizeEngine, l, maxAhead);
 		
 		this.compareSquareSigmaError(fixedModelSizeEngine);
 			
-		this.compareASigmas(fixedModelSizeEngine);
+		if (this.chosenModelIndex + this.lowModelSize == this.trueModel.getRank()){
+			this.compareASigmas(fixedModelSizeEngine);
+		}
 		
 		this.compareQueryErrors(fixedModelSizeEngine);
 	}
 	
-	public void plotBaseDifferences(){
-		int modelSize = this.numberOfModels/2;		
+	public void plotBaseDifferences(int modelSize){		
 		
 		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] squareErrors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] variances = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] standardDeviations = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
-
 		
 		double error = 0, empProb, truProb;
 		int maxPower;
@@ -206,15 +218,17 @@ public class testEngine{
 				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; j++){
 					maxPower = (int) Math.pow(this.base, j);
 					dataSize[j][c] = this.keySetSorted[c];
-					
+	
 					double errorBefore = errors[j][c];
+					
 					for (int query = 0; query < this.maxQuery; query++){
 						truProb = this.trueQueryEngine.probabilityQuery(query, maxPower, this.base, true);
 						empProb = qe[i].probabilityQuery(query, maxPower, this.base, true);
 						error = this.computeError(truProb, empProb);
-						errors[j][c] += error;	
+						errors[j][c] += error;
 					}
 					squareErrors[j][c] += Math.pow(errors[j][c] - errorBefore,2);
+					
 				}
 			}
 		}
@@ -238,8 +252,40 @@ public class testEngine{
 		System.out.println("Standard Deviations");
 		new Matrix(standardDeviations).print(5, this.digitsToPrint);
 		
+		System.out.println("Differences");
+		new Matrix(testEngine.computeDifferenceWithNaive(errors)).print(5, this.digitsToPrint);
+		
+		double[][] datasize_differences = testEngine.makeDataSizeDifferences(dataSize);
+		testEngine.outputData(pltFolder + "Difference Plot_FIXEDMS", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(errors) );
+
+		
 	}
 	
+	private static double[][] makeDataSizeDifferences(double[][] dataSize) {
+		double[][] r = new double[dataSize.length-1][dataSize[0].length];
+		for (int i = 1; i < dataSize.length; i++) {
+			r[i-1] = dataSize[i];
+		}
+		return r;
+	}
+
+	private static double[][] computeDifferenceWithNaive(double[][] d){
+		double[][] r = new double[d.length-1][d[0].length];
+		double[] t = d[0];
+		for (int i = 1; i < d.length; i++) {
+			r[i-1] = testEngine.arrayDifference(t, d[i]);
+		}
+		return r;
+	}
+	
+	private static double[] arrayDifference(double[] t, double[] ds) {
+		double[] r = new double[t.length];
+		for (int i = 0; i < ds.length; i++) {
+			r[i] = t[i] - ds[i];
+		}
+		return r;
+	}
+
 	private double computeError(double truProb, double empProb) {
 		double error =  Math.abs( truProb - empProb );
 		return error;
@@ -574,6 +620,13 @@ public class testEngine{
 	
 		testEngine.outputData(pltFolder + "MinError_Dif_Bases", "X: log(Data) Y:log(Min_over_states)", "", xaxis, plotErrors);
 		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: log(Data) Y:ArgMin_over_states", "", xaxis, plotArgForErrors);
+		
+		new Matrix( testEngine.computeDifferenceWithNaive(plotErrors) ).print(5, this.digitsToPrint);
+		
+		double[][] datasize_differences = testEngine.makeDataSizeDifferences(xaxis);
+		
+		testEngine.outputData(pltFolder + "Difference Plot", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(plotErrors) );
+
 	}
 	
 	public void plotTrialsModelSize(QueryEngine[][] chosenSizeQueryEngine ){
@@ -600,8 +653,8 @@ public class testEngine{
 		xaxis = new Matrix(xaxis).transpose().getArrayCopy();
 		yaxis = new Matrix(yaxis).transpose().getArrayCopy();
 		testEngine.outputData(pltFolder + "Multiple_Trials_ModelError", "X: ModelSize Y:Error", "", xaxis, yaxis);
-		System.out.println("Fixed Size repeated trial plots");
-		new Matrix(yaxis).print(5, this.digitsToPrint);
+		//System.out.println("Fixed Size repeated trial plots");
+		//new Matrix(yaxis).print(5, this.digitsToPrint);
 	}
 	
 	

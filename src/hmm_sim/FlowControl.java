@@ -10,19 +10,28 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int loop1 = 4;
-		int loop2 = 3;
-		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
-		FlowControl.createFolder(workingFolder);
+		int loop1 = 19;
+		int loop2 = 12;
 		
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000};
-		int repetitions = 1000;
-		FlowControl.generateLabyrinthData(workingFolder, trajectorySizes, repetitions, loop1, loop2, 0.05, 200, .6, .4);
+		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000};
+		int repetitions = 100;
+		
+		/*
+		String workingFolder = "testLargeLabyrinth/";
+		FlowControl.createFolder(workingFolder);
+		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, 400);
+		l.generateData(trajectorySizes, repetitions);
+		*/
+		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
+		
+		
+		FlowControl.createFolder(workingFolder);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, 200, .6, .4);
+		r.generateData(trajectorySizes, repetitions);
 		
 		int basisSize = 70;
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
-		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 16000, basisSize, 2, 4, 1000);
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 10, 5 );
 		
 	}
 	
@@ -80,12 +89,7 @@ public class FlowControl {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void generateLabyrinthData(String workingFolder, int[] trajectorySizes, int repetitions, int loop1, int loop2, double selfTransitionP , int hSize, double exit1P, double exit2P){
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionP, hSize, exit1P, exit2P);
-		r.generateData(trajectorySizes, repetitions);
-	}
-	
+		
 	public static void outputData(String s, double[][] data){
 		ObjectOutputStream out;
 		try {

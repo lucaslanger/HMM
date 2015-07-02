@@ -28,16 +28,15 @@ public abstract class Environment {
 	public void initializeProbabilities(){
 		this.trueProbabilities  = this.computeTrueProbabilities();
 	}
-	
-	public double[] generateTrueProbabilities(){
-		return this.trueProbabilities;
-	}
+
 	
 	public double[] generateEmpericalProbabilities(int samples){
-		double[] p = new double[this.desiredHankelSize*2];
+		double[] p = new double[this.probabilityArraySize];
 		for (int i = 0; i < samples; i++) {
 			int d = this.generateDuration();
-			p[d] += 1;
+			if (d < p.length){
+				p[d] += 1;
+			}
 		}
 		
 		for (int i = 0; i < p.length; i++) {
@@ -69,13 +68,14 @@ public abstract class Environment {
 		
 	}
 	
-	private double[][] makeHankel(){
+	private double[][] makeHankel(double[] s){
 		double[][] hankel = new double[this.desiredHankelSize][this.desiredHankelSize];
 		for (int i = 0; i < this.desiredHankelSize; i++) {
 			for (int j = 0; j < this.desiredHankelSize; j++) {
-				hankel[i][j] = this.trueProbabilities[i+j];
+				hankel[i][j] = s[i+j];
 			}
 		}
+	
 		return hankel;
 	}
 	
@@ -88,8 +88,9 @@ public abstract class Environment {
 	}
 	
 	public void printTrueProbabilities(){
-		double[][] t = this.makeHankel();
-		FlowControl.outputData( this.getTrueFile(), t);
+		//double[][] t = this.makeHankel(this.trueProbabilities);
+		//FlowControl.outputData( this.getTrueFile(), t);
+		FlowControl.outputData( this.getTrueFile(), new double[][]{ this.trueProbabilities });
 	}
 	
 	public void printEmpericalTrials(int trajectoryLength, int repetitions){
@@ -113,7 +114,7 @@ public abstract class Environment {
 	public String getTrueFile(){
 		return this.trueFile;
 	}
-
+	
 	protected int getDesiredHankelSize() {
 		return this.desiredHankelSize;
 	}
