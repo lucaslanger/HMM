@@ -3,14 +3,14 @@ import sys
 import os
 import math
 
-colors = {}
-for i in range(10):
-	r = 55 + 20*i
-	g = 50
-	b = 55 + 20*i
-	colors[i] = '#%02x%02x%02x' % (r,g,b)
+colorsAnalysis = {}
+for i in range(6):
+	r = 0
+	g = 200
+	b = 50
+	colorsAnalysis[i] = '#%02x%02x%02x' % (r,g,b)
 
-colorsOther = {0:'g', 1:'r', 2:'b', 3:'y'}
+colorsTests = {0:'g', 1:'r', 2:'b', 3:'y'}
 
 def getDataFromFile(datafile):
 	with open(datafile) as f:
@@ -52,9 +52,9 @@ def getDataFromFile(datafile):
 		return (xaxisLabel,yaxisLabel,xvals,yvals)
 
 def takeLogOfArray(a):
-	return [Math.log(i) for i in a]
+	return [math.log(i) for i in a]
 
-def drawPlots(folder, names):	
+def drawPlots(folder, names, colors):	
 	l = len(names)
 
 	i = 1
@@ -73,7 +73,9 @@ def drawPlots(folder, names):
 				if name[2] == 'log':
 					ydata = takeLogOfArray(ydata)
 				
-plt.plot(d[2][j],d[3][j], colorsOther[j%4])
+				a=(1.0*(j%len(colors)))/len(colors)
+				print a
+				plt.plot(xdata,ydata, colors[j%len(colors)], alpha=a)
 
 			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
@@ -81,7 +83,8 @@ plt.plot(d[2][j],d[3][j], colorsOther[j%4])
 			plt.ylabel(d[1])
 			plt.title(n)
 			i += 1
-		except:
+		except Exception,e:
+			print str(e)
 			print "Trouble plotting ",n  
 
 	plt.subplots_adjust( hspace=0.88 )
@@ -89,11 +92,16 @@ plt.plot(d[2][j],d[3][j], colorsOther[j%4])
 	plt.show()
 
 datafile = sys.argv[1]
+t = sys.argv[2]
 
 temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
 initialTests = [(i,'normal','normal') for i in temp]
 
-modelBased = ['BaseComp_Area', 'log','log', ("MinError_Dif_Bases", 'log','log'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'log','log')]
+modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','log'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
 
-drawPlots(datafile, initialTests)
-drawPlots(datafile, modelBased)
+if t=='-v':	
+	drawPlots(datafile, initialTests, colorsTests)
+elif t=='-a':
+	drawPlots(datafile, modelBased, colorsAnalysis)
+else:
+	print "invalid format"

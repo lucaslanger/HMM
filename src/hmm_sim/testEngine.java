@@ -57,7 +57,7 @@ public class testEngine{
 		this.lowModelSize = this.trueModel.getRank()-rangeOnModelSize;
 		this.upperModelSize = this.trueModel.getRank()+rangeOnModelSize;
 		this.numberOfModels = this.upperModelSize - this.lowModelSize;
-		this.chosenModelIndex = 0 ;
+		this.chosenModelIndex = 0;
 		System.out.println("True Learned Model Size");
 		System.out.println(this.trueModel.getRank());
 		System.out.println("Model Range:");
@@ -621,6 +621,7 @@ public class testEngine{
 		testEngine.outputData(pltFolder + "MinError_Dif_Bases", "X: log(Data) Y:log(Min_over_states)", "", xaxis, plotErrors);
 		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: log(Data) Y:ArgMin_over_states", "", xaxis, plotArgForErrors);
 		
+		System.out.println("Differences:");
 		new Matrix( testEngine.computeDifferenceWithNaive(plotErrors) ).print(5, this.digitsToPrint);
 		
 		double[][] datasize_differences = testEngine.makeDataSizeDifferences(xaxis);

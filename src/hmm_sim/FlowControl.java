@@ -31,7 +31,7 @@ public class FlowControl {
 		
 		int basisSize = 70;
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 10, 5 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 5, 5 );
 		
 	}
 	
