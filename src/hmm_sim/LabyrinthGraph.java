@@ -97,13 +97,12 @@ public class LabyrinthGraph extends Environment{
 		return d3;
 	}
 	
-	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize ){
-		 int stretchFactor = 5;
+	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor ){
 			
 		 int[][] graph = new int[][]{   
 				 {},
-				 {2,0},
-				 {3,0},
+				 {0,2},
+				 {0,3},
 				 {4,13},
 				 {5,13},
 				 {6,15},
@@ -121,8 +120,8 @@ public class LabyrinthGraph extends Environment{
 		 };
 		 int[][] edges = new int[][]{
 				 {},
-				 {1,0},
-				 {1,0},
+				 {0,1},
+				 {0,1},
 				 {2,3},
 				 {1,2},
 				 {1,2},
@@ -149,7 +148,7 @@ public class LabyrinthGraph extends Environment{
 		 
 		 
 		 double[] prior = new double[edges.length];
-		 prior[1] = 1;
+		 prior[5] = 1;
 
 		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior);
 		 return l;
@@ -177,8 +176,7 @@ public class LabyrinthGraph extends Environment{
 		return d;
 	}
 
-	public static LabyrinthGraph testLabyrinth(String workingFolder, int desiredHankelSize ){
-		 int stretchFactor = 5;
+	public static LabyrinthGraph testLabyrinth(String workingFolder, int desiredHankelSize, int stretchFactor){
 		
 		 int[][] graph = new int[][]{   
 				 {},
@@ -224,7 +222,7 @@ public class LabyrinthGraph extends Environment{
 	public static void main(String[] args){
 		String wf = "test";
 		int d = 100;
-		LabyrinthGraph.testLabyrinth(wf,  d);
+		LabyrinthGraph.testLabyrinth(wf,  d, 1);
 	}
 	
 	

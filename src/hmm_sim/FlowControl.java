@@ -10,28 +10,45 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int loop1 = 19;
-		int loop2 = 12;
+		
+		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000,32000,64000};
+		int repetitions = 100;
+		
+		String workingFolder = "testLargeLabyrinth/";
+		int basisSize = 150;
+
+		
+		FlowControl.createFolder(workingFolder);
+		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, 500, 10);
+		l.generateData(trajectorySizes, repetitions);
+		
+		FlowControl.readDataIntoModels(workingFolder, basisSize);
+		System.out.println("Reading data into models");
+		
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 30 , 10 );
+		
+	}
+	
+	public static void testLoops(){
+		
+		int loop1 = 32;
+		int loop2 = 16;
+		int basisSize = 150;
+
 		
 		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000};
 		int repetitions = 100;
-		
-		
-		String workingFolder = "testLargeLabyrinth/";
-		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, 400);
-		l.generateData(trajectorySizes, repetitions);
-		/*
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
 		
 		
 		FlowControl.createFolder(workingFolder);
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, 200, .6, .4);
 		r.generateData(trajectorySizes, repetitions);
-		*/
-		int basisSize = 150;
+		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 5 );
+		System.out.println("Reading data into models");
+		
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 20 , 10 );
 		
 	}
 	

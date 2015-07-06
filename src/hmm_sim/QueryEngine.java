@@ -159,8 +159,6 @@ public class QueryEngine {
 			int exponent = (int)( Math.log(p)/Math.log(base));
 			
 			if (forward){
-				//System.out.println(p);
-				//System.out.println(d.keySet());
 				r = r.times( this.Asigmas[exponent] );
 				
 			}
@@ -198,6 +196,45 @@ public class QueryEngine {
 		}
 		
 		return r;
+		
+	}
+
+	public double debugProbabilityQuery(int power, int maxPower, int base, boolean forward){
+		int p = maxPower;
+		Matrix r;
+		if (forward){
+			r = this.a0;
+		}
+		else{
+			r = ainf;
+		}
+		
+		System.out.println("Exponent Ordering");
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+			int exponent = (int)( Math.log(p)/Math.log(base));
+			
+			if (forward){
+				System.out.println(exponent);
+
+				r = r.times( this.Asigmas[exponent] );
+				
+			}
+			else{
+				r = this.Asigmas[exponent].times(r);
+			}
+			power -= p;
+		}
+		if (forward){
+			r = r.times(this.ainf);
+		}
+		else{
+			r = this.a0.times(r);
+		}
+		return r.get(0,0);
 		
 	}
 	

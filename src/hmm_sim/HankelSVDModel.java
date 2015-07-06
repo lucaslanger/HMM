@@ -3,6 +3,7 @@ package hmm_sim;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import Jama.Matrix;
@@ -73,10 +74,13 @@ public class HankelSVDModel implements Serializable{
 				
 		int freq;
 		Matrix h;
+		//System.out.println("Building queryEngine");
 		for (int l = 0; l <= maxExponent; l++) {
 			freq = (int) Math.pow(base,l);
 			try {
 				h = this.buildH(freq, freq+basisSize);
+				//System.out.println("Printing out Hsigma");
+				//System.out.println( Arrays.toString(h.getArrayCopy()[0]) );
 				H_Matrices[l] = h;
 			} catch (Exception e) {
 				System.out.println("Problem Building Model when creating Hankel");
@@ -87,9 +91,10 @@ public class HankelSVDModel implements Serializable{
 		
 		Matrix Asigmas[] = new Matrix[maxExponent+1];
 		Matrix t;
+
 		for (int i = 0; i <= maxExponent; i++) {
 			t = pinv.times(H_Matrices[i]).times( sinv );
-			Asigmas[i] = t;
+			Asigmas[i] = pinv.times(H_Matrices[i]).times( sinv );
 		}
 		
 		double[][] h_L = new double[basisSize][1];

@@ -37,10 +37,12 @@ public class testEngine{
 	private int numberOfModels;
 	private int digitsToPrint;
 	private int chosenModelIndex;
+	private int fixedModelSize;
+	private int dataSizeForFixedPlots;
 	
 	public static void main(String[] args){}
 	
-	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int rangeOnModelSize, int numberPerTrajectorySize){
+	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int rangeOnModelSize, int fixedModelSize, int numberPerTrajectorySize){
 		this.fileNameOfEmpericalModels = workingFolder + empModels;
 		this.pltFolder = workingFolder + "Plotting_" + empModels + "/";
 		testEngine.createFolder(this.pltFolder);
@@ -57,7 +59,10 @@ public class testEngine{
 		this.lowModelSize = this.trueModel.getRank()-rangeOnModelSize;
 		this.upperModelSize = this.trueModel.getRank()+rangeOnModelSize;
 		this.numberOfModels = this.upperModelSize - this.lowModelSize;
-		this.chosenModelIndex = 0;
+		this.chosenModelIndex = this.numberOfModels/2;
+		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
+		
+		this.fixedModelSize = fixedModelSize;
 		System.out.println("True Learned Model Size");
 		System.out.println(this.trueModel.getRank());
 		System.out.println("Model Range:");
@@ -68,18 +73,21 @@ public class testEngine{
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
 		this.checkTrueEngine();
 		
-		this.maxQuery = this.trueQueryEngine.getMaxPower(); //* base;
+		this.maxQuery = this.trueQueryEngine.getMaxPower()*base; //* base;
 		System.out.println("MaxQuery:");
 		System.out.println(this.maxQuery);
+		double capturedProbability = 0;
+		for (int i = 0; i <= this.maxQuery; i++) {
+			 capturedProbability += this.trueModel.getProbabilities()[i];
+		}
+		System.out.println("Captured Probability: ");
+		System.out.println(capturedProbability);
 		
 		
 		this.REPEATS = numberPerTrajectorySize;
 		
-		this.anySizeQueryEngines = this.getAllSizesQueryEngines(numberPerTrajectorySize);
 		this.makeKeySetSorted();
-				
-		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(dataSizeForFixedPlots);
-		
+						
 		this.digitsToPrint = 7;
 		
 		if (this.maxQuery < 100){
@@ -92,14 +100,24 @@ public class testEngine{
 	
 
 	private void checkTrueEngine() {
-		double[] r = new double[this.trueModel.getProbabilities().length];
-		for (int i = 0; i < r.length; i++) {
-			r[i] = Math.abs(this.trueModel.getProbabilities()[i] - this.trueQueryEngine.probabilityQuery(i, 1, this.base, true));
+		
+		this.trueQueryEngine.debugProbabilityQuery(100, 64, this.base, true);
+		
+		//Make sure that sum is 1 regardless of maxpower
+		System.out.println();
+
+		for (int i = 0; i <= this.trueQueryEngine.getMaxExponent(); i++) {
+			int pow = (int) Math.pow(this.base,i);
+		
+			double[] r = new double[this.trueModel.getProbabilities().length];
+			for (int i1 = 0; i1 < r.length; i1++) {
+				r[i1] = Math.abs(this.trueModel.getProbabilities()[i1] - this.trueQueryEngine.probabilityQuery(i1, pow, this.base, true));
+			}
+			System.out.println("True Queries v.s True Probabilities maxpower: " + Integer.toString(pow));
+			System.out.println(testEngine.sumArray(r));
 		}
 		System.out.println();
-		System.out.println("True Queries v.s True Probabilities");
-		System.out.println(testEngine.sumArray(r));
-		System.out.println();
+
 	}
 
 	private static File[] getFiles(String folder) {
@@ -114,29 +132,46 @@ public class testEngine{
 	}
 
 	private void makePlots(){
-		this.fixedSize_Plots();
-		//System.out.println("Done Fixed Plots");
 		
+		
+		System.out.println("Chosen Model = " + Integer.toString(this.fixedModelSize));
+		this.plotBaseDifferences(  );
+		//System.out.println("Done Base Differences");
+		
+		//this.anySizeQueryEngines = this.getAllSizesQueryEngines(this.REPEATS);
+		//this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(this.dataSizeForFixedPlots);
+		//this.fixedSize_Plots();
+		//System.out.println("Done Fixed Plots");
+				
 		//this.compareH_Hbar(5);
 		//System.out.println("Done H, Hbar comparisons");
 		
-		System.out.println("Chosen Model = " + Integer.toString(this.chosenModelIndex + this.lowModelSize));
-		this.plotBaseDifferences( this.chosenModelIndex );
-		//System.out.println("Done Base Differences");
-		
-		this.sizeOfModelPlots( );
+		//this.sizeOfModelPlots( );
 		//System.out.println("Done Model Differences");
 		
 	}
 	
 	private void makeKeySetSorted(){
+		int[] kss = new int[this.fileNames.length];
+		int i=0;
+		for (String f: this.fileNames) {
+			int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(f);
+			kss[i] = trajectoryLength;
+			i++;
+		}
+		this.keySetSorted = kss;
+		/*
+		 * 		
 		this.keySetSorted = new int[this.anySizeQueryEngines.size()];
+
 		Set<Integer> ks = this.anySizeQueryEngines.keySet();
 		int c = 0;
 		for (Integer integer : ks) {
 			this.keySetSorted[c] = (int) integer;
 			c++;
 		} 
+		
+		*/
 		Arrays.sort(this.keySetSorted);
 	}
 	
@@ -172,6 +207,36 @@ public class testEngine{
 			return null;
 		}
 		
+	}
+	
+	public HashMap<Integer, QueryEngine[]> getSpecificModelSizeQueryEngines(int numberOfTrajectoriesFromEachSize, int modelSize){
+		HashMap<Integer, QueryEngine[]> dataSizeToModels = new HashMap<Integer, QueryEngine[]>();
+		QueryEngine[] enginesTrajectorySize = new QueryEngine[numberOfTrajectoriesFromEachSize];
+		QueryEngine q;
+
+		try{
+			for (String f: this.fileNames) {
+				enginesTrajectorySize = new QueryEngine[numberOfTrajectoriesFromEachSize];	//Weird bug
+				String file = this.fileNameOfEmpericalModels + f;
+				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
+				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
+				HankelSVDModel h;
+				
+				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
+					h = (HankelSVDModel) ois.readObject();
+					q = h.buildHankelBasedModel(this.basisSize, this.base, modelSize);
+					enginesTrajectorySize[i] = q;
+				}
+				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);
+				ois.close();
+			}
+			return dataSizeToModels;
+		}
+		catch(Exception e){
+			System.out.println("Trouble making emperical models - fixed modelsize");
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public HankelSVDModel readTrueModel(String f){
@@ -214,7 +279,9 @@ public class testEngine{
 		this.compareQueryErrors(fixedModelSizeEngine);
 	}
 	
-	public void plotBaseDifferences(int modelSize){		
+	public void plotBaseDifferences(){	
+		
+		HashMap<Integer, QueryEngine[]> fixedModelQE = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
 		
 		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
@@ -226,7 +293,7 @@ public class testEngine{
 		int maxPower;
 		
 		for (int c = 0; c < this.keySetSorted.length; c++) {
-			QueryEngine[] qe = this.anySizeQueryEngines.get(this.keySetSorted[c])[modelSize];
+			QueryEngine[] qe = fixedModelQE.get(this.keySetSorted[c]);
 			for (int i = 0; i < this.REPEATS; i++){
 				for (int j = 0; j <= this.trueQueryEngine.getMaxExponent() ; j++){
 					maxPower = (int) Math.pow(this.base, j);
