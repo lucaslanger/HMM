@@ -123,5 +123,9 @@ public abstract class Environment {
 		return this.probabilityArraySize;
 	}
 	
+	public double[] getTrueProbabilities(){
+		return this.trueProbabilities;
+	}
+	
 	
 }

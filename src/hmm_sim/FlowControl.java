@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 
 public class FlowControl {
 	
@@ -52,13 +53,13 @@ public class FlowControl {
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
 		/*
 		FlowControl.createFolder(workingFolder);
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, hSize, .6, .4);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.00, hSize, .6, .4);
 		r.generateData(trajectorySizes, repetitions);
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 		System.out.println("Reading data into models");
 		*/
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 32, 100 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 32, 5 );
 	}
 	
 	public FlowControl(){

@@ -40,7 +40,6 @@ public class testEngine{
 	private int upperModelSize;
 	private int numberOfModels;
 	private int digitsToPrint;
-	private int chosenModelIndex;
 	private int fixedModelSize;
 	private int dataSizeForFixedPlots;
 	
@@ -72,7 +71,6 @@ public class testEngine{
 		this.lowModelSize = this.trueModel.getRank()-rangeOnModelSize;
 		this.upperModelSize = this.trueModel.getRank()+rangeOnModelSize;
 		this.numberOfModels = this.upperModelSize - this.lowModelSize;
-		this.chosenModelIndex = this.numberOfModels/2;
 		this.fixedModelSize = fixedModelSize;
 		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
@@ -107,11 +105,13 @@ public class testEngine{
 		}
 		System.out.println("Captured Probability: ");
 		System.out.println(capturedProbability);
-		System.out.println("");
-
+		System.out.println();
+		System.out.println("Probabilities:");
+		System.out.println( Arrays.toString(this.trueModel.getProbabilities()) );
+		System.out.println();
 	
 		this.fixedModelQE = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
-		this.checkEngine(fixedModelQE.get(fixedSizeQueryEngines)[0], "FixedModelSize");
+		this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize");
 
 		this.trueRankQueryEngines = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 		
