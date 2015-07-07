@@ -10,46 +10,55 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000,32000,64000};
-		int repetitions = 100;
-		
-		String workingFolder = "testLargeLabyrinth/";
-		int basisSize = 150;
-
-		
-		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, 500, 10);
-		l.generateData(trajectorySizes, repetitions);
-		
-		FlowControl.readDataIntoModels(workingFolder, basisSize);
-		System.out.println("Reading data into models");
-		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 30 , 10 );
-		
+		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 256000;
+		int base = 2;
+	
+		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 	}
 	
-	public static void testLoops(){
+	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
 		
-		int loop1 = 32;
-		int loop2 = 16;
+		int repetitions = 100;
+		int stretchFactor = 10;
+		int hSize = 500;
 		int basisSize = 150;
 
-		
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000};
-		int repetitions = 100;
-		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
-		
-		
+		String workingFolder = "testLargeLabyrinth/";
+	
+		System.out.println("Generating data:");
+		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, 200, .6, .4);
+		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
+		l.generateData(trajectorySizes, repetitions);
+		System.out.println("");
+		
+		System.out.println("Reading data into models");
+		FlowControl.readDataIntoModels(workingFolder, basisSize);
+		System.out.println("Done loading models");
+		System.out.println("");
+		
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, 1, 30 , 5 );
+	}
+	
+	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
+		int repetitions = 100;
+
+		int loop1 = 32;
+		int loop2 = 16;
+		int hSize = 400;
+		int basisSize = 150;
+		
+		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
+		/*
+		FlowControl.createFolder(workingFolder);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.05, hSize, .6, .4);
 		r.generateData(trajectorySizes, repetitions);
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 		System.out.println("Reading data into models");
-		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, 1000, basisSize, 2, 1, 20 , 10 );
-		
+		*/
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 32, 100 );
 	}
 	
 	public FlowControl(){

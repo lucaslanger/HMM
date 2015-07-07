@@ -43,7 +43,7 @@ public class rawHMM extends Environment{
 		Matrix E = new Matrix( e );
 		
 		int hSize = 100;
-		rawHMM h = new rawHMM(workingFolder, "2_State_HMM",hSize,T,O,P,E);	
+		rawHMM h = new rawHMM(workingFolder,"2_State_HMM",hSize,T,O,P,E);	
 		return h;
 	}
 	

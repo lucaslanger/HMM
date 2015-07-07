@@ -54,7 +54,7 @@ def getDataFromFile(datafile):
 def takeLogOfArray(a):
 	return [math.log(i) for i in a]
 
-def drawPlots(folder, names, colors):	
+def drawPlots(folder, names, colors, alpha_scaling):	
 	l = len(names)
 
 	i = 1
@@ -72,11 +72,13 @@ def drawPlots(folder, names, colors):
 					xdata = takeLogOfArray(xdata)
 				if name[2] == 'log':
 					ydata = takeLogOfArray(ydata)
-				
-				a=(1.0*(j%len(colors)))/len(colors)
+				if alpha_scaling:
+					a=(1.0*(j%len(colors)))/len(colors)
+				else:
+					a = 1.0				
 				plt.plot(xdata,ydata, colors[j%len(colors)], alpha=a)
 
-			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+			#plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
 			plt.xlabel(d[0])
 			plt.ylabel(d[1])
@@ -96,11 +98,11 @@ t = sys.argv[2]
 temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
 initialTests = [(i,'normal','normal') for i in temp]
 
-modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','log'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
+modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
 
 if t=='-v':	
-	drawPlots(datafile, initialTests, colorsTests)
+	drawPlots(datafile, initialTests, colorsTests, False)
 elif t=='-a':
-	drawPlots(datafile, modelBased, colorsAnalysis)
+	drawPlots(datafile, modelBased, colorsAnalysis, True)
 else:
 	print "invalid format"

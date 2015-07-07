@@ -201,6 +201,7 @@ public class QueryEngine {
 
 	public double debugProbabilityQuery(int power, int maxPower, int base, boolean forward){
 		int p = maxPower;
+		
 		Matrix r;
 		if (forward){
 			r = this.a0;
@@ -218,8 +219,8 @@ public class QueryEngine {
 			int exponent = (int)( Math.log(p)/Math.log(base));
 			
 			if (forward){
-				System.out.println(exponent);
-
+				System.out.print(exponent);
+				System.out.print(", ");
 				r = r.times( this.Asigmas[exponent] );
 				
 			}
@@ -234,6 +235,9 @@ public class QueryEngine {
 		else{
 			r = this.a0.times(r);
 		}
+		
+		System.out.println("");
+		
 		return r.get(0,0);
 		
 	}

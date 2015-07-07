@@ -199,6 +199,10 @@ public class HankelSVDModel implements Serializable{
 		return this.svd.getS().rank();
 	}
 	
+	public Matrix getHankel(){
+		return this.svd.getU().times(this.svd.getS()).times(this.svd.getV().transpose());
+	}
+	
 	private synchronized void writeObject(java.io.ObjectOutputStream stream) throws java.io.IOException{
 		stream.writeInt(this.probabilities.length);
 		for (int i=0; i<this.probabilities.length; i++){
