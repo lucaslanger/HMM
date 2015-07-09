@@ -210,7 +210,7 @@ public class QueryEngine {
 			r = ainf;
 		}
 		
-		System.out.println("Exponent Ordering");
+		System.out.print("Exponent Ordering: ");
 		while(power != 0){
 			
 			while (p > power){
@@ -218,11 +218,10 @@ public class QueryEngine {
 			}
 			int exponent = (int)( Math.log(p)/Math.log(base));
 			
-			if (forward){
-				System.out.print(exponent);
-				System.out.print(", ");
-				r = r.times( this.Asigmas[exponent] );
-				
+			System.out.print(p);
+			System.out.print(", ");
+			if (forward){	
+				r = r.times( this.Asigmas[exponent] );	
 			}
 			else{
 				r = this.Asigmas[exponent].times(r);

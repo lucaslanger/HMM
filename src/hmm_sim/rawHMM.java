@@ -63,7 +63,7 @@ public class rawHMM extends Environment{
 		changeTo.put(loop2 + loop1/2 - 1, new int[]{loop1/2});
 
 		double[][] p = new double[states][1];
-		p[0][0] = 1;
+		p[loop1/2][0] = 1;
 		double[][] t = new double[states][states];
 		double[][] e = new double[states][1];
 		int[] v;

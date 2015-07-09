@@ -123,13 +123,8 @@ public class testEngine{
 
 	private void checkEngine(QueryEngine q, String id, int topCount) {
 		System.out.println("Inspecting the following engine: " + id);
-		
-		q.debugProbabilityQuery(100, q.getMaxPower()/this.base, this.base, true);
-		
-		//Make sure that sum is 1 regardless of maxpower
 		System.out.println();
 
-	
 		for (int i = 0; i <= q.getMaxExponent(); i++) {
 			int pow = (int) Math.pow(this.base,i);
 		
@@ -137,10 +132,11 @@ public class testEngine{
 			for (int i1 = 0; i1 < r.length; i1++) {
 				r[i1] = Math.abs(this.trueModel.getProbabilities()[i1] - q.probabilityQuery(i1, pow, this.base, true));
 			}
-			System.out.println("Queries v.s True Probabilities maxpower: " + Integer.toString(pow));
+			System.out.print ("Qerrors maxpower: " + Integer.toString(pow) + ":  ");
 			System.out.print( Arrays.toString(getTopErrorIndices(r, topCount)[0]) );
 			System.out.print(", ");
 			System.out.println( Arrays.toString(getTopErrorIndices(r, topCount)[1]) );
+			q.debugProbabilityQuery(100, pow, this.base, true);
 
 			System.out.println(testEngine.sumArray(r));
 		}
@@ -880,14 +876,16 @@ public class testEngine{
 	
 		double[] top = new double[topcount];
 		double[] topvalues = new double[topcount];
-		for (int i = 0; i < top.length; i++) {
-			int c=0;
-			while(c<val_to_index.get(d[i]).size() && i < top.length){
-				top[i] = val_to_index.get(d[i]).get(c);
-				topvalues[i] = d[i];
-				i++;
-				c++;
+		
+		int i = 0;
+		int t = 0;
+		while(t < top.length){
+			while(t-i<val_to_index.get(d[i]).size() && t < top.length){
+				top[t] = val_to_index.get(d[i]).get(t-i);
+				topvalues[t] = d[i];
+				t++;
 			}
+			i++;
 		}
 		return new double[][]{ top, topvalues };
 		

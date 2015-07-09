@@ -34,6 +34,7 @@ public class FlowControl {
 		FlowControl.createFolder(workingFolder);
 		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
 		l.generateData(trajectorySizes, repetitions);
+		
 		System.out.println("");
 		
 		System.out.println("Reading data into models");
@@ -54,12 +55,18 @@ public class FlowControl {
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
 		
+		System.out.println("Generating data:");
+		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.00, hSize, .6, .4);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.00, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions);
 		
-		FlowControl.readDataIntoModels(workingFolder, basisSize);
+		System.out.println("");
+		
 		System.out.println("Reading data into models");
+		FlowControl.readDataIntoModels(workingFolder, basisSize);
+		System.out.println("Done loading models");
+		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 35, 5 );
 	}
