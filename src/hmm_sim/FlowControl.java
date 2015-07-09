@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class FlowControl {
 	
@@ -43,23 +45,23 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 100;
+		int repetitions = 5;
 
-		int loop1 = 32;
+		int loop1 = 64;
 		int loop2 = 16;
 		int hSize = 400;
 		int basisSize = 150;
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
-		/*
+		
 		FlowControl.createFolder(workingFolder);
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.00, hSize, .6, .4);
 		r.generateData(trajectorySizes, repetitions);
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 		System.out.println("Reading data into models");
-		*/
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 32, 5 );
+		
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 35, 5 );
 	}
 	
 	public FlowControl(){
@@ -145,5 +147,6 @@ public class FlowControl {
 			return null;
 		}
 	}
+
 
 }

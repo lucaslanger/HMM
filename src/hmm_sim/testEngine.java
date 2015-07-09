@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import Jama.Matrix;
@@ -74,7 +76,7 @@ public class testEngine{
 		this.fixedModelSize = fixedModelSize;
 		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
-		this.checkEngine(this.trueQueryEngine, "True Engine");
+		//this.checkEngine(this.trueQueryEngine, "True Engine");
 		
 		this.maxQuery = this.trueQueryEngine.getMaxPower()*base; 
 		
@@ -111,7 +113,7 @@ public class testEngine{
 		System.out.println();
 	
 		this.fixedModelQE = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
-		this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize");
+		this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize", 10);
 
 		this.trueRankQueryEngines = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 		
@@ -119,7 +121,7 @@ public class testEngine{
 	}
 	
 
-	private void checkEngine(QueryEngine q, String id) {
+	private void checkEngine(QueryEngine q, String id, int topCount) {
 		System.out.println("Inspecting the following engine: " + id);
 		
 		q.debugProbabilityQuery(100, q.getMaxPower()/this.base, this.base, true);
@@ -127,6 +129,7 @@ public class testEngine{
 		//Make sure that sum is 1 regardless of maxpower
 		System.out.println();
 
+	
 		for (int i = 0; i <= q.getMaxExponent(); i++) {
 			int pow = (int) Math.pow(this.base,i);
 		
@@ -135,6 +138,10 @@ public class testEngine{
 				r[i1] = Math.abs(this.trueModel.getProbabilities()[i1] - q.probabilityQuery(i1, pow, this.base, true));
 			}
 			System.out.println("Queries v.s True Probabilities maxpower: " + Integer.toString(pow));
+			System.out.print( Arrays.toString(getTopErrorIndices(r, topCount)[0]) );
+			System.out.print(", ");
+			System.out.println( Arrays.toString(getTopErrorIndices(r, topCount)[1]) );
+
 			System.out.println(testEngine.sumArray(r));
 		}
 		System.out.println();
@@ -169,6 +176,25 @@ public class testEngine{
 		//this.sizeOfModelPlots( );
 		//System.out.println("Done Model Differences");
 		
+	}
+	
+	public void fixedSize_Plots(){		
+		
+		this.plotTrialsModelSize( this.fixedSizeQueryEngines );
+
+		QueryEngine[] fixedModelSizeEngine = this.fixedModelQE.get( this.dataSizeForFixedPlots );
+		
+		int maxAhead = this.maxQuery;
+		int l = 5;
+		int maxbase = 1;
+		this.conditionalPlots(fixedModelSizeEngine, l, maxAhead, maxbase);
+		
+		this.compareSquareSigmaError(fixedModelSizeEngine);
+			
+		this.compareASigmas();
+		
+		
+		this.compareQueryErrors(fixedModelSizeEngine);
 	}
 	
 	private void makeKeySetSorted(){
@@ -273,24 +299,6 @@ public class testEngine{
 		
 	}
 	
-	public void fixedSize_Plots(){		
-		
-		this.plotTrialsModelSize( this.fixedSizeQueryEngines );
-
-		QueryEngine[] fixedModelSizeEngine = this.fixedModelQE.get( this.dataSizeForFixedPlots );
-		
-		int maxAhead = this.maxQuery;
-		int l = 5;
-		this.conditionalPlots(fixedModelSizeEngine, l, maxAhead);
-		
-		this.compareSquareSigmaError(fixedModelSizeEngine);
-			
-		this.compareASigmas();
-		
-		
-		this.compareQueryErrors(fixedModelSizeEngine);
-	}
-	
 	public void plotBaseDifferences(){			
 		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
@@ -380,12 +388,12 @@ public class testEngine{
 		return error;
 	}
 
-	public void conditionalPlots(QueryEngine[] chosenSizeQueryEngine, int maxK, int maxAhead){
+	public void conditionalPlots(QueryEngine[] chosenSizeQueryEngine, int maxK, int maxAhead, int maxbase){
 				
 		double[][] xaxis = new double[maxK][maxAhead];
 		double[][] queryArrayTru = new double[maxK][maxAhead];
 		for (int i = 0; i < maxK; i++) {
-			queryArrayTru[i] = this.conditionalQuery(this.trueQueryEngine ,i, maxAhead);
+			queryArrayTru[i] = this.conditionalQuery(this.trueQueryEngine ,i, maxAhead, maxbase);
 			xaxis[i] = testEngine.incArray(maxAhead);
 		}
 		Matrix truPredictions = new Matrix(queryArrayTru);
@@ -397,7 +405,7 @@ public class testEngine{
 		
 		for (int i = 0; i < this.REPEATS; i++) {
 			for (int j = 0; j < maxK; j++) {
-				queryArrayEmp[j] = this.conditionalQuery(chosenSizeQueryEngine[i], j, maxAhead);
+				queryArrayEmp[j] = this.conditionalQuery(chosenSizeQueryEngine[i], j, maxAhead, maxbase);
 			}
 			qE = new Matrix(queryArrayEmp);
 			if (queryEmpAvg != null){
@@ -500,7 +508,7 @@ public class testEngine{
 	}
 	
 	public void compareSquareSigmaError(QueryEngine[] chosenSizeQueryEngine){
-		
+	
 		int maxExpSquareComparison = this.trueQueryEngine.getMaxExponent()-1;
 		
 		double[][] sigmaNumber = new double[1][maxExpSquareComparison];
@@ -509,10 +517,10 @@ public class testEngine{
 		Matrix temp1, temp2, r;
 		int pow;
 		
-		for (int i = 0; i < chosenSizeQueryEngine.length; i++) {
+		for (int i = 0; i < this.REPEATS; i++) {
 			Matrix[] experimentalSigmas = chosenSizeQueryEngine[i].getAsigmas();
 			for (int j = 0; j < maxExpSquareComparison; j++) {
-				pow = (int) Math.pow(2, j);
+				pow = (int) Math.pow(this.base, j);
 				temp1 = QueryEngine.matrixPower( experimentalSigmas[j] , this.base);
 				temp2 = experimentalSigmas[j+1];
 				r = temp2.minus( temp1 );	
@@ -616,7 +624,7 @@ public class testEngine{
 		
 	}
 	
-	public double[] conditionalQuery(QueryEngine q, int k, int maxAhead){
+	public double[] conditionalQuery(QueryEngine q, int k, int maxAhead, int maxbase ){
 		int maxpow = (int) Math.pow(this.base,q.getMaxExponent());
 		Matrix alpha_k = q.alphaKQuery( k, maxpow, 2);
 		
@@ -627,7 +635,7 @@ public class testEngine{
 		double jointProb;
 		
 		double[] pA = new double[maxAhead];
-		int maxbase = 1;
+	
 		for (int i = 0; i < pA.length; i++) {
 			jointProb = q.probabilityQuery( i+k, maxbase ,2, true);
 			pA[i] = jointProb/normalizer;			
@@ -846,6 +854,44 @@ public class testEngine{
 	
 	private static int getTrajectoryLengthFromFileName(String filename){
 		return Integer.parseInt(filename.split(":")[1]);
+	}
+	
+	
+	public static double[][] getTopErrorIndices(double[] r, int topcount){
+		double[] d = new double[r.length];
+		for (int i = 0; i <r.length; i++) {
+			d[i] = r[i];
+		}
+		HashMap<Double, ArrayList<Integer>> val_to_index = new HashMap<Double, ArrayList<Integer>>();
+		for (int i = 0; i < d.length; i++) {
+			ArrayList<Integer> v = val_to_index.get(d[i]);
+			if (v == null){
+				v = new ArrayList<Integer>();
+			}
+			v.add(i);
+			val_to_index.put(d[i], v);
+		}
+		Arrays.sort(d);
+		double[] reverse_d = new double[d.length];
+		for (int i = 0; i < d.length; i++) {
+			reverse_d[d.length-1-i] = d[i];
+		}
+		d = reverse_d;
+	
+		double[] top = new double[topcount];
+		double[] topvalues = new double[topcount];
+		for (int i = 0; i < top.length; i++) {
+			int c=0;
+			while(c<val_to_index.get(d[i]).size() && i < top.length){
+				top[i] = val_to_index.get(d[i]).get(c);
+				topvalues[i] = d[i];
+				i++;
+				c++;
+			}
+		}
+		return new double[][]{ top, topvalues };
+		
+		
 	}
 
 }
