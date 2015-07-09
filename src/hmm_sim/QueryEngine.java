@@ -2,6 +2,8 @@ package hmm_sim;
 
 import java.util.HashMap;
 
+import javax.management.Query;
+
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
@@ -142,6 +144,28 @@ public class QueryEngine {
 		return r;
 	}
 	
+	
+	public Matrix alphaKQuery(int power, int maxPower, int base){	//Always forward for now
+		
+		int p = maxPower;
+		
+		Matrix r = this.a0;
+		while(power != 0){
+			
+			while (p > power){
+				p = p/base;
+			}
+		
+			int exponent = (int)( Math.log(p)/Math.log(base));
+		
+			r = r.times( this.Asigmas[ exponent ] );
+			power -= p;
+		}
+		
+		return r;
+		
+	}
+
 	public double probabilityQuery(int power, int maxPower, int base, boolean forward){
 		int p = maxPower;
 		Matrix r;
@@ -149,7 +173,7 @@ public class QueryEngine {
 			r = this.a0;
 		}
 		else{
-			r = ainf;
+			r = this.ainf;
 		}
 		while(power != 0){
 			
@@ -173,29 +197,26 @@ public class QueryEngine {
 		else{
 			r = this.a0.times(r);
 		}
-		return r.get(0,0);
+		try {
+			QueryEngine.checkQueryResultValidity(r);
+			return r.get(0,0);
+		} catch (Exception e) {
+			System.out.println("Problem with multiplication");
+			e.printStackTrace();
+			return -10000;
+		}
+		
 		
 	}
 	
-	
-	public Matrix alphaKQuery(int power, int maxPower, int base){	//Always forward for now
-		
-		int p = maxPower;
-		
-		Matrix r = this.a0;
-		while(power != 0){
+	private static void checkQueryResultValidity(Matrix r) throws Exception {
+
+		if( !( (r.getArrayCopy().length == 1) && (r.getArrayCopy()[0].length == 1) ) ){
+			r.print(5, 5);
+
+			throw new Exception();
 			
-			while (p > power){
-				p = p/base;
-			}
-		
-			int exponent = (int)( Math.log(p)/Math.log(base));
-		
-			r = r.times( this.Asigmas[ exponent ] );
-			power -= p;
 		}
-		
-		return r;
 		
 	}
 

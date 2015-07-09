@@ -95,7 +95,7 @@ def drawPlots(folder, names, colors, alpha_scaling):
 datafile = sys.argv[1]
 t = sys.argv[2]
 
-temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Query_Error', "QError_Base_vs_Naive",'Comm_Matrix_Error','True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
+temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Qerror', "QError_Base_vs_Naive",'True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
 initialTests = [(i,'normal','normal') for i in temp]
 
 modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]

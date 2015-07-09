@@ -93,7 +93,7 @@ public class testEngine{
 		System.out.print(this.lowModelSize);
 		System.out.print("-");
 		System.out.println(this.upperModelSize);
-		
+
 		System.out.println("Chosen Model = " + Integer.toString(this.fixedModelSize));
 		System.out.println("");
 		
@@ -136,7 +136,7 @@ public class testEngine{
 			System.out.print( Arrays.toString(getTopErrorIndices(r, topCount)[0]) );
 			System.out.print(", ");
 			System.out.println( Arrays.toString(getTopErrorIndices(r, topCount)[1]) );
-			q.debugProbabilityQuery(100, pow, this.base, true);
+			q.debugProbabilityQuery(160, pow, this.base, true);
 
 			System.out.println(testEngine.sumArray(r));
 		}
@@ -188,7 +188,6 @@ public class testEngine{
 		this.compareSquareSigmaError(fixedModelSizeEngine);
 			
 		this.compareASigmas();
-		
 		
 		this.compareQueryErrors(fixedModelSizeEngine);
 	}
@@ -446,7 +445,6 @@ public class testEngine{
 		double[][] error = new double[1][keySetSorted.length];
 		double avgError, e;
 	
-		int c = 0;
 		for (int i = 0; i < this.keySetSorted.length; i++) {
 			int key = this.keySetSorted[i]; 
 			HankelSVDModel[] q = this.empericalModels.get(key);
@@ -459,10 +457,9 @@ public class testEngine{
 				avgError += e;
 			}
 			avgError /= this.REPEATS;
-			dataSize[0][c] = key;
-			error[0][c] = avgError;
+			dataSize[0][i] = Math.log(key);
+			error[0][i] = avgError;
 			
-			c++;
 		}
 			
 		testEngine.outputData(pltFolder + "True_H_vs_Emp", "X:Data Seen Y:Fnorm","", dataSize, error );
@@ -474,14 +471,14 @@ public class testEngine{
 		
 		QueryEngine q;
 		
-		double[][] sigmaNumber = new double[1][this.trueQueryEngine.getMaxExponent()];
-		double[][] errors = new double[1][this.trueQueryEngine.getMaxExponent()];
+		double[][] sigmaNumber = new double[2][this.trueQueryEngine.getMaxExponent()];
+		double[][] errors = new double[2][this.trueQueryEngine.getMaxExponent()];
 		
 		Matrix a_sigma_true, a_sigma_exp, r;
 		
 		Matrix[] trueSigmas = this.trueQueryEngine.getAsigmas();
 		
-		for (int i = 0; i < chosenSizeQueryEngine.length; i++) {
+		for (int i = 0; i < this.REPEATS; i++) {
 			q = chosenSizeQueryEngine[i];
 			Matrix[] empericalSigmas = q.getAsigmas();
 			for (int j = 0; j < this.trueQueryEngine.getMaxExponent(); j++) {
@@ -489,26 +486,30 @@ public class testEngine{
 				a_sigma_exp = empericalSigmas[j];
 
 				r = a_sigma_true.minus( a_sigma_exp );
-				errors[0][j] += r.normF();
+				errors[0][j] += r.norm1();
 			}
 		}
 		
 		for (int j = 0; j < this.trueQueryEngine.getMaxExponent(); j++) {
 			int pow = (int) Math.pow(this.base, j);
 			sigmaNumber[0][j] = pow;
-			errors[0][j] /= (this.REPEATS*trueSigmas[j].normF());
+			sigmaNumber[1][j] = pow;
+			errors[0][j] /= (this.REPEATS*trueSigmas[j].norm1());
+			errors[1][j] = (trueSigmas[j].norm1());
 		}
 		
-		testEngine.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.normF","", sigmaNumber, errors );
+		testEngine.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.norm1","", sigmaNumber, errors );
 		// Add file containing error testEngine for alphaInf and alpha0?
 	}
 	
 	public void compareSquareSigmaError(QueryEngine[] chosenSizeQueryEngine){
+		
+		(Asigma)^x v.s Asigmax
 	
 		int maxExpSquareComparison = this.trueQueryEngine.getMaxExponent()-1;
 		
-		double[][] sigmaNumber = new double[1][maxExpSquareComparison];
-		double[][] errors = new double[1][maxExpSquareComparison];
+		double[][] sigmaNumber = new double[2][maxExpSquareComparison];
+		double[][] errors = new double[2][maxExpSquareComparison];
 		
 		Matrix temp1, temp2, r;
 		int pow;
@@ -520,7 +521,7 @@ public class testEngine{
 				temp1 = QueryEngine.matrixPower( experimentalSigmas[j] , this.base);
 				temp2 = experimentalSigmas[j+1];
 				r = temp2.minus( temp1 );	
-				errors[0][j] += r.normF();
+				errors[0][j] += r.norm1();
 			}
 		}
 		
@@ -528,12 +529,15 @@ public class testEngine{
 		Matrix[] trueSigmas = this.trueQueryEngine.getAsigmas();
 		for (int j = 0; j < maxExpSquareComparison; j++) {
 			pow = (int) Math.pow(2, j+1);
-			h_sigma_true = trueSigmas[j];
+			h_sigma_true = trueSigmas[j+1];
 			sigmaNumber[0][j] = pow;
-			errors[0][j] /= (this.REPEATS*h_sigma_true.normF());
+			sigmaNumber[1][j] = pow;
+			errors[0][j] /= (this.REPEATS*h_sigma_true.norm1());
+			errors[1][j] = h_sigma_true.norm1();
 		}
 		
-		testEngine.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).Fnorm/T_Ax.Fnorm","", sigmaNumber, errors );
+		
+		testEngine.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.1norm","", sigmaNumber, errors );
 
 	}
 	
@@ -542,13 +546,12 @@ public class testEngine{
 		double[][] queries = new double[9][this.maxQuery];
 		double[][] errors = new double[9][this.maxQuery];
 		
-		double[][] baseQueries = new double[this.trueQueryEngine.getMaxExponent()][this.maxQuery];
-		double[][] x_base_Queries = new double[this.trueQueryEngine.getMaxExponent()][this.maxQuery];
+		double[][] baseQueries = new double[this.trueQueryEngine.getMaxExponent()+1][this.maxQuery];
+		double[][] x_base_Queries = new double[this.trueQueryEngine.getMaxExponent()+1][this.maxQuery];
 		
-		Matrix empQF, empQB;
 		double truProbQF,  empProbQF, empProbQB, empProbP;
 		//double truProbQB, truProbP;
-
+		//Matrix empQF, empQB;
 		for (int i = 0; i < this.maxQuery ; i++) {
 	
 			truProbQF = this.trueQueryEngine.probabilityQuery(i, this.trueQueryEngine.getMaxPower(), this.base, true);
@@ -557,15 +560,16 @@ public class testEngine{
 			//System.out.println(truProbQF - truProbQB);//Always 0 which makes sense
 			//System.out.println(truProbP - truProbQF);
 			
-			for (int j = 0; j < chosenSizeQueryEngine.length; j++) {	
+			for (int j = 0; j < this.REPEATS; j++) {	
 				QueryEngine q = chosenSizeQueryEngine[j];
 		
-				empQF = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, true);
-				empQB = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
+				//empQF = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, true);
+				//empQB = q.matrixQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
+				//errors[6][i] += empQF.minus(empQB).normF();			// Matrix Comm Error
 				
 				empProbQF = q.probabilityQuery( i, this.trueQueryEngine.getMaxPower(), this.base, true);
-				empProbQB =  q.probabilityQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
-				empProbP =  q.probabilityQuery(i, 1, 2, true);
+				empProbQB = q.probabilityQuery( i, this.trueQueryEngine.getMaxPower(), this.base, false);
+				empProbP = q.probabilityQuery(i, 1, this.base, true);
 				
 				errors[0][i] += Math.abs(truProbQF - empProbQF);	//Tru v.s Base 
 				errors[1][i] += truProbQF - empProbQF;
@@ -575,9 +579,7 @@ public class testEngine{
 								
 				errors[4][i] += Math.abs(empProbQF - empProbQB );	// Comm Error
 				errors[5][i] += empProbQF - empProbQB ;
-				
-				errors[6][i] += empQF.minus(empQB).normF();			// Matrix Comm Error
-				
+								
 				double pq;
 				for (int k = 0; k < baseQueries.length; k++) {
 					pq = Math.abs( q.probabilityQuery( i, (int) Math.pow(2,k), 2, true) - truProbQF);
@@ -586,37 +588,35 @@ public class testEngine{
 			}
 			
 			for (int j = 0; j < x_base_Queries.length; j++){
-				baseQueries[j][i] /= (chosenSizeQueryEngine.length );
+				baseQueries[j][i] /= this.REPEATS;
 				x_base_Queries[j] = testEngine.incArray(this.maxQuery);
 			}
 			
 			for (int c = 0; c < 9; c++) {
-				errors[c][i] /= (chosenSizeQueryEngine.length );
+				errors[c][i] /= this.REPEATS;
 				queries[c][i] = i;
 			}
 		}
 		
+		/*System.out.println("Commutative Avg error");
+		System.out.println( Arrays.toString(errors[4]) );
+		System.out.println();
+		*/
+		
 		testEngine.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
 		testEngine.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
-		testEngine.outputData(pltFolder + "Comm_Query_Error", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
-		testEngine.outputData(pltFolder + "Comm_Matrix_Error", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
+		testEngine.outputData(pltFolder + "Comm_Qerror", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
+		testEngine.outputData(pltFolder + "Comm_Merror", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
 		testEngine.outputData(pltFolder + "Base_Errors","X:Sigma Y: Error" ,"", x_base_Queries, baseQueries);
 		
-		double[][] ebase = Arrays.copyOfRange(errors,0, 1);
+		double[][] ebase = Arrays.copyOfRange(errors, 0, 1);
 		double[][] enaive = Arrays.copyOfRange(errors, 2, 3);
 		double[][] ejoint = new double[][]{ebase[0], enaive[0]};
 		
 		double[][] qbase = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qnaive = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
-		testEngine.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","",qjoint,ejoint  );
-		
-		/*	//Print out area under curve between naive and base method
-		System.out.println("Highest Max-Base = " + Integer.toString(this.maxPower));
-		System.out.println( testEngine.sumArray(errors[0]) );
-		System.out.println("Naive Max-Base = 1");
-		System.out.println( testEngine.sumArray(errors[2]) );
-		*/
+		testEngine.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","", qjoint,ejoint  );
 		
 	}
 	
