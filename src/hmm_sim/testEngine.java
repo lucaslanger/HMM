@@ -47,7 +47,7 @@ public class testEngine{
 	
 	public static void main(String[] args){}
 	
-	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int rangeOnModelSize, int fixedModelSize, int numberPerTrajectorySize){
+	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int numberPerTrajectorySize){
 		this.digitsToPrint = 7;
 		
 		this.fileNameOfEmpericalModels = workingFolder + empModels;
@@ -69,10 +69,12 @@ public class testEngine{
 		
 		this.trueModel = this.readTrueModel(workingFolder + fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
+			
+		this.modelSizes = modelSizes;
+		this.numberOfModels = modelSizes.length
+		this.lowModelSize = testEngine.getMinValue(modelSizes);
+		this.upperModelSize = testEngine.getMaxValue(modelSizes);
 		
-		this.lowModelSize = this.trueModel.getRank()-rangeOnModelSize;
-		this.upperModelSize = this.trueModel.getRank()+rangeOnModelSize;
-		this.numberOfModels = this.upperModelSize - this.lowModelSize;
 		this.fixedModelSize = fixedModelSize;
 		
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
@@ -503,15 +505,13 @@ public class testEngine{
 	}
 	
 	public void compareSquareSigmaError(QueryEngine[] chosenSizeQueryEngine){
-		
-		(Asigma)^x v.s Asigmax
 	
 		int maxExpSquareComparison = this.trueQueryEngine.getMaxExponent()-1;
 		
-		double[][] sigmaNumber = new double[2][maxExpSquareComparison];
-		double[][] errors = new double[2][maxExpSquareComparison];
+		double[][] sigmaNumber = new double[3][maxExpSquareComparison];
+		double[][] errors = new double[3][maxExpSquareComparison];
 		
-		Matrix temp1, temp2, r;
+		Matrix temp1, temp2, temp3, r, r2;
 		int pow;
 		
 		for (int i = 0; i < this.REPEATS; i++) {
@@ -520,8 +520,12 @@ public class testEngine{
 				pow = (int) Math.pow(this.base, j);
 				temp1 = QueryEngine.matrixPower( experimentalSigmas[j] , this.base);
 				temp2 = experimentalSigmas[j+1];
+				temp3 = QueryEngine.matrixPower( experimentalSigmas[0], pow*this.base );
+
 				r = temp2.minus( temp1 );	
+				r2 = temp2.minus( temp3 );
 				errors[0][j] += r.norm1();
+				errors[2][j] += r2.norm1();
 			}
 		}
 		
@@ -532,10 +536,12 @@ public class testEngine{
 			h_sigma_true = trueSigmas[j+1];
 			sigmaNumber[0][j] = pow;
 			sigmaNumber[1][j] = pow;
+			sigmaNumber[2][j] = pow;
 			errors[0][j] /= (this.REPEATS*h_sigma_true.norm1());
+			errors[2][j] /= (this.REPEATS*h_sigma_true.norm1());
 			errors[1][j] = h_sigma_true.norm1();
+			
 		}
-		
 		
 		testEngine.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.1norm","", sigmaNumber, errors );
 
@@ -778,6 +784,7 @@ public class testEngine{
 
 	}
 	
+	comparable
 	private static double getMinValue( double[] a){
 		double min = 0;
 		boolean init = false;
@@ -891,5 +898,6 @@ public class testEngine{
 		
 		
 	}
+	
 
 }
