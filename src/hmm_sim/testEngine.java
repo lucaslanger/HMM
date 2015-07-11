@@ -44,6 +44,8 @@ public class testEngine{
 	private int digitsToPrint;
 	private int fixedModelSize;
 	private int dataSizeForFixedPlots;
+	private int[] modelSizes;
+	private HashMap<Integer, Integer> modelSizeToIndex;
 	
 	public static void main(String[] args){}
 	
@@ -71,9 +73,14 @@ public class testEngine{
 		this.maxStates = this.trueModel.getRank();
 			
 		this.modelSizes = modelSizes;
-		this.numberOfModels = modelSizes.length
+		this.numberOfModels = modelSizes.length;
 		this.lowModelSize = testEngine.getMinValue(modelSizes);
 		this.upperModelSize = testEngine.getMaxValue(modelSizes);
+		this.modelSizeToIndex = new HashMap<Integer, Integer>();
+		for (int i = 0; i < modelSizes.length; i++) {
+			this.modelSizeToIndex.put(modelSizes[i], i);
+		}
+		
 		
 		this.fixedModelSize = fixedModelSize;
 		
@@ -171,8 +178,8 @@ public class testEngine{
 		this.compareH_Hbar();
 		System.out.println("Done H, Hbar comparisons");
 		
-		//this.sizeOfModelPlots( );
-		//System.out.println("Done Model Differences");
+		this.sizeOfModelPlots( );
+		System.out.println("Done Model Differences");
 		
 	}
 	
@@ -226,7 +233,7 @@ public class testEngine{
 					HankelSVDModel h = new HankelSVDModel();
 					h = (HankelSVDModel) ois.readObject();
 					for (int j = 0; j < this.numberOfModels; j++) {
-						q = h.buildHankelBasedModel(this.basisSize, this.base, this.lowModelSize + j);
+						q = h.buildHankelBasedModel(this.basisSize, this.base, this.modelSizes[j]);
 						enginesModelSizeTrajectorySize[j][i] = q;
 					}
 					ha[i] = h;
@@ -684,7 +691,7 @@ public class testEngine{
 							errors[i][j] += error;
 						}
 					}
-					argMinArray[i] += testEngine.getArgMin( errors[i] ) + this.lowModelSize;
+					argMinArray[i] += modelSizes[ (int) testEngine.getArgMin( errors[i] )];
 					
 					minValue = testEngine.getMinValue( errors[i] );
 					errorMinArray[i] += minValue;
@@ -747,7 +754,7 @@ public class testEngine{
 					empQuery = q.probabilityQuery( c, 1, 2, true);
 					error += computeError(truQuery, empQuery);
 				}
-				xaxis[i][j] = i+this.lowModelSize;
+				xaxis[i][j] = this.modelSizes[i];
 				yaxis[i][j] = error;
 			}
 			
@@ -784,7 +791,31 @@ public class testEngine{
 
 	}
 	
-	comparable
+	private static int getMinValue( int[] a){
+		int min = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || min > a[i]){
+				init = true;
+				min = a[i];
+			}
+		}
+		return min;
+	}
+		
+	
+	private static int getMaxValue( int[] a){
+		int max = 0;
+		boolean init = false;
+		for (int i = 0; i < a.length; i++) {
+			if (!init || max < a[i]){
+				init = true;
+				max = a[i];
+			}
+		}
+		return max;
+	}
+	
 	private static double getMinValue( double[] a){
 		double min = 0;
 		boolean init = false;

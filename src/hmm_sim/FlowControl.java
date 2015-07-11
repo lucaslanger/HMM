@@ -23,6 +23,7 @@ public class FlowControl {
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 150;
+		int[] modelSizes = new int[]{10,20};
 
 		String workingFolder = "testLargeLabyrinth/";
 	
@@ -39,16 +40,18 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, 1, 30 ,50 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 30 ,50 );
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 5;
+		int repetitions = 50;
 
 		int loop1 = 64;
 		int loop2 = 16;
 		int hSize = 450;
 		int basisSize = 150;
+		int[] modelSizes = new int[]{};
+		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
 		
@@ -65,7 +68,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, 1, 50, 5 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 50, 2 );
 	}
 	
 	public FlowControl(){
