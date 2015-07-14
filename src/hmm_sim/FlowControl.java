@@ -14,23 +14,24 @@ public class FlowControl {
 		int dataSizeForFixedPlots = 256000;
 		int base = 2;
 	
-		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
 		
-		int repetitions = 100;
+		int repetitions = 5;
 		int stretchFactor = 10;
 		int hSize = 500;
-		int basisSize = 150;
-		int[] modelSizes = new int[]{10,20};
+		int basisSize = 300;
+		int[] modelSizes = new int[]{};
 
 		String workingFolder = "testLargeLabyrinth/";
 	
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor);
+		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
 		l.generateData(trajectorySizes, repetitions);
 		
 		System.out.println("");
@@ -40,7 +41,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 30 ,50 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 50 ,1 );
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -58,7 +59,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.00, hSize, .5, .5);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.10, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions);
 		
 		System.out.println("");
@@ -68,7 +69,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 50, 2 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 );
 	}
 	
 	public FlowControl(){

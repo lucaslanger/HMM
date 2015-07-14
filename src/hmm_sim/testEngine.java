@@ -87,7 +87,7 @@ public class testEngine{
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
 		//this.checkEngine(this.trueQueryEngine, "True Engine");
 		
-		this.maxQuery = this.trueQueryEngine.getMaxPower()*base; 
+		this.maxQuery = this.trueQueryEngine.getMaxPower()*base*base; 
 		
 		System.out.println("Hankel Size " + Integer.toString(this.trueModel.getProbabilities().length/2));
 		System.out.println("Basis Size: " + Integer.toString(basisSize));

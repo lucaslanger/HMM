@@ -1,5 +1,7 @@
 package hmm_sim;
 
+import java.util.HashMap;
+import java.util.PriorityQueue;
 import java.util.Random;
 
 import Jama.Matrix;
@@ -223,6 +225,37 @@ public class LabyrinthGraph extends Environment{
 		String wf = "test";
 		int d = 100;
 		LabyrinthGraph.testLabyrinth(wf,  d, 1);
+	}
+	
+	
+	public HashMap<Integer, Integer> shortestPathsFromKey(){
+		int start = 5;
+		
+		HashMap<Integer, Integer> paths = new HashMap<Integer, Integer>();
+		HashMap<Integer, DijkstraNode> accessIntoHeap = new HashMap<Integer, DijkstraNode>();
+		PriorityQueue<DijkstraNode> pq = new PriorityQueue<DijkstraNode>();
+		
+		DijkstraNode startNode = new DijkstraNode(start, 0);
+		pq.add(startNode);
+		
+		while(pq.isEmpty() == false){
+			DijkstraNode n = pq.remove();
+			int lengthToN = n.getLengthToNode();
+			paths.put(n.getId(), lengthToN) ;
+			for (int i = 0; i < graph[n.getId()].length; i++) {
+				int outEdge = graph[n.getId()][i];
+				
+				if ( accessIntoHeap.containsKey(outEdge) ){
+					int l = lengthToN + edges[n.getId()][i];
+					DijkstraNode d = accessIntoHeap.get(outEdge);
+					if ( d.getLengthToNode() < l ){
+						d.setLengthToNode(l);
+					}
+				} 
+			}
+		}
+
+		return paths;
 	}
 	
 	
