@@ -262,4 +262,13 @@ public class QueryEngine {
 		
 	}
 	
+	public Matrix[] getAllKStateQueries(int maxK, int base){
+		Matrix[] m = new Matrix[maxK];
+		
+		for (int i = 1; i < m.length; i++) {
+			m[i] = this.alphaKQuery(i, this.maxPower, base );
+		}
+		return m;
+	}
+	
 }

@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.awt.AlphaComposite;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -263,56 +264,104 @@ public class LabyrinthGraph extends Environment{
 		return paths;
 	}
 	
-	public void createObservationDistanceSamples(int maxObservation, int samples, int initialState){
+	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
+		Matrix distances = new Matrix(samples)[0];
+		Matrix durations = new Matrix(samples)[1];
+		
+		double[][] a = new double[samples.length][alphaKStates[0].getArray().length];
+		for (int i = 0; i < samples.length; i++) {
+			int k = (int) durations.get(i, 0);
+			double[] aK = alphaKStates[k].getArrayCopy()[0];
+			a[i] = aK;
+		}
+		Matrix A = new Matrix(a);
+		Matrix AT = A.transpose();
+		Matrix inverseForRegression = AT.times(A).inverse();
+		
+		Matrix theta = inverseForRegression.times(distances);
+		return theta;
+	}
+	
+	public performanceDistanceErrorComputations(Matrix theta, Matrix[] alphaKStates, double[][] trueDistanceKAhead, int[][] samples){
+		double[] trueAverageDistance = new double[samples.length];
+		for (int i = 0; i < trueAverageDistance.length; i++) {
+			trueAverageDistance[i] = trueDistanceKAhead[samples[i][0]];
+		}
+		A.times(theta);
+	}
+	
+	public int[][] createObservationDistanceSamples(HashMap<Integer, Integer> shortestPaths,int maxObservation, int samples, double[] initialStates){
+		int[][] s = new int[samples][2];
 		Random random = new Random();
 		for (int i = 0; i < samples; i++) {
 			int r = random.nextInt(maxObservation); 
-			double d = sampleDistance(r);
-			
+			int d = sampleDistance(shortestPaths, r, random ,initialStates);
+			s[i] = new int[]{r,d};
 		}
+		return s;
 	}
 
-	private double sampleDistance(int r) {
-		//Sample from function below
+	private int sampleDistance(HashMap<Integer, Integer> shortestPaths, int r, Random random, double[] initialStates) {
+		while(true){
+			int state = sampleState(initialStates, random);
+			int d = r;
+			while(true){
+				int desiredNextState = graph[state][sampleState(transitions[state], random)];
+				if (desiredNextState == 0){
+					break;
+				}
+				else if( edges[state][desiredNextState] > d){
+					return shortestPaths.get(state) + d;
+				}
+				else{
+					d = d - edges[state][desiredNextState]; 
+					state = desiredNextState;
+				}
+			}
+		}
 	}
 	
-	//Determine the True Distance from key starting at node i and observing k observations
+	public int sampleState(double[] d, Random random){
+		double[] c = cumulativeSum(d);
+		double r = random.nextDouble();
+		
+		int index = Arrays.binarySearch(c, r);
+		return index;
+	}
 	
-	private void dynamicallyDetermineTrueDistanceKAhead(HashMap<Integer, Integer> shortestPaths, int maxK){
-		double[][][] distanceStorage = new double[maxK][this.graph.length][this.graph.length]; 		//all initialStates, max sigma
-		Matrix thetaDistances = new Matrix( new double[][]{shortestPaths} );
+	public double[] cumulativeSum( double[] d){
+		double[] r = new double[d.length];
+		r[0] = d[0];
+		for (int i = 1; i < r.length; i++) {
+			r[i] = r[i-1] + d[i]; 
+		}
+		return r;
+	}
+	
+	private double[][] dynamicallyDetermineTrueDistanceKAhead(HashMap<Integer, Integer> shortestPaths, int maxK){
+		double[][] distanceStorage = new double[maxK][this.graph.length];		
 		
 		for (int i = 0; i < maxK; i++) {
 			for (int j = 0; j < distanceStorage.length; j++) {
 				if (i==0){
-					double[] b = new double[this.graph.length];
-					b[j] = shortestPaths.get(j);
-					distanceStorage[i][j] = b;
+					distanceStorage[i][j] = shortestPaths.get(j);
 				}
 				else{
-					double[] b = new double[this.graph.length];
-					Matrix r = new Matrix( new double[][]{b});
-					
-					for (int j2 = 0; j2 < this.graph[j].length; j2++) {	//neighbors
-						int n = this.graph[j][j2];
-						double[] pdist;
-						if ( i-edges[j][j2] >=0 ){
-							pdist = distanceStorage[i-edges[j][j2]][n];
+					for (int j2 = 0; j2 < graph[j].length; j2++) {
+						int n = graph[j][j2];
+						int d = i - edges[j][j2];
+						if(d >= 0){
+							distanceStorage[i][j] += distanceStorage[d][n]*transitions[j][j2];
 						}
 						else{
-							pdist = distanceStorage[0][n];
-							for (int k = 0; k < pdist.length; k++) {
-								pdist[k] = pdist[k] + (i-edges[j][j2]);
-							}
+							distanceStorage[i][j] += (distanceStorage[0][n] + -1*d)*transitions[j][j2];
 						}
-						Matrix p = new Matrix( new double[][]{pdist} );
-						p.times(this.transitions[j][j2]);
-						r = r.plus(p);
 					}
-					distanceStorage[i][j] = r.getArrayCopy()[0];
 				}
+				
 			}
 		}
+		return distanceStorage;
 	}
 
 }
