@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -244,52 +245,74 @@ public class LabyrinthGraph extends Environment{
 			paths.put(n.getId(), lengthToN) ;
 			for (int i = 0; i < graph[n.getId()].length; i++) {
 				int outEdge = graph[n.getId()][i];
-				
+				DijkstraNode d;
 				if ( accessIntoHeap.containsKey(outEdge) ){
 					int l = lengthToN + edges[n.getId()][i];
-					DijkstraNode d = accessIntoHeap.get(outEdge);
+					d = accessIntoHeap.get(outEdge);
 					if ( d.getLengthToNode() < l ){
 						d.setLengthToNode(l);
 					}
-				} 
+				}
+				else{
+					d = new DijkstraNode(outEdge, lengthToN + edges[n.getId()][i]);
+				}
+				pq.add(d);
 			}
 		}
 
 		return paths;
 	}
 	
-	
-}
-
-
-/*
-public double[] computeTrueProbabilities(){
-	double[] probabilities = new double[super.getProbabilityArraySize()];
-	
-	HashMap<Integer, double[]> preComputed = new HashMap<Integer, double[]>();
-	
-	for (int i = 0; i < this.prior.length; i++) {
-		double[] t = new double[probabilities.length];
-		
-		depthLimitedSearch(i, this.prior[i], t, 0, super.getProbabilityArraySize(), preComputed);
-		for (int j = 0; j < t.length; j++) {
-			probabilities[j] += t[j];
+	public void createObservationDistanceSamples(int maxObservation, int samples, int initialState){
+		Random random = new Random();
+		for (int i = 0; i < samples; i++) {
+			int r = random.nextInt(maxObservation); 
+			double d = sampleDistance(r);
+			
 		}
-		
 	}
-	return probabilities;
-}
 
-private void depthLimitedSearch(int currentNode, double p, double[] terminations, int currentDepth, int depthLimit, HashMap<Integer, double[]> alreadyComputed){
-	if (p==0 || currentDepth >= depthLimit){
-		//DoNothing	
+	private double sampleDistance(int r) {
+		//Sample from function below
 	}
-	else if(currentNode == -1){
-		terminations[currentDepth] += p;
+	
+	//Determine the True Distance from key starting at node i and observing k observations
+	
+	private void dynamicallyDetermineTrueDistanceKAhead(HashMap<Integer, Integer> shortestPaths, int maxK){
+		double[][][] distanceStorage = new double[maxK][this.graph.length][this.graph.length]; 		//all initialStates, max sigma
+		Matrix thetaDistances = new Matrix( new double[][]{shortestPaths} );
+		
+		for (int i = 0; i < maxK; i++) {
+			for (int j = 0; j < distanceStorage.length; j++) {
+				if (i==0){
+					double[] b = new double[this.graph.length];
+					b[j] = shortestPaths.get(j);
+					distanceStorage[i][j] = b;
+				}
+				else{
+					double[] b = new double[this.graph.length];
+					Matrix r = new Matrix( new double[][]{b});
+					
+					for (int j2 = 0; j2 < this.graph[j].length; j2++) {	//neighbors
+						int n = this.graph[j][j2];
+						double[] pdist;
+						if ( i-edges[j][j2] >=0 ){
+							pdist = distanceStorage[i-edges[j][j2]][n];
+						}
+						else{
+							pdist = distanceStorage[0][n];
+							for (int k = 0; k < pdist.length; k++) {
+								pdist[k] = pdist[k] + (i-edges[j][j2]);
+							}
+						}
+						Matrix p = new Matrix( new double[][]{pdist} );
+						p.times(this.transitions[j][j2]);
+						r = r.plus(p);
+					}
+					distanceStorage[i][j] = r.getArrayCopy()[0];
+				}
+			}
+		}
 	}
-	for (int i = 0; i < this.graph[currentNode].length; i++) {
-		int n = this.graph[currentNode][i];
-		depthLimitedSearch(n, p*this.transitions[currentNode][n], terminations, currentDepth + this.edges[currentNode][n], depthLimit, alreadyComputed);
-	}
+
 }
-*/
