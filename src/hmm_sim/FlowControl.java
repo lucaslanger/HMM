@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 
 import Jama.Matrix;
 
@@ -82,7 +81,7 @@ public class FlowControl {
 		int basisSize = 300;
 		int key = 5;
 		
-		int maxK = 500;
+		int maxK = 50;
 		int samples = 1000;
 		String workingFolder = "keySearchPacMan/";
 		FlowControl.createFolder(workingFolder);
@@ -92,7 +91,7 @@ public class FlowControl {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, 50, 1 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, 220, 1 );
 		
 		QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
 		Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);

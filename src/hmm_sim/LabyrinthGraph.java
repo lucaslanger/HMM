@@ -1,6 +1,7 @@
 package hmm_sim;
 
 import java.awt.AlphaComposite;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ public class LabyrinthGraph extends Environment{
 	private double[][] transitions; 
 	private double[] prior;
 	private int key;
+	private HashMap<Integer, ArrayList<Integer>> incomingEdges;
 		
 	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior){
 		super(workingFolder, workingFolder, desiredHankelSize);
@@ -35,8 +37,26 @@ public class LabyrinthGraph extends Environment{
 		this.transitions = transitions;
 		this.prior = prior;
 		this.key = key;
+		this.buildIncomingEdges();
 		super.initializeProbabilities();
 		
+	}
+	
+	public void buildIncomingEdges(){
+		HashMap<Integer, ArrayList<Integer>> incomingEdges = new HashMap<Integer, ArrayList<Integer>>();
+		for (int i = 0; i < graph.length; i++) {
+			for (int j = 0; j < graph[i].length; j++) {
+				if (incomingEdges.get( graph[i][j] ) != null){
+					incomingEdges.get( graph[i][j] ).add(i);
+				}
+				else{
+					ArrayList<Integer> a = new ArrayList<Integer>();
+					a.add(i);
+					incomingEdges.put( graph[i][j], a );
+				}
+			}
+		}
+		this.incomingEdges = incomingEdges;
 	}
 	
 	public double[] computeTrueProbabilities(){
@@ -255,26 +275,33 @@ public class LabyrinthGraph extends Environment{
 		
 		while(pq.isEmpty() == false){
 			DijkstraNode n = pq.remove();
-			int lengthToN = n.getLengthToNode();
-			paths.put(n.getId(), lengthToN) ;
-			for (int i = 0; i < graph[n.getId()].length; i++) {
-				if( paths.containsKey( graph[n.getId()][i] ) ){
-					continue;
-				}
-				else{
-					int outEdge = graph[n.getId()][i];
-					DijkstraNode d;
-					if ( accessIntoHeap.containsKey(outEdge) ){
-						int l = lengthToN + edges[n.getId()][i];
-						d = accessIntoHeap.get(outEdge);
-						if ( d.getLengthToNode() < l ){
-							d.setLengthToNode(l);
+			if (paths.containsKey(n.getId()) == false){
+				//System.out.println("ID: " + Integer.toString(n.getId()));
+				//System.out.println("Distance: " + Integer.toString(n.getLengthToNode()));
+				
+				int nId = n.getId();
+				int lengthToN = n.getLengthToNode();
+				paths.put(n.getId(), lengthToN) ;
+				if (this.incomingEdges.get(nId) != null){
+					for (int i = 0; i < this.incomingEdges.get(nId).size(); i++) {
+						int outEdge = this.incomingEdges.get(nId).get(i);
+						int nIDLoc = Arrays.binarySearch( this.graph[outEdge], nId);
+						int edgeLength = this.edges[outEdge][nIDLoc];
+						int l = lengthToN + edgeLength;
+						DijkstraNode d;
+						if ( accessIntoHeap.containsKey(outEdge) ){
+							d = accessIntoHeap.get(outEdge);
+							if ( d.getLengthToNode() < l ){
+								d.setLengthToNode(l);
+							}
 						}
+						else{
+							d = new DijkstraNode(outEdge, l);
+						}
+						pq.add(d);
+	
 					}
-					else{
-						d = new DijkstraNode(outEdge, lengthToN + edges[n.getId()][i]);
-					}
-					pq.add(d);
+					//System.out.println();
 				}
 			}
 		}
@@ -283,25 +310,26 @@ public class LabyrinthGraph extends Environment{
 		for (int a: paths.keySet()) {
 			p[a] = paths.get(a); 
 		}
+		System.out.println( Arrays.toString(p) );
 		return p;
 	}
 	
 	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
 		Matrix m = new Matrix( intArrayToDouble(samples) );
-		Matrix distances = new Matrix( new double[][]{m.transpose().getArrayCopy()[0]} );
-		Matrix durations = new Matrix( new double[][]{m.transpose().getArrayCopy()[1]} );
+		Matrix durations = new Matrix( new double[][]{m.getArrayCopy()[0]} );
+		Matrix distances = new Matrix( new double[][]{m.getArrayCopy()[1]} );
 		
-		double[][] a = new double[samples.length][alphaKStates[0].getArray().length];
-		for (int i = 0; i < samples.length; i++) {
+		double[][] a = new double[samples[0].length][alphaKStates[0].getArray().length];
+		for (int i = 0; i < samples[0].length; i++) {
 			int k = (int) durations.get(0, i);
 			double[] aK = alphaKStates[k].getArrayCopy()[0];
 			a[i] = aK;
 		}
 		Matrix A = new Matrix(a);
 		Matrix AT = A.transpose();
-		Matrix inverseForRegression = AT.times(A).inverse();
+		Matrix inverseForRegression = (AT.times(A)).inverse();
 		
-		Matrix theta = inverseForRegression.times( AT.times(distances.transpose() )); //x = (At*A)^-1*AtD
+		Matrix theta = inverseForRegression.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
 		return A.times(theta);
 	}
 	
@@ -311,8 +339,8 @@ public class LabyrinthGraph extends Environment{
 		Matrix trueAverageDistance = td.times( p );	//Function of times
 		
 		Matrix s = new Matrix( intArrayToDouble(samples) );
-		Matrix n = new Matrix( new double[][]{ {1}, {0} } );
-		s = s.times(n).transpose();	//Vector of times
+		Matrix n = new Matrix( new double[][]{ {1,0} } );
+		s = n.times(s);
 		double[] distances = new double[s.getArray()[0].length];
 		for (int i = 0; i < s.getArray()[0].length; i++) {
 			distances[i] = trueAverageDistance.get( (int) s.getArray()[0][i], 0);
@@ -320,31 +348,34 @@ public class LabyrinthGraph extends Environment{
 		Matrix d = new Matrix(new double[][]{ distances }).transpose();
 		
 		Matrix error = Atheta.minus( d );
+
 		d.transpose().print(5, 5);
 		Atheta.transpose().print(5, 5);
 		System.out.println( error.norm1() / error.getArray().length);
-		System.out.println( d.plus(Atheta).norm1() / (error.getArray().length*2) );
+		//System.out.println( d.plus(Atheta).norm1() / (error.getArray().length*2) );
 	}
 	
 	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
-		int[][] s = new int[samples][2];
+		int[][] s = new int[2][samples];
 		Random random = new Random();
 		for (int i = 0; i < samples; i++) {
 			int r = random.nextInt(maxObservation); 
 			int d = sampleDistance(shortestPaths, r, random , prior);
-			s[i] = new int[]{r,d};
+			s[0][i] = r;
+			s[1][i] = d;
 		}
+		
 		return s;
 	}
 
 	private int sampleDistance(int[] shortestPaths, int r, Random random, double[] initialStates) {
 		while(true){
 			int state = sampleState(initialStates, random);
+			//System.out.println("Initial State is: " + Integer.toString(state));
 			int d = r;
 			while(true){
-			
 				int desiredNextStateIndex = sampleState(transitions[state], random);
-				if (desiredNextStateIndex == 0){
+				if (desiredNextStateIndex == 0 && graph[state][0] == 0){
 					break;
 				}
 				else if( edges[state][desiredNextStateIndex] > d){
@@ -359,23 +390,15 @@ public class LabyrinthGraph extends Environment{
 	}
 	
 	public int sampleState(double[] d, Random random){
-		double[] c = cumulativeSum(d);
+		double[] c = super.cumulativeSum(d);
 		double r = random.nextDouble();
 		
 		int index = Arrays.binarySearch(c, r);
 		if (index < 0 ){
 			index = index*-1 - 1;
 		}
+
 		return index;
-	}
-	
-	public double[] cumulativeSum( double[] d){
-		double[] r = new double[d.length];
-		r[0] = d[0];
-		for (int i = 1; i < r.length; i++) {
-			r[i] = r[i-1] + d[i]; 
-		}
-		return r;
 	}
 	
 	public double[][] dynamicallyDetermineTrueDistanceKAhead(int[] shortestPaths, int maxK){
@@ -383,7 +406,8 @@ public class LabyrinthGraph extends Environment{
 		
 		for (int i = 0; i < maxK; i++) {
 			for (int j = 1; j < this.graph.length; j++) {
-				if (i==0){
+				double[] tNoDoors = convertTransitionsToNonDoorTransitions(j);
+				if (i == 0){
 					distanceStorage[i][j] = shortestPaths[j];
 				}
 				else{
@@ -391,17 +415,32 @@ public class LabyrinthGraph extends Environment{
 						int n = graph[j][j2];
 						int d = i - edges[j][j2];
 						if(d >= 0){
-							distanceStorage[i][j] += distanceStorage[d][n]*transitions[j][j2];
+							distanceStorage[i][j] += distanceStorage[d][n]*tNoDoors[j2];
 						}
 						else{
-							distanceStorage[i][j] += (distanceStorage[0][n] + -1*d)*transitions[j][j2];
+							distanceStorage[i][j] += (distanceStorage[0][n] + -1*d)*tNoDoors[j2];
 						}
 					}
 				}
 				
 			}
 		}
+		//System.out.println( Arrays.toString(distanceStorage[300]) );
 		return distanceStorage;
+	}
+	
+	public double[] convertTransitionsToNonDoorTransitions(int fromIndex){
+		if(this.graph[fromIndex][0] == 0){
+			double l = transitions[fromIndex].length;
+			double[] t = new double[ (int) l];
+			for (int i = 1; i < l; i++) {
+				t[i] = transitions[fromIndex][i] * (l / (l-1.0));
+			}
+			return t;
+		}
+		else{
+			return transitions[fromIndex];
+		}
 	}
 	
 	public static double[][] intArrayToDouble(int[][] I){

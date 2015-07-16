@@ -47,12 +47,7 @@ public abstract class Environment {
 	
 	private int generateDuration(){ 						
 		int l = this.trueProbabilities.length; 
-		double[] cumulativeSum = new double[l];
-		
-		cumulativeSum[0] = this.trueProbabilities[0];
-		for (int i = 1; i<l;i++){
-			cumulativeSum[i] = cumulativeSum[i-1] + this.trueProbabilities[i];
-		}
+		double[] cumulativeSum = cumulativeSum(this.trueProbabilities);
 
 		Random random = new Random();
 		double r = random.nextDouble();
@@ -66,6 +61,15 @@ public abstract class Environment {
 			return -1*(index + 1);
 		}
 		
+	}
+	
+	public double[] cumulativeSum( double[] d){
+		double[] r = new double[d.length];
+		r[0] = d[0];
+		for (int i = 1; i < r.length; i++) {
+			r[i] = r[i-1] + d[i]; 
+		}
+		return r;
 	}
 	
 	private double[][] makeHankel(double[] s){
