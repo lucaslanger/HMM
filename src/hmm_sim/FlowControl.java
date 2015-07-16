@@ -101,13 +101,14 @@ public class FlowControl {
 		
 		int[] shortestPaths = l.shortestPathsFromKey();
 		System.out.println("Done shortest paths");
+		System.out.println("FIX SHORTEST PATH ALGORITHM ASAP");
 		int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
 		System.out.println("Done generating duration,distance pairs");
 		
 		double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
-		Matrix[] AandAlpha = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
-		
-		l.performanceDistanceErrorComputations(AandAlpha, trueDistanceAhead, durationDistancePairs);
+		Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
+
+		l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
 	}
 	
 	public FlowControl(){

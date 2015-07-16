@@ -286,14 +286,14 @@ public class LabyrinthGraph extends Environment{
 		return p;
 	}
 	
-	public Matrix[] getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
+	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
 		Matrix m = new Matrix( intArrayToDouble(samples) );
 		Matrix distances = new Matrix( new double[][]{m.transpose().getArrayCopy()[0]} );
 		Matrix durations = new Matrix( new double[][]{m.transpose().getArrayCopy()[1]} );
 		
 		double[][] a = new double[samples.length][alphaKStates[0].getArray().length];
 		for (int i = 0; i < samples.length; i++) {
-			int k = (int) durations.get(i, 0);
+			int k = (int) durations.get(0, i);
 			double[] aK = alphaKStates[k].getArrayCopy()[0];
 			a[i] = aK;
 		}
@@ -301,14 +301,29 @@ public class LabyrinthGraph extends Environment{
 		Matrix AT = A.transpose();
 		Matrix inverseForRegression = AT.times(A).inverse();
 		
-		Matrix theta = inverseForRegression.times(distances);
-		return new Matrix[]{A, theta};
+		Matrix theta = inverseForRegression.times( AT.times(distances.transpose() )); //x = (At*A)^-1*AtD
+		return A.times(theta);
 	}
 	
-	public void performanceDistanceErrorComputations(Matrix[] m, double[][] trueDistanceKAhead, int[][] samples){
-		Matrix trueAverageDistance = new Matrix( new double[][]{prior} ).times( new Matrix(trueDistanceKAhead) );
-		Matrix error = m[0].times(m[1]).minus(trueAverageDistance );
-		System.out.println( error.norm1() );
+	public void performanceDistanceErrorComputations(Matrix Atheta, double[][] trueDistanceKAhead, int[][] samples){
+		Matrix p = new Matrix( new double[][]{prior} ).transpose();
+		Matrix td = new Matrix(trueDistanceKAhead);
+		Matrix trueAverageDistance = td.times( p );	//Function of times
+		
+		Matrix s = new Matrix( intArrayToDouble(samples) );
+		Matrix n = new Matrix( new double[][]{ {1}, {0} } );
+		s = s.times(n).transpose();	//Vector of times
+		double[] distances = new double[s.getArray()[0].length];
+		for (int i = 0; i < s.getArray()[0].length; i++) {
+			distances[i] = trueAverageDistance.get( (int) s.getArray()[0][i], 0);
+		}
+		Matrix d = new Matrix(new double[][]{ distances }).transpose();
+		
+		Matrix error = Atheta.minus( d );
+		d.transpose().print(5, 5);
+		Atheta.transpose().print(5, 5);
+		System.out.println( error.norm1() / error.getArray().length);
+		System.out.println( d.plus(Atheta).norm1() / (error.getArray().length*2) );
 	}
 	
 	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
