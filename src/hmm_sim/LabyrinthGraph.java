@@ -2,6 +2,7 @@ package hmm_sim;
 
 import java.awt.AlphaComposite;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -15,6 +16,7 @@ public class LabyrinthGraph extends Environment{
 	private int[][] edges;
 	private double[][] transitions; 
 	private double[] prior;
+	private int key;
 		
 	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior){
 		super(workingFolder, workingFolder, desiredHankelSize);
@@ -22,6 +24,17 @@ public class LabyrinthGraph extends Environment{
 		this.edges = edges;
 		this.transitions = transitions;
 		this.prior = prior;
+		super.initializeProbabilities();
+		
+	}
+	
+	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int key){
+		super(workingFolder, workingFolder, desiredHankelSize);
+		this.graph = graph;
+		this.edges = edges;
+		this.transitions = transitions;
+		this.prior = prior;
+		this.key = key;
 		super.initializeProbabilities();
 		
 	}
@@ -101,7 +114,7 @@ public class LabyrinthGraph extends Environment{
 		return d3;
 	}
 	
-	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor ){
+	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor, int key){
 			
 		 int[][] graph = new int[][]{   
 				 {},
@@ -152,9 +165,9 @@ public class LabyrinthGraph extends Environment{
 		 
 		 
 		 double[] prior = new double[edges.length];
-		 prior[5] = 1;
+		 prior[3] = 1;
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, key);
 		 return l;
 	}
 	
@@ -230,14 +243,14 @@ public class LabyrinthGraph extends Environment{
 	}
 	
 	
-	public HashMap<Integer, Integer> shortestPathsFromKey(){
-		int start = 5;
+	public int[] shortestPathsFromKey(){
+		int key = this.key;
 		
 		HashMap<Integer, Integer> paths = new HashMap<Integer, Integer>();
 		HashMap<Integer, DijkstraNode> accessIntoHeap = new HashMap<Integer, DijkstraNode>();
-		PriorityQueue<DijkstraNode> pq = new PriorityQueue<DijkstraNode>();
+		PriorityQueue<DijkstraNode> pq = new PriorityQueue<DijkstraNode>( 20, new DijkstraNodeComparator() );
 		
-		DijkstraNode startNode = new DijkstraNode(start, 0);
+		DijkstraNode startNode = new DijkstraNode(key, 0);
 		pq.add(startNode);
 		
 		while(pq.isEmpty() == false){
@@ -245,28 +258,38 @@ public class LabyrinthGraph extends Environment{
 			int lengthToN = n.getLengthToNode();
 			paths.put(n.getId(), lengthToN) ;
 			for (int i = 0; i < graph[n.getId()].length; i++) {
-				int outEdge = graph[n.getId()][i];
-				DijkstraNode d;
-				if ( accessIntoHeap.containsKey(outEdge) ){
-					int l = lengthToN + edges[n.getId()][i];
-					d = accessIntoHeap.get(outEdge);
-					if ( d.getLengthToNode() < l ){
-						d.setLengthToNode(l);
-					}
+				if( paths.containsKey( graph[n.getId()][i] ) ){
+					continue;
 				}
 				else{
-					d = new DijkstraNode(outEdge, lengthToN + edges[n.getId()][i]);
+					int outEdge = graph[n.getId()][i];
+					DijkstraNode d;
+					if ( accessIntoHeap.containsKey(outEdge) ){
+						int l = lengthToN + edges[n.getId()][i];
+						d = accessIntoHeap.get(outEdge);
+						if ( d.getLengthToNode() < l ){
+							d.setLengthToNode(l);
+						}
+					}
+					else{
+						d = new DijkstraNode(outEdge, lengthToN + edges[n.getId()][i]);
+					}
+					pq.add(d);
 				}
-				pq.add(d);
 			}
 		}
 
-		return paths;
+		int[] p = new int[this.graph.length];
+		for (int a: paths.keySet()) {
+			p[a] = paths.get(a); 
+		}
+		return p;
 	}
 	
-	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
-		Matrix distances = new Matrix(samples)[0];
-		Matrix durations = new Matrix(samples)[1];
+	public Matrix[] getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
+		Matrix m = new Matrix( intArrayToDouble(samples) );
+		Matrix distances = new Matrix( new double[][]{m.transpose().getArrayCopy()[0]} );
+		Matrix durations = new Matrix( new double[][]{m.transpose().getArrayCopy()[1]} );
 		
 		double[][] a = new double[samples.length][alphaKStates[0].getArray().length];
 		for (int i = 0; i < samples.length; i++) {
@@ -279,43 +302,42 @@ public class LabyrinthGraph extends Environment{
 		Matrix inverseForRegression = AT.times(A).inverse();
 		
 		Matrix theta = inverseForRegression.times(distances);
-		return theta;
+		return new Matrix[]{A, theta};
 	}
 	
-	public performanceDistanceErrorComputations(Matrix theta, Matrix[] alphaKStates, double[][] trueDistanceKAhead, int[][] samples){
-		double[] trueAverageDistance = new double[samples.length];
-		for (int i = 0; i < trueAverageDistance.length; i++) {
-			trueAverageDistance[i] = trueDistanceKAhead[samples[i][0]];
-		}
-		A.times(theta);
+	public void performanceDistanceErrorComputations(Matrix[] m, double[][] trueDistanceKAhead, int[][] samples){
+		Matrix trueAverageDistance = new Matrix( new double[][]{prior} ).times( new Matrix(trueDistanceKAhead) );
+		Matrix error = m[0].times(m[1]).minus(trueAverageDistance );
+		System.out.println( error.norm1() );
 	}
 	
-	public int[][] createObservationDistanceSamples(HashMap<Integer, Integer> shortestPaths,int maxObservation, int samples, double[] initialStates){
+	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
 		int[][] s = new int[samples][2];
 		Random random = new Random();
 		for (int i = 0; i < samples; i++) {
 			int r = random.nextInt(maxObservation); 
-			int d = sampleDistance(shortestPaths, r, random ,initialStates);
+			int d = sampleDistance(shortestPaths, r, random , prior);
 			s[i] = new int[]{r,d};
 		}
 		return s;
 	}
 
-	private int sampleDistance(HashMap<Integer, Integer> shortestPaths, int r, Random random, double[] initialStates) {
+	private int sampleDistance(int[] shortestPaths, int r, Random random, double[] initialStates) {
 		while(true){
 			int state = sampleState(initialStates, random);
 			int d = r;
 			while(true){
-				int desiredNextState = graph[state][sampleState(transitions[state], random)];
-				if (desiredNextState == 0){
+			
+				int desiredNextStateIndex = sampleState(transitions[state], random);
+				if (desiredNextStateIndex == 0){
 					break;
 				}
-				else if( edges[state][desiredNextState] > d){
-					return shortestPaths.get(state) + d;
+				else if( edges[state][desiredNextStateIndex] > d){
+					return shortestPaths[state] + d;
 				}
 				else{
-					d = d - edges[state][desiredNextState]; 
-					state = desiredNextState;
+					d = d - edges[state][desiredNextStateIndex]; 
+					state = graph[state][desiredNextStateIndex];
 				}
 			}
 		}
@@ -326,6 +348,9 @@ public class LabyrinthGraph extends Environment{
 		double r = random.nextDouble();
 		
 		int index = Arrays.binarySearch(c, r);
+		if (index < 0 ){
+			index = index*-1 - 1;
+		}
 		return index;
 	}
 	
@@ -338,13 +363,13 @@ public class LabyrinthGraph extends Environment{
 		return r;
 	}
 	
-	private double[][] dynamicallyDetermineTrueDistanceKAhead(HashMap<Integer, Integer> shortestPaths, int maxK){
+	public double[][] dynamicallyDetermineTrueDistanceKAhead(int[] shortestPaths, int maxK){
 		double[][] distanceStorage = new double[maxK][this.graph.length];		
 		
 		for (int i = 0; i < maxK; i++) {
-			for (int j = 0; j < distanceStorage.length; j++) {
+			for (int j = 1; j < this.graph.length; j++) {
 				if (i==0){
-					distanceStorage[i][j] = shortestPaths.get(j);
+					distanceStorage[i][j] = shortestPaths[j];
 				}
 				else{
 					for (int j2 = 0; j2 < graph[j].length; j2++) {
@@ -362,6 +387,17 @@ public class LabyrinthGraph extends Environment{
 			}
 		}
 		return distanceStorage;
+	}
+	
+	public static double[][] intArrayToDouble(int[][] I){
+		double[][] r = new double[I.length][I[0].length];
+		for (int j = 0; j < I.length; j++) {
+			for (int j2 = 0; j2 < I[j].length; j2++) {
+				//System.out.println( Arrays.toString(I[j]) );
+				r[j][j2] = (double) I[j][j2];
+			}
+		}
+		return r;
 	}
 
 }

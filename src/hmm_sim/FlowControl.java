@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
+
+import Jama.Matrix;
 
 public class FlowControl {
 	
@@ -14,7 +17,7 @@ public class FlowControl {
 		int dataSizeForFixedPlots = 256000;
 		int base = 2;
 	
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base);
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -30,7 +33,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5);
 		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
 		l.generateData(trajectorySizes, repetitions);
 		
@@ -70,6 +73,41 @@ public class FlowControl {
 		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 );
+	}
+	
+	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
+		int repetitions = 5;
+		int stretchFactor = 10;
+		int hSize = 500;
+		int basisSize = 300;
+		int key = 5;
+		
+		int maxK = 500;
+		int samples = 1000;
+		String workingFolder = "keySearchPacMan/";
+		FlowControl.createFolder(workingFolder);
+
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, key);
+		l.generateData(trajectorySizes, repetitions);
+		
+		FlowControl.readDataIntoModels(workingFolder, basisSize);
+
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, 50, 1 );
+		
+		QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
+		Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);
+		System.out.println(alphaKStates[0].getArray().length);
+		System.out.println("Ak states");
+		
+		int[] shortestPaths = l.shortestPathsFromKey();
+		System.out.println("Done shortest paths");
+		int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
+		System.out.println("Done generating duration,distance pairs");
+		
+		double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
+		Matrix[] AandAlpha = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
+		
+		l.performanceDistanceErrorComputations(AandAlpha, trueDistanceAhead, durationDistancePairs);
 	}
 	
 	public FlowControl(){

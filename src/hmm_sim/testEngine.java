@@ -126,7 +126,7 @@ public class testEngine{
 
 		this.trueRankQueryEngines = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 		
-		this.makePlots();
+		//this.makePlots();
 	}
 	
 
