@@ -14,8 +14,10 @@ public class FlowControl {
 	public static void main(String[] args){
 		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
 		int dataSizeForFixedPlots = 256000;
-		int base = 2;
+		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base);
 	}
 	
@@ -43,7 +45,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 50 ,1 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 50 ,1, true );
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -71,7 +73,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 , true);
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -81,7 +83,7 @@ public class FlowControl {
 		int basisSize = 300;
 		int key = 5;
 		
-		int maxK = 50;
+		int maxK = 30;
 		int samples = 1000;
 		String workingFolder = "keySearchPacMan/";
 		FlowControl.createFolder(workingFolder);
@@ -91,23 +93,30 @@ public class FlowControl {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, 220, 1 );
+		double[][] modelSizes = new double[][]{{30,40,50}};
+		double[][] errorVSModelSize = new double[1][modelSizes[0].length];
+				
+		for (int i = 0; i < modelSizes[0].length; i++) {
+			int m = (int) modelSizes[0][i];
 		
-		QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
-		Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);
-		System.out.println(alphaKStates[0].getArray().length);
-		System.out.println("Ak states");
-		
-		int[] shortestPaths = l.shortestPathsFromKey();
-		System.out.println("Done shortest paths");
-		System.out.println("FIX SHORTEST PATH ALGORITHM ASAP");
-		int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
-		System.out.println("Done generating duration,distance pairs");
-		
-		double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
-		Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
-
-		l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
+			testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
+			
+			QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
+			Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);
+			
+			int[] shortestPaths = l.shortestPathsFromKey();
+	
+			int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
+			
+			Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
+	
+			double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
+	
+			double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
+			errorVSModelSize[0][i] = e;
+		}
+		Matrix pe = new Matrix(errorVSModelSize);
+		pe.print(5, 5);
 	}
 	
 	public FlowControl(){

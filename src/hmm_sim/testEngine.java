@@ -49,7 +49,7 @@ public class testEngine{
 	
 	public static void main(String[] args){}
 	
-	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int numberPerTrajectorySize){
+	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int numberPerTrajectorySize, boolean verbose){
 		this.digitsToPrint = 7;
 		
 		this.fileNameOfEmpericalModels = workingFolder + empModels;
@@ -88,41 +88,46 @@ public class testEngine{
 		//this.checkEngine(this.trueQueryEngine, "True Engine");
 		
 		this.maxQuery = this.trueQueryEngine.getMaxPower()*base*base; 
-		
-		System.out.println("Hankel Size " + Integer.toString(this.trueModel.getProbabilities().length/2));
-		System.out.println("Basis Size: " + Integer.toString(basisSize));
-		System.out.println("Repetitions: " + Integer.toString(numberPerTrajectorySize));
-		System.out.println("Base System: " + Integer.toString(base));
-		System.out.println("DataSize for Fixed Plots: " + Integer.toString(dataSizeForFixedPlots));
-		System.out.println();
-
-		System.out.println("True Learned Model Size");
-		System.out.println(this.trueModel.getRank());
-		System.out.println("Model Range:");
-		System.out.print(this.lowModelSize);
-		System.out.print("-");
-		System.out.println(this.upperModelSize);
-
-		System.out.println("Chosen Model = " + Integer.toString(this.fixedModelSize));
-		System.out.println("");
-		
-		System.out.println("MaxQuery:");
-		System.out.println(this.maxQuery);
-		System.out.println("");
-		
+	
 		double capturedProbability = 0;
 		for (int i = 0; i <= this.maxQuery; i++) {
 			 capturedProbability += this.trueModel.getProbabilities()[i];
 		}
-		System.out.println("Captured Probability: ");
-		System.out.println(capturedProbability);
-		System.out.println();
-		System.out.println("Probabilities:");
-		System.out.println( Arrays.toString(this.trueModel.getProbabilities()) );
-		System.out.println();
+		
+		
+		if (verbose){
+			System.out.println("Hankel Size " + Integer.toString(this.trueModel.getProbabilities().length/2));
+			System.out.println("Basis Size: " + Integer.toString(basisSize));
+			System.out.println("Repetitions: " + Integer.toString(numberPerTrajectorySize));
+			System.out.println("Base System: " + Integer.toString(base));
+			System.out.println("DataSize for Fixed Plots: " + Integer.toString(dataSizeForFixedPlots));
+			System.out.println();
 	
+			System.out.println("True Learned Model Size");
+			System.out.println(this.trueModel.getRank());
+			System.out.println("Model Range:");
+			System.out.print(this.lowModelSize);
+			System.out.print("-");
+			System.out.println(this.upperModelSize);
+	
+			System.out.println("Chosen Model = " + Integer.toString(this.fixedModelSize));
+			System.out.println("");
+			
+			System.out.println("MaxQuery:");
+			System.out.println(this.maxQuery);
+			System.out.println("");
+			
+			
+			System.out.println("Captured Probability: ");
+			System.out.println(capturedProbability);
+			System.out.println();
+			System.out.println("Probabilities:");
+			System.out.println( Arrays.toString(this.trueModel.getProbabilities()) );
+			System.out.println();
+	
+		}
 		this.fixedModelQE = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
-		this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize", 10);
+		double[] e = this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize", 10);
 
 		this.trueRankQueryEngines = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 		
@@ -130,10 +135,11 @@ public class testEngine{
 	}
 	
 
-	private void checkEngine(QueryEngine q, String id, int topCount) {
+	private double[] checkEngine(QueryEngine q, String id, int topCount) {
 		System.out.println("Inspecting the following engine: " + id);
 		System.out.println();
-
+		
+		double[] error = new double[q.getMaxExponent()+1];
 		for (int i = 0; i <= q.getMaxExponent(); i++) {
 			int pow = (int) Math.pow(this.base,i);
 		
@@ -147,10 +153,13 @@ public class testEngine{
 			System.out.println( Arrays.toString(getTopErrorIndices(r, topCount)[1]) );
 			q.debugProbabilityQuery(160, pow, this.base, true);
 
-			System.out.println(testEngine.sumArray(r));
+			double s = testEngine.sumArray(r);
+			System.out.println(s);
+			error[i] = s; 
+			
 		}
 		System.out.println();
-
+		return error;
 	}
 
 	private static File[] getFiles(String folder) {
@@ -158,7 +167,7 @@ public class testEngine{
 		return dir.listFiles();
 	}
 
-	private static void createFolder(String folder) {
+	static void createFolder(String folder) {
 		File dir = new File(folder);
 		dir.mkdir();
 		

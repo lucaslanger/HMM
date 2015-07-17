@@ -316,6 +316,10 @@ public class LabyrinthGraph extends Environment{
 	
 	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
 		Matrix m = new Matrix( intArrayToDouble(samples) );
+		
+		System.out.println("Samples: ");
+		m.print(5, 5);
+
 		Matrix durations = new Matrix( new double[][]{m.getArrayCopy()[0]} );
 		Matrix distances = new Matrix( new double[][]{m.getArrayCopy()[1]} );
 		
@@ -333,7 +337,7 @@ public class LabyrinthGraph extends Environment{
 		return A.times(theta);
 	}
 	
-	public void performanceDistanceErrorComputations(Matrix Atheta, double[][] trueDistanceKAhead, int[][] samples){
+	public double performanceDistanceErrorComputations(Matrix Atheta, double[][] trueDistanceKAhead, int[][] samples){
 		Matrix p = new Matrix( new double[][]{prior} ).transpose();
 		Matrix td = new Matrix(trueDistanceKAhead);
 		Matrix trueAverageDistance = td.times( p );	//Function of times
@@ -349,10 +353,10 @@ public class LabyrinthGraph extends Environment{
 		
 		Matrix error = Atheta.minus( d );
 
-		d.transpose().print(5, 5);
-		Atheta.transpose().print(5, 5);
-		System.out.println( error.norm1() / error.getArray().length);
-		//System.out.println( d.plus(Atheta).norm1() / (error.getArray().length*2) );
+		//d.transpose().print(5, 5);
+		//Atheta.transpose().print(5, 5);
+		//System.out.println( error.norm1() / error.getArray().length);
+		return error.norm1() / error.getArray().length;
 	}
 	
 	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
