@@ -82,9 +82,9 @@ public class FlowControl {
 		int hSize = 500;
 		int basisSize = 300;
 		int key = 5;
-		
+				
 		int maxK = 30;
-		int samples = 1000;
+		int samples = 10;
 		String workingFolder = "keySearchPacMan/";
 		FlowControl.createFolder(workingFolder);
 
@@ -93,8 +93,16 @@ public class FlowControl {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		double[][] modelSizes = new double[][]{{30,40,50}};
+		double[][] modelSizes = new double[][]{{50}};
 		double[][] errorVSModelSize = new double[1][modelSizes[0].length];
+		
+		int[] shortestPaths = l.shortestPathsFromKey();
+		int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
+		double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
+
+		System.out.println("AVERAGING");
+		System.out.println("AVERAGING");
+		System.out.println("AVERAGING");
 				
 		for (int i = 0; i < modelSizes[0].length; i++) {
 			int m = (int) modelSizes[0][i];
@@ -104,14 +112,8 @@ public class FlowControl {
 			QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
 			Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);
 			
-			int[] shortestPaths = l.shortestPathsFromKey();
-	
-			int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
-			
 			Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
-	
-			double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
-	
+
 			double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
 			errorVSModelSize[0][i] = e;
 		}

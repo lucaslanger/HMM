@@ -68,6 +68,14 @@ public class HankelSVDModel implements Serializable{
 		
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		
+		/*System.out.println("Testing inverses");
+		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));
+		Matrix test2 = truncatedSVD.get("VT").times(sinv);
+		System.out.println(Arrays.toString( getDiagonalArray(test1) ));
+		System.out.println(Arrays.toString( getDiagonalArray(test2) ));
+		*/
+		
 		int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
 
 		Matrix[] H_Matrices = new Matrix[maxExponent+1];
@@ -79,8 +87,6 @@ public class HankelSVDModel implements Serializable{
 			freq = (int) Math.pow(base,l);
 			try {
 				h = this.buildH(freq, freq+basisSize);
-				//System.out.println("Printing out Hsigma");
-				//System.out.println( Arrays.toString(h.getArrayCopy()[0]) );
 				H_Matrices[l] = h;
 			} catch (Exception e) {
 				System.out.println("Problem Building Model when creating Hankel");
@@ -114,6 +120,14 @@ public class HankelSVDModel implements Serializable{
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 
 		return q;
+	}
+	
+	public static double[] getDiagonalArray(Matrix m){
+		double[] r = new double[m.getArrayCopy()[0].length];
+		for (int i = 0; i < r.length; i++) {
+			r[i] = m.get(i, i);
+		}
+		return r;
 	}
 	
 	public Matrix buildH(int startingIndex, int endingIndex) throws Exception{		
@@ -238,7 +252,12 @@ public class HankelSVDModel implements Serializable{
 		Matrix s = svd.getV().transpose();
 		
 		Matrix pinv = p.inverse();
+		
+		System.out.println("INVERSE TEST");
+		p.times(pinv).print(5, 5);
+		
 		Matrix sinv = s.inverse();
+		s.times(sinv).print(5, 5);
 		
 		Matrix Aa = pinv.times(Ha).times(sinv); 
 		Matrix Ab = pinv.times(Hb).times(sinv); 

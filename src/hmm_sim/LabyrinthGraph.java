@@ -9,6 +9,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 
 public class LabyrinthGraph extends Environment{
@@ -316,25 +317,61 @@ public class LabyrinthGraph extends Environment{
 	
 	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
 		Matrix m = new Matrix( intArrayToDouble(samples) );
-		
-		System.out.println("Samples: ");
-		m.print(5, 5);
 
 		Matrix durations = new Matrix( new double[][]{m.getArrayCopy()[0]} );
 		Matrix distances = new Matrix( new double[][]{m.getArrayCopy()[1]} );
-		
+				
 		double[][] a = new double[samples[0].length][alphaKStates[0].getArray().length];
 		for (int i = 0; i < samples[0].length; i++) {
 			int k = (int) durations.get(0, i);
 			double[] aK = alphaKStates[k].getArrayCopy()[0];
 			a[i] = aK;
 		}
+		
 		Matrix A = new Matrix(a);
 		Matrix AT = A.transpose();
-		Matrix inverseForRegression = (AT.times(A)).inverse();
+		Matrix ATA = AT.times(A);
+				
+		Matrix ATAinverse = svdInverse(ATA);
+		testInverse();
 		
-		Matrix theta = inverseForRegression.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
+		System.out.println("Rank of A:");
+		System.out.println(A.rank());
+
+		ATA.times(ATAinverse).print(5, 5);
+		ATAinverse.times(ATA).print(5, 5);
+
+		Matrix theta = ATAinverse.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
+		
+		System.out.println("Check of regression");
+		System.out.println(A.times(theta).minus(distances.transpose()).norm1());
+		
 		return A.times(theta);
+	}
+	
+	public void testInverse(){
+		double[][] d = { { 1,3,2}, {5,3,1}, {2,0,0}};
+		Matrix D = new Matrix(d);
+		D.times( D.inverse() ).print(5, 5);
+		D.times( svdInverse(D) ).print(5, 5);
+	}
+	
+	public Matrix svdInverse(Matrix m){
+		SingularValueDecomposition svd = m.svd();
+		return svd.getV().times( pseudoInvDiagonal(svd.getS()) ).times(svd.getU().transpose() );
+	}
+	
+	public Matrix pseudoInvDiagonal(Matrix m){
+		double[][] a = m.getArrayCopy();
+		for (int i = 0; i < a.length; i++) {
+			if (a[i][i] != 0){
+				a[i][i] = 1/a[i][i];
+			}
+			else{
+				a[i][i] = 0;
+			}
+		}
+		return new Matrix(a);
 	}
 	
 	public double performanceDistanceErrorComputations(Matrix Atheta, double[][] trueDistanceKAhead, int[][] samples){
@@ -350,13 +387,18 @@ public class LabyrinthGraph extends Environment{
 			distances[i] = trueAverageDistance.get( (int) s.getArray()[0][i], 0);
 		}
 		Matrix d = new Matrix(new double[][]{ distances }).transpose();
+		Atheta.print(5, 5);
+		d.print(5, 5);
 		
 		Matrix error = Atheta.minus( d );
 
 		//d.transpose().print(5, 5);
 		//Atheta.transpose().print(5, 5);
 		//System.out.println( error.norm1() / error.getArray().length);
-		return error.norm1() / error.getArray().length;
+		
+		System.out.println("Normalizer: ");
+		System.out.println(error.getArray().length);
+		return error.norm1()/ error.getArray().length;
 	}
 	
 	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
@@ -429,7 +471,6 @@ public class LabyrinthGraph extends Environment{
 				
 			}
 		}
-		//System.out.println( Arrays.toString(distanceStorage[300]) );
 		return distanceStorage;
 	}
 	

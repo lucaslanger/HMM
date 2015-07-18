@@ -17,7 +17,6 @@ import Jama.Matrix;
 public class testEngine{
 	
 	public String pltFolder;
-	private String fileNameOfEmpericalModels;
 	private String[] fileNames;
 
 	private QueryEngine[][] fixedSizeQueryEngines;
@@ -46,54 +45,51 @@ public class testEngine{
 	private int dataSizeForFixedPlots;
 	private int[] modelSizes;
 	private HashMap<Integer, Integer> modelSizeToIndex;
+	private ModelRetrieval ModelRetrieval;
 	
 	public static void main(String[] args){}
 	
 	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int numberPerTrajectorySize, boolean verbose){
 		this.digitsToPrint = 7;
+		this.lowModelSize = testEngine.getMinValue(modelSizes);
+		this.upperModelSize = testEngine.getMaxValue(modelSizes);
+		this.modelSizes = modelSizes;
+		this.numberOfModels = modelSizes.length;
+		this.fixedModelSize = fixedModelSize;
 		
-		this.fileNameOfEmpericalModels = workingFolder + empModels;
 		this.pltFolder = workingFolder + "Plotting_" + empModels + "/";
 		testEngine.createFolder(this.pltFolder);
 		
+		
+		//this.fileNameOfEmpericalModels = workingFolder + empModels;
+		/*
 		File[] f = testEngine.getFiles(fileNameOfEmpericalModels);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < this.fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
 		}
 		this.makeKeySetSorted();
-
 		
+		*/
+
 		this.basisSize = basisSize;
 		this.base = base;
 		this.REPEATS = numberPerTrajectorySize;
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
 		
-		this.trueModel = this.readTrueModel(workingFolder + fileNameOfTrueModel);
+		this.ModelRetrieval = new ModelRetrieval(workingFolder, empModels, fileNameOfTrueModel, basisSize, base);
+		this.keySetSorted = ModelRetrieval.getKeySetSorted();
+		this.trueModel = ModelRetrieval.readTrueModel(fileNameOfTrueModel);
+		//this.trueModel = this.readTrueModel(workingFolder + fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
-			
-		this.modelSizes = modelSizes;
-		this.numberOfModels = modelSizes.length;
-		this.lowModelSize = testEngine.getMinValue(modelSizes);
-		this.upperModelSize = testEngine.getMaxValue(modelSizes);
-		this.modelSizeToIndex = new HashMap<Integer, Integer>();
-		for (int i = 0; i < modelSizes.length; i++) {
-			this.modelSizeToIndex.put(modelSizes[i], i);
-		}
-		
-		
-		this.fixedModelSize = fixedModelSize;
-		
-		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);
-		//this.checkEngine(this.trueQueryEngine, "True Engine");
-		
+		this.modelSizeToIndex = this.initializeModelSizeToIndex();
+		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);		
 		this.maxQuery = this.trueQueryEngine.getMaxPower()*base*base; 
 	
 		double capturedProbability = 0;
 		for (int i = 0; i <= this.maxQuery; i++) {
 			 capturedProbability += this.trueModel.getProbabilities()[i];
 		}
-		
 		
 		if (verbose){
 			System.out.println("Hankel Size " + Integer.toString(this.trueModel.getProbabilities().length/2));
@@ -126,45 +122,18 @@ public class testEngine{
 			System.out.println();
 	
 		}
-		this.fixedModelQE = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
-		double[] e = this.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], "FixedModelSize", 10);
-
-		this.trueRankQueryEngines = this.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
-		
-		//this.makePlots();
+		this.fixedModelQE = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
+		this.trueRankQueryEngines = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
+	
+		double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
 	}
 	
-
-	private double[] checkEngine(QueryEngine q, String id, int topCount) {
-		System.out.println("Inspecting the following engine: " + id);
-		System.out.println();
-		
-		double[] error = new double[q.getMaxExponent()+1];
-		for (int i = 0; i <= q.getMaxExponent(); i++) {
-			int pow = (int) Math.pow(this.base,i);
-		
-			double[] r = new double[this.trueModel.getProbabilities().length];
-			for (int i1 = 0; i1 < r.length; i1++) {
-				r[i1] = Math.abs(this.trueModel.getProbabilities()[i1] - q.probabilityQuery(i1, pow, this.base, true));
-			}
-			System.out.print ("Qerrors maxpower: " + Integer.toString(pow) + ":  ");
-			System.out.print( Arrays.toString(getTopErrorIndices(r, topCount)[0]) );
-			System.out.print(", ");
-			System.out.println( Arrays.toString(getTopErrorIndices(r, topCount)[1]) );
-			q.debugProbabilityQuery(160, pow, this.base, true);
-
-			double s = testEngine.sumArray(r);
-			System.out.println(s);
-			error[i] = s; 
-			
+	private HashMap<Integer, Integer> initializeModelSizeToIndex(){
+		HashMap<Integer, Integer> t = new HashMap<Integer, Integer>();
+		for (int i = 0; i < modelSizes.length; i++) {
+			this.modelSizeToIndex.put(modelSizes[i], i);
 		}
-		System.out.println();
-		return error;
-	}
-
-	private static File[] getFiles(String folder) {
-		File dir = new File(folder);
-		return dir.listFiles();
+		return t;
 	}
 
 	static void createFolder(String folder) {
@@ -178,7 +147,10 @@ public class testEngine{
 		this.plotBaseDifferences(  );
 		System.out.println("Done Base Differences");
 		
-		this.getAllSizesQueryEngines(this.REPEATS);
+		ModelEnginePair p = this.ModelRetrieval.getAllSizesQueryEngines(this.REPEATS, this.numberOfModels, this.modelSizes);
+		this.anySizeQueryEngines = p.getAnySizeQueryEngines();
+		this.empericalModels = p.getEmpericalModels();
+		
 		this.fixedSizeQueryEngines = this.anySizeQueryEngines.get(this.dataSizeForFixedPlots);
 		
 		this.fixedSize_Plots();
@@ -210,107 +182,6 @@ public class testEngine{
 		this.compareQueryErrors(fixedModelSizeEngine);
 	}
 	
-	private void makeKeySetSorted(){
-		int[] kss = new int[this.fileNames.length];
-		int i=0;
-		for (String f: this.fileNames) {
-			int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(f);
-			kss[i] = trajectoryLength;
-			i++;
-		}
-		this.keySetSorted = kss;
-	
-		Arrays.sort(this.keySetSorted);
-	}
-	
-	private void getAllSizesQueryEngines(int numberOfTrajectoriesFromEachSize){
-		
-		HashMap<Integer, HankelSVDModel[]> hsvdModels = new HashMap<Integer, HankelSVDModel[]>();
-		HashMap<Integer, QueryEngine[][]> dataSizeToModels = new HashMap<Integer, QueryEngine[][]>();
-		QueryEngine[][] enginesModelSizeTrajectorySize = new QueryEngine[this.numberOfModels][numberOfTrajectoriesFromEachSize];
-		QueryEngine q;
-
-		try{
-			for (String f: this.fileNames) {
-				enginesModelSizeTrajectorySize = new QueryEngine[this.numberOfModels][numberOfTrajectoriesFromEachSize];	//Weird bug
-				String file = this.fileNameOfEmpericalModels + f;
-				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
-				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
-				
-				HankelSVDModel[] ha = new HankelSVDModel[numberOfTrajectoriesFromEachSize];
-				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
-					HankelSVDModel h = new HankelSVDModel();
-					h = (HankelSVDModel) ois.readObject();
-					for (int j = 0; j < this.numberOfModels; j++) {
-						q = h.buildHankelBasedModel(this.basisSize, this.base, this.modelSizes[j]);
-						enginesModelSizeTrajectorySize[j][i] = q;
-					}
-					ha[i] = h;
-				}
-				dataSizeToModels.put(trajectoryLength, enginesModelSizeTrajectorySize);
-				hsvdModels.put(trajectoryLength, ha);
-				ois.close();
-			}
-			this.anySizeQueryEngines = dataSizeToModels;
-			this.empericalModels = hsvdModels;
-		}
-		catch(Exception e){
-			System.out.println("Trouble making emperical models");
-			e.printStackTrace();
-		}
-		
-	}
-	
-	public HashMap<Integer, QueryEngine[]> getSpecificModelSizeQueryEngines(int numberOfTrajectoriesFromEachSize, int modelSize){
-		HashMap<Integer, QueryEngine[]> dataSizeToModels = new HashMap<Integer, QueryEngine[]>();
-		QueryEngine[] enginesTrajectorySize = new QueryEngine[numberOfTrajectoriesFromEachSize];
-		QueryEngine q;
-
-		try{
-			for (String f: this.fileNames) {
-				enginesTrajectorySize = new QueryEngine[numberOfTrajectoriesFromEachSize];	//Weird bug
-				String file = this.fileNameOfEmpericalModels + f;
-				int trajectoryLength = testEngine.getTrajectoryLengthFromFileName(file);
-				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
-				HankelSVDModel h;
-				
-				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
-					h = (HankelSVDModel) ois.readObject();
-					q = h.buildHankelBasedModel(this.basisSize, this.base, modelSize);
-					enginesTrajectorySize[i] = q;
-				}
-				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);
-				ois.close();
-			}
-			return dataSizeToModels;
-		}
-		catch(Exception e){
-			System.out.println("Trouble making emperical models - fixed modelsize");
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public HankelSVDModel readTrueModel(String f){
-		HankelSVDModel t;
-		//Search for file with True model
-		ObjectInputStream ois;
-		try {
-			ois = new ObjectInputStream(new FileInputStream(f));
-			t = (HankelSVDModel) ois.readObject();
-			ois.close();
-			return t;
-		} catch (IOException e) {
-			System.out.println("Problem fetching true Model");
-			e.printStackTrace();
-			return null;
-		} catch (ClassNotFoundException e) {
-			System.out.println("Couldn't find the file");
-			e.printStackTrace();
-			return null;
-		}
-		
-	}
 	
 	public void plotBaseDifferences(){			
 		double[][] dataSize = new double[this.trueQueryEngine.getMaxExponent()+1][this.keySetSorted.length];
@@ -864,7 +735,7 @@ public class testEngine{
 		return max;
 	}
 	
-	private static double getArgMax( double[] a){
+	private static double getArgMax(double[] a){
 		double max = 0;
 		double argmax = 0;
 		boolean init = false;
@@ -927,7 +798,7 @@ public class testEngine{
 		int i = 0;
 		int t = 0;
 		while(t < top.length){
-			while(t-i<val_to_index.get(d[i]).size() && t < top.length){
+			while(t-i <val_to_index.get(d[i]).size() && t < top.length){
 				top[t] = val_to_index.get(d[i]).get(t-i);
 				topvalues[t] = d[i];
 				t++;
