@@ -83,27 +83,27 @@ public abstract class Environment {
 		return hankel;
 	}
 	
-	public void generateData(int[] trajectorySizes, int repetitions){
+	public void generateData(int[] trajectorySizes, int repetitions, boolean verbose){
 		FlowControl.createFolder(this.empericalFolder);
-		this.printTrueProbabilities();
+		this.printTrueProbabilities(verbose);
 		for (int i = 0; i < trajectorySizes.length; i++) {
-			this.printEmpericalTrials(trajectorySizes[i], repetitions);
+			this.printEmpericalTrials(trajectorySizes[i], repetitions, verbose);
 		}
 	}
 	
-	public void printTrueProbabilities(){
+	public void printTrueProbabilities(boolean verbose){
 		//double[][] t = this.makeHankel(this.trueProbabilities);
 		//FlowControl.outputData( this.getTrueFile(), t);
-		FlowControl.outputData( this.getTrueFile(), new double[][]{ this.trueProbabilities });
+		FlowControl.outputData( this.getTrueFile(), new double[][]{ this.trueProbabilities }, verbose);
 	}
 	
-	public void printEmpericalTrials(int trajectoryLength, int repetitions){
+	public void printEmpericalTrials(int trajectoryLength, int repetitions, boolean verbose){
 		double[][] data = new double[repetitions][this.getDesiredHankelSize()*2];
 		for (int i = 0; i < repetitions; i++) {
 			data[i] = generateEmpericalProbabilities(trajectoryLength);
 		}
 		String f = this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength);
-		FlowControl.outputData(f, data );
+		FlowControl.outputData(f, data, verbose );
 	}
 
 

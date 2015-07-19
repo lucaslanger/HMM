@@ -96,13 +96,18 @@ datafile = sys.argv[1]
 t = sys.argv[2]
 
 temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Qerror', "QError_Base_vs_Naive",'True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
-initialTests = [(i,'normal','normal') for i in temp]
+validityTests = [(i,'normal','normal') for i in temp]
 
 modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
 
+
+keyPredictions = [('KeyFindingError','normal','normal')]
+
 if t=='-v':	
-	drawPlots(datafile, initialTests, colorsTests, False)
+	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
+elif t=='-k':
+	drawPlots(datafile, keyPredictions, colorsAnalysis, True)
 else:
 	print "invalid format"

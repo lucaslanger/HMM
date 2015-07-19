@@ -46,6 +46,8 @@ public class testEngine{
 	private int[] modelSizes;
 	private HashMap<Integer, Integer> modelSizeToIndex;
 	private ModelRetrieval ModelRetrieval;
+	private String pltFolderFixed;
+	private String pltFolderQError;
 	
 	public static void main(String[] args){}
 	
@@ -58,18 +60,19 @@ public class testEngine{
 		this.fixedModelSize = fixedModelSize;
 		
 		this.pltFolder = workingFolder + "Plotting_" + empModels + "/";
+		this.pltFolderFixed = this.pltFolder + "fixedSize/";
+		this.pltFolderQError = this.pltFolder + "qError/";
 		testEngine.createFolder(this.pltFolder);
+		testEngine.createFolder(this.pltFolderFixed);
+		testEngine.createFolder(this.pltFolderQError);
 		
-		
-		//this.fileNameOfEmpericalModels = workingFolder + empModels;
-		/*
+		/*this.fileNameOfEmpericalModels = workingFolder + empModels;
 		File[] f = testEngine.getFiles(fileNameOfEmpericalModels);
 		this.fileNames = new String[f.length];
 		for (int i = 0; i < this.fileNames.length; i++) {
 			this.fileNames[i] = f[i].getName();
 		}
 		this.makeKeySetSorted();
-		
 		*/
 
 		this.basisSize = basisSize;
@@ -125,7 +128,9 @@ public class testEngine{
 		this.fixedModelQE = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
 		this.trueRankQueryEngines = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 	
-		double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
+		if(verbose){
+			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
+		}
 	}
 	
 	private HashMap<Integer, Integer> initializeModelSizeToIndex(){
@@ -223,7 +228,7 @@ public class testEngine{
 			}
 		}
 		
-		testEngine.outputData(pltFolder + "BaseComp_Area", "X:log(Data) Y:log(Error)","", dataSize, errors );
+		OutputData.outputData(pltFolder + "BaseComp_Area", "X:log(Data) Y:log(Error)","", dataSize, errors );
 		
 		System.out.println("");
 		System.out.println("Base Comp Errors");
@@ -237,7 +242,7 @@ public class testEngine{
 		new Matrix(testEngine.computeDifferenceWithNaive(errors)).print(5, this.digitsToPrint);
 		
 		double[][] datasize_differences = testEngine.makeDataSizeDifferences(dataSize);
-		testEngine.outputData(pltFolder + "Difference Plot_FIXEDMS", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(errors) );
+		OutputData.outputData(pltFolder + "Difference Plot_FIXEDMS", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(errors) );
 
 		
 	}
@@ -321,9 +326,9 @@ public class testEngine{
 		avgError = avgError.times(1.0/this.REPEATS);
 		queryEmpAvg = queryEmpAvg.times(1.0/this.REPEATS);
 		
-		testEngine.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
-		testEngine.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
-		testEngine.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
+		OutputData.outputData(pltFolder + "ConditionalError", "x:Traj Length y:|f_k(x)-fhat_k(x)|", "", xaxis, avgError.getArrayCopy());
+		OutputData.outputData(pltFolder + "ConditionalEmp", "x:Traj Length y:fhat_k(x)", "", xaxis, queryEmpAvg.getArrayCopy());
+		OutputData.outputData(pltFolder + "ConditionalTrue", "x:Traj Length y:f_k(x)", "", xaxis, truPredictions.getArrayCopy());
 	}
 	
 	public void compareH_Hbar(){
@@ -351,7 +356,7 @@ public class testEngine{
 			
 		}
 			
-		testEngine.outputData(pltFolder + "True_H_vs_Emp", "X:Data Seen Y:Fnorm","", dataSize, error );
+		OutputData.outputData(pltFolder + "True_H_vs_Emp", "X:Data Seen Y:Fnorm","", dataSize, error );
 	
 	}
 	
@@ -387,7 +392,7 @@ public class testEngine{
 			errors[1][j] = (trueSigmas[j].norm1());
 		}
 		
-		testEngine.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.norm1","", sigmaNumber, errors );
+		OutputData.outputData(pltFolder + "True_Ax_vs_Emp", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.norm1","", sigmaNumber, errors );
 		// Add file containing error testEngine for alphaInf and alpha0?
 	}
 	
@@ -430,7 +435,7 @@ public class testEngine{
 			
 		}
 		
-		testEngine.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.1norm","", sigmaNumber, errors );
+		OutputData.outputData(pltFolder + "(Ax)^2_v.s A(x^2)", "X:Sigma Y:(T_Ax-E_Ax).1norm/T_Ax.1norm","", sigmaNumber, errors );
 
 	}
 	
@@ -496,11 +501,11 @@ public class testEngine{
 		System.out.println();
 		*/
 		
-		testEngine.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
-		testEngine.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
-		testEngine.outputData(pltFolder + "Comm_Qerror", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
-		testEngine.outputData(pltFolder + "Comm_Merror", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
-		testEngine.outputData(pltFolder + "Base_Errors","X:Sigma Y: Error" ,"", x_base_Queries, baseQueries);
+		OutputData.outputData(pltFolder + "Query_Errors_Base", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,0,2), Arrays.copyOfRange(errors,0,2) );
+		OutputData.outputData(pltFolder + "Query_Errors_Naive", "X:Sigma Y: Green:Absolute","", Arrays.copyOfRange(queries,2,4), Arrays.copyOfRange(errors,2,4) );
+		OutputData.outputData(pltFolder + "Comm_Qerror", "X:Sigma Y:a0(A16A1-A1A16)aI","", Arrays.copyOfRange(queries,4,6), Arrays.copyOfRange(errors,4,6) );
+		OutputData.outputData(pltFolder + "Comm_Merror", "X:Sigma Y:(A16A1-A1A16).Fnorm","", Arrays.copyOfRange(queries,6,7), Arrays.copyOfRange(errors,6,7) );
+		OutputData.outputData(pltFolder + "Base_Errors","X:Sigma Y: Error" ,"", x_base_Queries, baseQueries);
 		
 		double[][] ebase = Arrays.copyOfRange(errors, 0, 1);
 		double[][] enaive = Arrays.copyOfRange(errors, 2, 3);
@@ -509,7 +514,7 @@ public class testEngine{
 		double[][] qbase = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qnaive = Arrays.copyOfRange(queries, 2, 3);
 		double[][] qjoint = new double[][]{qbase[0], qnaive[0]};
-		testEngine.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","", qjoint,ejoint  );
+		OutputData.outputData(pltFolder + "QError_Base_vs_Naive", "X:Sigma Y:|f(x)-fhat(x)|","", qjoint,ejoint  );
 		
 	}
 	
@@ -606,15 +611,15 @@ public class testEngine{
 		System.out.println("Standard Deviations");
 		new Matrix(standardDeviations).print(5, this.digitsToPrint);
 	
-		testEngine.outputData(pltFolder + "MinError_Dif_Bases", "X: log(Data) Y:log(Min_over_states)", "", xaxis, plotErrors);
-		testEngine.outputData(pltFolder + "ArgMin_Dif_Bases", "X: log(Data) Y:ArgMin_over_states", "", xaxis, plotArgForErrors);
+		OutputData.outputData(pltFolder + "MinError_Dif_Bases", "X: log(Data) Y:log(Min_over_states)", "", xaxis, plotErrors);
+		OutputData.outputData(pltFolder + "ArgMin_Dif_Bases", "X: log(Data) Y:ArgMin_over_states", "", xaxis, plotArgForErrors);
 		
 		System.out.println("Differences:");
 		new Matrix( testEngine.computeDifferenceWithNaive(plotErrors) ).print(5, this.digitsToPrint);
 		
 		double[][] datasize_differences = testEngine.makeDataSizeDifferences(xaxis);
 		
-		testEngine.outputData(pltFolder + "Difference Plot", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(plotErrors) );
+		OutputData.outputData(pltFolder + "Difference Plot", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(plotErrors) );
 
 	}
 	
@@ -641,35 +646,13 @@ public class testEngine{
 		}
 		xaxis = new Matrix(xaxis).transpose().getArrayCopy();
 		yaxis = new Matrix(yaxis).transpose().getArrayCopy();
-		testEngine.outputData(pltFolder + "Multiple_Trials_ModelError", "X: ModelSize Y:Error", "", xaxis, yaxis);
+		OutputData.outputData(pltFolder + "Multiple_Trials_ModelError", "X: ModelSize Y:Error", "", xaxis, yaxis);
 		//System.out.println("Fixed Size repeated trial plots");
 		//new Matrix(yaxis).print(5, this.digitsToPrint);
 	}
 	
 	
-	private static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
-		try {
-			PrintWriter writer = new PrintWriter(filename, "UTF-8");
-			
-			writer.println(xaxisLabel + "," + yaxisLabel);
-			
-			StringBuilder line = new StringBuilder();
-			for (int j = 0; j < xaxis[0].length; j++) {	
-				for (int i = 0; i < xaxis.length; i++) {
-					line.append(xaxis[i][j] + ",");
-					line.append(yaxis[i][j] + " ");
-				}
-				writer.println( line );
-				line.setLength(0);
-			} 
-			
-			writer.close();
-			
-		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
 
-	}
 	
 	private static int getMinValue( int[] a){
 		int min = 0;

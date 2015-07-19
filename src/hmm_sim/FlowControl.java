@@ -36,7 +36,7 @@ public class FlowControl {
 		FlowControl.createFolder(workingFolder);
 		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5);
 		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
-		l.generateData(trajectorySizes, repetitions);
+		l.generateData(trajectorySizes, repetitions, false);
 		
 		System.out.println("");
 		
@@ -64,7 +64,7 @@ public class FlowControl {
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.10, hSize, .5, .5);
-		r.generateData(trajectorySizes, repetitions);
+		r.generateData(trajectorySizes, repetitions, false);
 		
 		System.out.println("");
 		
@@ -85,17 +85,21 @@ public class FlowControl {
 				
 		int samples = 100;
 		String workingFolder = "keySearchPacMan/";
+		String empModels = "Models_Emperical_" + workingFolder;
+		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
+		
 		FlowControl.createFolder(workingFolder);
 
 		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, key);
-		l.generateData(trajectorySizes, repetitions);
+		l.generateData(trajectorySizes, repetitions, false);
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
 		double[][] modelSizes = new double[][]{{3, 5, 10, 20, 30, 50, 70, 90}};
-		double[][] maxKsToTest = new double[][]{{1, 5, 10, 20, 40, 80, 160, 320}};
+		double[][] maxKsToTest = new double[][]{{5, 10, 20, 40, 80, 160, 320}};
 		double[][] errorVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
-		
+		double[][] xaxis = new double[maxKsToTest[0].length][modelSizes[0].length];
+
 		int[] shortestPaths = l.shortestPathsFromKey();
 
 		System.out.println("AVERAGING");
@@ -109,19 +113,27 @@ public class FlowControl {
 			for (int i = 0; i < modelSizes[0].length; i++) {		
 				int m = (int) modelSizes[0][i];
 				
-				testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
+				//testEngine a = new testEngine(workingFolder, empModels, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
+				//QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
+
+				ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
+				QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(1, m).get(dataSizeForFixedPlots)[0];
 				
-				QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
 				Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
 				
 				Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
 	
 				double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
 				errorVSModelSize[j][i] = e;
+				xaxis[j][i] = i;
 			}
-			Matrix pe = new Matrix(errorVSModelSize);
-			pe.print(5, 5);
+			
 		}
+		Matrix pe = new Matrix(errorVSModelSize);
+		pe.print(5, 5);
+		
+		System.out.println("Writing data to: " + pltFolder + "KeyFindingError");
+		OutputData.outputData(pltFolder + "KeyFindingError", "modelSize", "error", xaxis, errorVSModelSize);
 	}
 	
 	public FlowControl(){
@@ -179,7 +191,7 @@ public class FlowControl {
 		}
 	}
 		
-	public static void outputData(String s, double[][] data){
+	public static void outputData(String s, double[][] data, boolean verbose){
 		ObjectOutputStream out;
 		try {
 			out = new ObjectOutputStream( new FileOutputStream( s ) );
@@ -190,8 +202,9 @@ public class FlowControl {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Done generating data for " + s);
-		
+		if(verbose){
+			System.out.println("Done generating data for " + s);
+		}
 	}
 	
 	public static double[][] readData(String filename){
