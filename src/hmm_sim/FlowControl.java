@@ -83,8 +83,7 @@ public class FlowControl {
 		int basisSize = 300;
 		int key = 5;
 				
-		int maxK = 30;
-		int samples = 10;
+		int samples = 100;
 		String workingFolder = "keySearchPacMan/";
 		FlowControl.createFolder(workingFolder);
 
@@ -93,32 +92,36 @@ public class FlowControl {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		double[][] modelSizes = new double[][]{{50}};
-		double[][] errorVSModelSize = new double[1][modelSizes[0].length];
+		double[][] modelSizes = new double[][]{{3, 5, 10, 20, 30, 50, 70, 90}};
+		double[][] maxKsToTest = new double[][]{{1, 5, 10, 20, 40, 80, 160, 320}};
+		double[][] errorVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
 		
 		int[] shortestPaths = l.shortestPathsFromKey();
-		int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
-		double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, maxK);
 
 		System.out.println("AVERAGING");
-		System.out.println("AVERAGING");
-		System.out.println("AVERAGING");
+		System.out.println("HACK ON PSEUDOINVERSE");
+			
+		for (int j = 0; j < maxKsToTest[0].length; j++) {
+			int k = (int) maxKsToTest[0][j]; 
+			int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, k, samples);
+			double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
+			
+			for (int i = 0; i < modelSizes[0].length; i++) {		
+				int m = (int) modelSizes[0][i];
 				
-		for (int i = 0; i < modelSizes[0].length; i++) {
-			int m = (int) modelSizes[0][i];
-		
-			testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
-			
-			QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
-			Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, base);
-			
-			Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
-
-			double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
-			errorVSModelSize[0][i] = e;
+				testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
+				
+				QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
+				Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
+				
+				Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
+	
+				double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
+				errorVSModelSize[j][i] = e;
+			}
+			Matrix pe = new Matrix(errorVSModelSize);
+			pe.print(5, 5);
 		}
-		Matrix pe = new Matrix(errorVSModelSize);
-		pe.print(5, 5);
 	}
 	
 	public FlowControl(){

@@ -332,19 +332,13 @@ public class LabyrinthGraph extends Environment{
 		Matrix AT = A.transpose();
 		Matrix ATA = AT.times(A);
 				
-		Matrix ATAinverse = svdInverse(ATA);
-		testInverse();
-		
-		System.out.println("Rank of A:");
-		System.out.println(A.rank());
-
-		ATA.times(ATAinverse).print(5, 5);
-		ATAinverse.times(ATA).print(5, 5);
+		Matrix ATAinverse = svdInverse(ATA, false);
+		//testInverse();
 
 		Matrix theta = ATAinverse.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
 		
 		System.out.println("Check of regression");
-		System.out.println(A.times(theta).minus(distances.transpose()).norm1());
+		System.out.println(A.times(theta).minus(distances.transpose()).norm1()/samples[0].length);
 		
 		return A.times(theta);
 	}
@@ -353,18 +347,26 @@ public class LabyrinthGraph extends Environment{
 		double[][] d = { { 1,3,2}, {5,3,1}, {2,0,0}};
 		Matrix D = new Matrix(d);
 		D.times( D.inverse() ).print(5, 5);
-		D.times( svdInverse(D) ).print(5, 5);
+		D.times( svdInverse(D, false) ).print(5, 5);
 	}
 	
-	public Matrix svdInverse(Matrix m){
+	public Matrix svdInverse(Matrix m, boolean debug){
 		SingularValueDecomposition svd = m.svd();
-		return svd.getV().times( pseudoInvDiagonal(svd.getS()) ).times(svd.getU().transpose() );
+		if (debug == true){
+			//svd.getS().print(5, 5);
+			//svd.getU().print(5, 5);
+			//svd.getV().print(5, 5);
+			svd.getV().transpose().times( svd.getV()).print(5, 5);
+			svd.getU().transpose().times( svd.getU()).print(5, 5);
+			pseudoInvDiagonalKillLowSingularValues(svd.getS()).print(5, 5);
+		}
+		return svd.getV().times( pseudoInvDiagonalKillLowSingularValues(svd.getS() ) ).times(svd.getU().transpose() );
 	}
 	
-	public Matrix pseudoInvDiagonal(Matrix m){
+	public Matrix pseudoInvDiagonalKillLowSingularValues(Matrix m){
 		double[][] a = m.getArrayCopy();
 		for (int i = 0; i < a.length; i++) {
-			if (a[i][i] != 0){
+			if (a[i][i] > 0.0001){
 				a[i][i] = 1/a[i][i];
 			}
 			else{
@@ -387,17 +389,9 @@ public class LabyrinthGraph extends Environment{
 			distances[i] = trueAverageDistance.get( (int) s.getArray()[0][i], 0);
 		}
 		Matrix d = new Matrix(new double[][]{ distances }).transpose();
-		Atheta.print(5, 5);
-		d.print(5, 5);
 		
 		Matrix error = Atheta.minus( d );
-
-		//d.transpose().print(5, 5);
-		//Atheta.transpose().print(5, 5);
-		//System.out.println( error.norm1() / error.getArray().length);
 		
-		System.out.println("Normalizer: ");
-		System.out.println(error.getArray().length);
 		return error.norm1()/ error.getArray().length;
 	}
 	
