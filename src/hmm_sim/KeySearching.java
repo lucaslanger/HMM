@@ -1,5 +1,7 @@
 package hmm_sim;
 
+import java.util.HashMap;
+
 import Jama.Matrix;
 
 public class KeySearching {
@@ -39,8 +41,8 @@ public class KeySearching {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		double[][] modelSizes = new double[][]{{3, 5, 10, 20, 30, 50, 70, 90}};
-		double[][] maxKsToTest = new double[][]{{5, 10, 20, 40, 80, 160, 320}};
+		double[][] modelSizes = new double[][]{{5, 10, 20 ,40, 80}};
+		double[][] maxKsToTest = new double[][]{{5, 20, 40, 80, 160, 320, 640, 1280}};
 		double[][] errorVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
 		double[][] xaxis = new double[maxKsToTest[0].length][modelSizes[0].length];
 
@@ -51,25 +53,30 @@ public class KeySearching {
 			
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			int k = (int) maxKsToTest[0][j]; 
-			int[][] durationDistancePairs = l.createObservationDistanceSamples(shortestPaths, k, samples);
-			double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
-			
-			for (int i = 0; i < modelSizes[0].length; i++) {		
-				int m = (int) modelSizes[0][i];
-				
-				//testEngine a = new testEngine(workingFolder, empModels, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
-				//QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
+			HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
+			HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
 
-				ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
-				QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(1, m).get(dataSizeForFixedPlots)[0];
-				
-				Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
-				
-				Matrix Atheta = l.getAlphaFromSampledData(durationDistancePairs, alphaKStates);
+			//double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
+			
+			for (int i = 0; i < modelSizes[0].length; i++) {	
+				for (int r = 0; r < repetitions; r++) {
+						
+					int m = (int) modelSizes[0][i];
+					//testEngine a = new testEngine(workingFolder, empModels, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
+					//QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
 	
-				double e = l.performanceDistanceErrorComputations(Atheta, trueDistanceAhead, durationDistancePairs);
-				errorVSModelSize[j][i] = e;
-				xaxis[j][i] = i;
+					ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
+					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[r];
+					
+					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
+					
+					Matrix theta = l.getAlphaFromSampledData(trainingSamples, alphaKStates);
+		
+					double e = l.determineError(theta, alphaKStates, testingSamples);
+					errorVSModelSize[j][i] += e;
+				}
+				xaxis[j][i] = modelSizes[0][i];
+				errorVSModelSize[j][i] /= repetitions;
 			}
 			
 		}

@@ -75,7 +75,7 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 5;
+		int repetitions = 2;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;

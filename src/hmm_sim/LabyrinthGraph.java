@@ -315,14 +315,16 @@ public class LabyrinthGraph extends Environment{
 		return p;
 	}
 	
-	public Matrix getAlphaFromSampledData(int[][] samples, Matrix[] alphaKStates){
-		Matrix m = new Matrix( intArrayToDouble(samples) );
+	public Matrix getAlphaFromSampledData(HashMap<String, int[]> trainingSamples, Matrix[] alphaKStates){
 
-		Matrix durations = new Matrix( new double[][]{m.getArrayCopy()[0]} );
-		Matrix distances = new Matrix( new double[][]{m.getArrayCopy()[1]} );
-				
-		double[][] a = new double[samples[0].length][alphaKStates[0].getArray().length];
-		for (int i = 0; i < samples[0].length; i++) {
+		Matrix durations = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Distances") ) } );
+		Matrix distances = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Durations")) } );
+			
+		int numSamples = trainingSamples.get("Distances").length;
+		int modelSize = alphaKStates[0].getArrayCopy().length;
+		
+		double[][] a = new double[numSamples][modelSize];
+		for (int i = 0; i < numSamples; i++) {
 			int k = (int) durations.get(0, i);
 			double[] aK = alphaKStates[k].getArrayCopy()[0];
 			a[i] = aK;
@@ -337,10 +339,30 @@ public class LabyrinthGraph extends Environment{
 
 		Matrix theta = ATAinverse.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
 		
-		System.out.println("Check of regression");
-		System.out.println(A.times(theta).minus(distances.transpose()).norm1()/samples[0].length);
+		//System.out.println("Check of regression");
+		//System.out.println(A.times(theta).minus(distances.transpose()).norm1()/samples[0].length);
 		
-		return A.times(theta);
+		return theta;
+	}
+	
+	public double determineError(Matrix theta, Matrix[] alphaKStates, HashMap<String, int[]> testSamples){
+		int widthOfA = alphaKStates[0].getArrayCopy().length;
+		int numSamples = testSamples.get("").length;
+		double[][] a = new double[numSamples][widthOfA];
+		double[][] b = new double[numSamples][1];
+ 		for (int i = 0; i < numSamples; i++) {
+			int traj = testSamples.get("Durations")[i];
+			a[i] = alphaKStates[traj].getArrayCopy()[0];
+			b[i][0] = testSamples.get("Distances")[i];
+		}
+		
+ 		Matrix A = new Matrix(a);
+ 		Matrix B = new Matrix(b);
+ 		
+ 		A.print(5, 5);
+ 		B.print(5, 5);
+ 		
+		return A.times(theta).minus(B).norm1();
 	}
 	
 	public void testInverse(){
@@ -375,7 +397,7 @@ public class LabyrinthGraph extends Environment{
 		}
 		return new Matrix(a);
 	}
-	
+	/*
 	public double performanceDistanceErrorComputations(Matrix Atheta, double[][] trueDistanceKAhead, int[][] samples){
 		Matrix p = new Matrix( new double[][]{prior} ).transpose();
 		Matrix td = new Matrix(trueDistanceKAhead);
@@ -393,17 +415,21 @@ public class LabyrinthGraph extends Environment{
 		Matrix error = Atheta.minus( d );
 		
 		return error.norm1()/ error.getArray().length;
-	}
+	}*/
 	
-	public int[][] createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
-		int[][] s = new int[2][samples];
+	public HashMap<String, int[]> createObservationDistanceSamples(int[] shortestPaths, int maxObservation, int samples){
+		HashMap<String, int[]> s = new HashMap<String, int[]>();
 		Random random = new Random();
+		int[] durations = new int[samples];
+		int[] distances = new int[samples];
 		for (int i = 0; i < samples; i++) {
 			int r = random.nextInt(maxObservation); 
 			int d = sampleDistance(shortestPaths, r, random , prior);
-			s[0][i] = r;
-			s[1][i] = d;
+			durations[i] = r;
+			distances[i] = d;
 		}
+		s.put("Distances", distances);
+		s.put("Durations", durations);
 		
 		return s;
 	}
@@ -482,13 +508,10 @@ public class LabyrinthGraph extends Environment{
 		}
 	}
 	
-	public static double[][] intArrayToDouble(int[][] I){
-		double[][] r = new double[I.length][I[0].length];
+	public static double[] intArrayToDouble(int[] I){
+		double[] r = new double[I.length];
 		for (int j = 0; j < I.length; j++) {
-			for (int j2 = 0; j2 < I[j].length; j2++) {
-				//System.out.println( Arrays.toString(I[j]) );
-				r[j][j2] = (double) I[j][j2];
-			}
+			r[j] = (double) I[j];
 		}
 		return r;
 	}
