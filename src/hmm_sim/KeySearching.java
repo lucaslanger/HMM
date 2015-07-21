@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import Jama.Matrix;
@@ -29,7 +30,7 @@ public class KeySearching {
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
 	}
 
-	public void search(){
+	public void search(double[] mS, double[] maxKs){
 		String workingFolder = "keySearchPacMan/";
 		String empModels = "Models_Emperical_" + workingFolder;
 		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
@@ -41,9 +42,11 @@ public class KeySearching {
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 
-		double[][] modelSizes = new double[][]{{5, 10, 20 ,40, 80}};
-		double[][] maxKsToTest = new double[][]{{5, 20, 40, 80, 160, 320, 640, 1280}};
-		double[][] errorVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
+		double[][] modelSizes = new double[][]{mS};
+		double[][] maxKsToTest = new double[][]{maxKs};
+		double[][] errorTestingVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
+		double[][] errorTrainingVSModelSize = new double[maxKsToTest[0].length][modelSizes[0].length];
+
 		double[][] xaxis = new double[maxKsToTest[0].length][modelSizes[0].length];
 
 		int[] shortestPaths = l.shortestPathsFromKey();
@@ -53,38 +56,43 @@ public class KeySearching {
 			
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			int k = (int) maxKsToTest[0][j]; 
-			HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
-			HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
-
 			//double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
-			
-			for (int i = 0; i < modelSizes[0].length; i++) {	
+			for (int i = 0; i < modelSizes[0].length; i++) {
+				int m = (int) modelSizes[0][i];
+				ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
+
 				for (int r = 0; r < repetitions; r++) {
-						
-					int m = (int) modelSizes[0][i];
-					//testEngine a = new testEngine(workingFolder, empModels, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, new int[]{}, m, 1 , false);
-					//QueryEngine learnedModel = a.fixedModelQE.get(dataSizeForFixedPlots)[0];
-	
-					ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
-					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[r];
 					
+					System.out.println("Rep: " + r + " MS: " + m + " MaxK: " + k);
+					HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
+					HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
+	
+					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[0];
 					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
 					
 					Matrix theta = l.getAlphaFromSampledData(trainingSamples, alphaKStates);
 		
-					double e = l.determineError(theta, alphaKStates, testingSamples);
-					errorVSModelSize[j][i] += e;
+					double eTesting = l.determineError(theta, alphaKStates, testingSamples);
+					double eTraining = l.determineError(theta, alphaKStates, trainingSamples);
+					errorTestingVSModelSize[j][i] += eTesting;
+					errorTrainingVSModelSize[j][i] += eTraining;
 				}
 				xaxis[j][i] = modelSizes[0][i];
-				errorVSModelSize[j][i] /= repetitions;
+				errorTestingVSModelSize[j][i] /= repetitions;
+				errorTrainingVSModelSize[j][i] /= repetitions;
 			}
 			
 		}
-		Matrix pe = new Matrix(errorVSModelSize);
-		pe.print(5, 5);
+		Matrix errTraining = new Matrix(errorTrainingVSModelSize);
+		Matrix errTesting = new Matrix(errorTestingVSModelSize);
+		System.out.println("Training error:");
+		errTraining.print(5, 5);
+		System.out.println("Testing error");
+		errTesting.print(5, 5);
 		
-		System.out.println("Writing data to: " + pltFolder + "KeyFindingError");
-		OutputData.outputData(pltFolder + "KeyFindingError", "ModelSize | NOTE: Lighter curves --> Lower MaxK", "Error Norm1()", xaxis, errorVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower MaxK", "Error Norm1()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower MaxK", "Error Norm1()", xaxis, errorTestingVSModelSize);
+
 	}
 
 }

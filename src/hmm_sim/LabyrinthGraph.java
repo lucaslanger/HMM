@@ -18,26 +18,30 @@ public class LabyrinthGraph extends Environment{
 	private int[][] edges;
 	private double[][] transitions; 
 	private double[] prior;
+	private int stretchFactor;
 	private int key;
 	private HashMap<Integer, ArrayList<Integer>> incomingEdges;
+	
 		
-	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior){
+	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor){
 		super(workingFolder, workingFolder, desiredHankelSize);
 		this.graph = graph;
 		this.edges = edges;
 		this.transitions = transitions;
 		this.prior = prior;
+		this.stretchFactor = stretchFactor;
 		super.initializeProbabilities();
 		
 	}
 	
-	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int key){
+	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor, int key){
 		super(workingFolder, workingFolder, desiredHankelSize);
 		this.graph = graph;
 		this.edges = edges;
 		this.transitions = transitions;
 		this.prior = prior;
 		this.key = key;
+		this.stretchFactor = stretchFactor;
 		this.buildIncomingEdges();
 		super.initializeProbabilities();
 		
@@ -244,7 +248,7 @@ public class LabyrinthGraph extends Environment{
 		 
 		 double[] prior = new double[]{0,1,0,0,0};
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor);
 		 return l;
 		 
 	}
@@ -311,14 +315,14 @@ public class LabyrinthGraph extends Environment{
 		for (int a: paths.keySet()) {
 			p[a] = paths.get(a); 
 		}
-		System.out.println( Arrays.toString(p) );
+		//System.out.println( Arrays.toString(p) );
 		return p;
 	}
 	
 	public Matrix getAlphaFromSampledData(HashMap<String, int[]> trainingSamples, Matrix[] alphaKStates){
 
-		Matrix durations = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Distances") ) } );
-		Matrix distances = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Durations")) } );
+		Matrix distances = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Distances") ) } );
+		Matrix durations = new Matrix( new double[][]{ intArrayToDouble(trainingSamples.get("Durations")) } );
 			
 		int numSamples = trainingSamples.get("Distances").length;
 		int modelSize = alphaKStates[0].getArrayCopy().length;
@@ -339,15 +343,12 @@ public class LabyrinthGraph extends Environment{
 
 		Matrix theta = ATAinverse.times( AT.times(distances.transpose()) ); //x = (At*A)^-1*AtD
 		
-		//System.out.println("Check of regression");
-		//System.out.println(A.times(theta).minus(distances.transpose()).norm1()/samples[0].length);
-		
 		return theta;
 	}
 	
 	public double determineError(Matrix theta, Matrix[] alphaKStates, HashMap<String, int[]> testSamples){
 		int widthOfA = alphaKStates[0].getArrayCopy().length;
-		int numSamples = testSamples.get("").length;
+		int numSamples = testSamples.get("Durations").length;
 		double[][] a = new double[numSamples][widthOfA];
 		double[][] b = new double[numSamples][1];
  		for (int i = 0; i < numSamples; i++) {
@@ -358,11 +359,8 @@ public class LabyrinthGraph extends Environment{
 		
  		Matrix A = new Matrix(a);
  		Matrix B = new Matrix(b);
- 		
- 		A.print(5, 5);
- 		B.print(5, 5);
- 		
-		return A.times(theta).minus(B).norm1();
+ 		 		
+		return A.times(theta).minus(B).norm1()/numSamples;
 	}
 	
 	public void testInverse(){
@@ -514,6 +512,33 @@ public class LabyrinthGraph extends Environment{
 			r[j] = (double) I[j];
 		}
 		return r;
+	}
+	
+	public Matrix[] getTrueAlphaKs(int k, int maxK){
+		Matrix[] maxKs = new Matrix[maxK];
+		
+		int trueStateSize = graph.length - 1;
+		HashMap<Integer, HashMap<Integer, Integer>> pairsSeen = new HashMap<Integer, HashMap<Integer, Integer>>();
+		for (int i = 0; i < edges.length; i++) {
+			for (int j = 0; j < edges[i].length; j++) {
+				if (i ==0 || graph[i][j] == 0 || (pairsSeen.containsKey(i) && pairsSeen.get(i).containsKey(graph[j]) ) || (pairsSeen.containsKey(graph[j]) && pairsSeen.get(graph[j]).containsKey(i)) ){
+					continue;
+				}
+				else{
+					trueStateSize += edges[i][j] - 1;
+				}
+			}
+		}
+		
+		int[] distribution = new int[trueStateSize];
+		
+		for (int i = 0; i < maxK; i++) {
+			for (int j = 0; j < distribution.length; j++) {
+				// update probabilities
+			}
+		}
+		
+		return maxKs;
 	}
 
 }

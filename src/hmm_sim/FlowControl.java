@@ -75,15 +75,18 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 2;
+		int repetitions = 3;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
 		int key = 5;
-		int samples = 100;
+		int samples = 1000;
+		double[] mS = new double[]{20, 40, 60, 240};
+		double[] maxKs = new double[]{20, 40, 80, 160, 320};
 		
 		KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, base);
-		ks.search();
+		
+		ks.search(mS, maxKs);
 	}
 	
 	public FlowControl(){
