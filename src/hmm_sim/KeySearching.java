@@ -57,16 +57,16 @@ public class KeySearching {
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			int k = (int) maxKsToTest[0][j]; 
 			//double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
-			for (int i = 0; i < modelSizes[0].length; i++) {
-				int m = (int) modelSizes[0][i];
-				ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
+			for (int r = 0; r < repetitions; r++) {
+				HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
+				HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
 
-				for (int r = 0; r < repetitions; r++) {
+				for (int i = 0; i < modelSizes[0].length; i++) {
+					int m = (int) modelSizes[0][i];
+					ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
 					
 					System.out.println("Rep: " + r + " MS: " + m + " MaxK: " + k);
-					HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
-					HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, k, samples);
-	
+				
 					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[0];
 					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
 					
@@ -76,13 +76,21 @@ public class KeySearching {
 					double eTraining = l.determineError(theta, alphaKStates, trainingSamples);
 					errorTestingVSModelSize[j][i] += eTesting;
 					errorTrainingVSModelSize[j][i] += eTraining;
+					
 				}
+				
+			}
+			
+		}
+		for (int j = 0; j < maxKsToTest[0].length; j++) {
+			for (int i = 0; i < modelSizes[0].length; i++) {
 				xaxis[j][i] = modelSizes[0][i];
 				errorTestingVSModelSize[j][i] /= repetitions;
 				errorTrainingVSModelSize[j][i] /= repetitions;
 			}
-			
 		}
+	
+		
 		Matrix errTraining = new Matrix(errorTrainingVSModelSize);
 		Matrix errTesting = new Matrix(errorTestingVSModelSize);
 		System.out.println("Training error:");
@@ -90,8 +98,8 @@ public class KeySearching {
 		System.out.println("Testing error");
 		errTesting.print(5, 5);
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower MaxK", "Error Norm1()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower MaxK", "Error Norm1()", xaxis, errorTestingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm1()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm1()", xaxis, errorTestingVSModelSize);
 
 	}
 

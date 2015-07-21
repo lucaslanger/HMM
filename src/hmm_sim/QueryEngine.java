@@ -268,10 +268,9 @@ public class QueryEngine {
 		m[0] = this.a0;
 		for (int i = 1; i < m.length; i++) {
 			m[i] = this.alphaKQuery(i, this.maxPower, base );
-			double normalizer = m[i].norm1();
-			//System.out.println("Norm");
-			//System.out.println(m[i].norm1());
-			m[i].times(1/normalizer);
+			double normalizer = 1.0;
+			//double normalizer = m[i].times(ainf).get(0, 0);
+			m[i].times(1.0/normalizer);
 		}	
 		return m;
 	}

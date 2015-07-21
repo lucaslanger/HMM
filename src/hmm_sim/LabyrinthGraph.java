@@ -22,17 +22,6 @@ public class LabyrinthGraph extends Environment{
 	private int key;
 	private HashMap<Integer, ArrayList<Integer>> incomingEdges;
 	
-		
-	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor){
-		super(workingFolder, workingFolder, desiredHankelSize);
-		this.graph = graph;
-		this.edges = edges;
-		this.transitions = transitions;
-		this.prior = prior;
-		this.stretchFactor = stretchFactor;
-		super.initializeProbabilities();
-		
-	}
 	
 	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor, int key){
 		super(workingFolder, workingFolder, desiredHankelSize);
@@ -41,6 +30,9 @@ public class LabyrinthGraph extends Environment{
 		this.transitions = transitions;
 		this.prior = prior;
 		this.key = key;
+		System.out.println("Key location is: ");
+		System.out.println(key);
+		
 		this.stretchFactor = stretchFactor;
 		this.buildIncomingEdges();
 		super.initializeProbabilities();
@@ -192,7 +184,7 @@ public class LabyrinthGraph extends Environment{
 		 double[] prior = new double[edges.length];
 		 prior[3] = 1;
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, key);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor,key);
 		 return l;
 	}
 	
@@ -247,8 +239,10 @@ public class LabyrinthGraph extends Environment{
 		 
 		 
 		 double[] prior = new double[]{0,1,0,0,0};
+		 
+		 int key = 2;
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor, key);
 		 return l;
 		 
 	}
@@ -287,6 +281,7 @@ public class LabyrinthGraph extends Environment{
 				int nId = n.getId();
 				int lengthToN = n.getLengthToNode();
 				paths.put(n.getId(), lengthToN) ;
+				System.out.println(nId);
 				if (this.incomingEdges.get(nId) != null){
 					for (int i = 0; i < this.incomingEdges.get(nId).size(); i++) {
 						int outEdge = this.incomingEdges.get(nId).get(i);
@@ -514,27 +509,48 @@ public class LabyrinthGraph extends Environment{
 		return r;
 	}
 	
-	public Matrix[] getTrueAlphaKs(int k, int maxK){
-		Matrix[] maxKs = new Matrix[maxK];
-		
+
+	public Matrix[] getTrueAlphaKs(int k, int maxK){		
 		int trueStateSize = graph.length - 1;
-		HashMap<Integer, HashMap<Integer, Integer>> pairsSeen = new HashMap<Integer, HashMap<Integer, Integer>>();
+		int indexToExpandOn = graph.length; 
+		ArrayList<Integer> indexMarkers = new ArrayList<Integer>();
+		HashMap<IntegerPair, IntegerPair> pairsSeen = new HashMap<IntegerPair, IntegerPair>();
+		
 		for (int i = 0; i < edges.length; i++) {
 			for (int j = 0; j < edges[i].length; j++) {
-				if (i ==0 || graph[i][j] == 0 || (pairsSeen.containsKey(i) && pairsSeen.get(i).containsKey(graph[j]) ) || (pairsSeen.containsKey(graph[j]) && pairsSeen.get(graph[j]).containsKey(i)) ){
+				IntegerPair temp = new IntegerPair(i, graph[i][j]);
+				if (i ==0 || graph[i][j] == 0 || (pairsSeen.containsKey(temp) ) ){
 					continue;
 				}
 				else{
 					trueStateSize += edges[i][j] - 1;
+					IntegerPair pair = new IntegerPair(i, graph[i][j]);
+					IntegerPair range = new IntegerPair(indexToExpandOn, indexToExpandOn + edges[i][j] - 1);
+					pairsSeen.put(pair, range);
+					indexToExpandOn += edges[i][j] - 1;
 				}
 			}
 		}
 		
 		int[] distribution = new int[trueStateSize];
+		for (int i = 0; i < prior.length; i++) {
+			off by 1 because of 0 state?
+			distribution[i] = prior[i];
+		}
 		
-		for (int i = 0; i < maxK; i++) {
-			for (int j = 0; j < distribution.length; j++) {
-				// update probabilities
+		Matrix[] maxKs = new Matrix[maxK];
+		for (int i = 1; i < maxK; i++) {
+			int[] nextDistribution = new int[trueStateSize];
+			for (int j = 0; j < trueStateSize; j++) {
+				if (j < graph.length){
+					double[] a = convertTransitionsToNonDoorTransitions(j);
+					for (int out = 0; out < t.length; out++) {
+						 
+					} 
+				}
+				else{
+					nextDistribution[i] = nextDistribution[i-1];
+				}
 			}
 		}
 		
