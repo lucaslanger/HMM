@@ -354,8 +354,31 @@ public class LabyrinthGraph extends Environment{
 		
  		Matrix A = new Matrix(a);
  		Matrix B = new Matrix(b);
- 		 		
-		return A.times(theta).minus(B).norm1()/numSamples;
+ 		
+ 		System.out.println(A.times(theta).minus(B).norm2());
+ 		System.out.println( norm2Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
+ 		System.out.println(A.times(theta).minus(B).norm1() );
+ 		System.out.println( norm1Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
+
+ 		System.out.println();
+ 		
+		return A.times(theta).minus(B).norm2()/numSamples;
+	}
+	
+	public double norm2Custom(double[] d){
+		double r = 0;
+		for (int i = 0; i < d.length; i++) {
+			r += Math.pow(d[i], 2);
+		}
+		return Math.sqrt(r);
+	}
+	
+	public double norm1Custom(double[] d){
+		double r = 0;
+		for (int i = 0; i < d.length; i++) {
+			r += Math.abs(d[i]);
+		}
+		return Math.sqrt(r);
 	}
 	
 	public void testInverse(){
@@ -509,7 +532,7 @@ public class LabyrinthGraph extends Environment{
 		return r;
 	}
 	
-
+	/*
 	public Matrix[] getTrueAlphaKs(int k, int maxK){		
 		int trueStateSize = graph.length - 1;
 		int indexToExpandOn = graph.length; 
@@ -536,6 +559,8 @@ public class LabyrinthGraph extends Environment{
 		for (int i = 0; i < prior.length; i++) {
 			off by 1 because of 0 state?
 			distribution[i] = prior[i];
+			
+			FIX LABYRINTH TO BE A TRUE HMM
 		}
 		
 		Matrix[] maxKs = new Matrix[maxK];
@@ -556,5 +581,5 @@ public class LabyrinthGraph extends Environment{
 		
 		return maxKs;
 	}
-
+	*/
 }

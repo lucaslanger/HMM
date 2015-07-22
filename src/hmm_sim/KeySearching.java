@@ -98,8 +98,8 @@ public class KeySearching {
 		System.out.println("Testing error");
 		errTesting.print(5, 5);
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm1()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm1()", xaxis, errorTestingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
 
 	}
 
