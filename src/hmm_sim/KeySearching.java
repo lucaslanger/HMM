@@ -1,5 +1,7 @@
 package hmm_sim;
 
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -17,8 +19,9 @@ public class KeySearching {
 	private int base;
 	private int[] trajectorySizes;
 	private int dataSizeForFixedPlots;
+	private int maxPower;
 	
-	public KeySearching(int samples, int key, int basisSize, int hSize, int stretchFactor, int[] trajectorySizes, int dataSizeForFixedPlots, int repetitions, int base) {
+	public KeySearching(int samples, int key, int basisSize, int hSize, int stretchFactor, int[] trajectorySizes, int dataSizeForFixedPlots, int repetitions, int maxPower, int base) {
 		this.samples = samples;
 		this.key = key;
 		this.basisSize = basisSize;
@@ -28,16 +31,17 @@ public class KeySearching {
 		this.base = base;
 		this.trajectorySizes = trajectorySizes;
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
+		this.maxPower = maxPower;
 	}
 
-	public void search(double[] mS, double[] maxKs){
+	public ErrorPair search(double[] mS, double[] maxKs){
 		String workingFolder = "keySearchPacMan/";
 		String empModels = "Models_Emperical_" + workingFolder;
 		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
 		
 		FlowControl.createFolder(workingFolder);
 
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, key);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, key, false);
 		l.generateData(trajectorySizes, repetitions, false);
 		
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
@@ -51,8 +55,7 @@ public class KeySearching {
 
 		int[] shortestPaths = l.shortestPathsFromKey();
 
-		System.out.println("AVERAGING");
-		System.out.println("HACK ON PSEUDOINVERSE");
+		//System.out.println("HACK ON PSEUDOINVERSE");
 			
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			int k = (int) maxKsToTest[0][j]; 
@@ -64,11 +67,14 @@ public class KeySearching {
 				for (int i = 0; i < modelSizes[0].length; i++) {
 					int m = (int) modelSizes[0][i];
 					ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
-					
+					/*int trueModelRank = mr.readTrueModel("Models_True_" + workingFolder).getRank();
+					System.out.println("TrueModel rank: ");
+					System.out.println(trueModelRank);
 					System.out.println("Rep: " + r + " MS: " + m + " MaxK: " + k);
-				
+					System.out.println();
+					*/
 					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[0];
-					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, base);
+					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(k, this.maxPower, base);
 					
 					Matrix theta = l.getAlphaFromSampledData(trainingSamples, alphaKStates);
 		
@@ -85,22 +91,25 @@ public class KeySearching {
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			for (int i = 0; i < modelSizes[0].length; i++) {
 				xaxis[j][i] = modelSizes[0][i];
-				errorTestingVSModelSize[j][i] /= repetitions;
-				errorTrainingVSModelSize[j][i] /= repetitions;
+				errorTestingVSModelSize[j][i] /= repetitions*samples;
+				errorTrainingVSModelSize[j][i] /= repetitions*samples;
 			}
 		}
 	
 		
 		Matrix errTraining = new Matrix(errorTrainingVSModelSize);
 		Matrix errTesting = new Matrix(errorTestingVSModelSize);
-		System.out.println("Training error:");
+		
+		/*System.out.println("Training error:");
 		errTraining.print(5, 5);
 		System.out.println("Testing error");
 		errTesting.print(5, 5);
+		*/
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting", "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_Base:" + this.maxPower , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_Base:" + this.maxPower, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
 
+		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}
 
 }

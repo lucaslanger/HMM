@@ -100,9 +100,18 @@ validityTests = [(i,'normal','normal') for i in temp]
 
 modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
 
+modelSizes = [1,4,16,32,64,128]
+keyPredictions = []
+for m in modelSizes:
+	keyPredictions.append(('KeyFindingErrorTesting_Base:' + str(m),'normal','normal'))
+	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
 
-keyPredictions = [('KeyFindingError','normal','normal')]
 
+maxK = [40,60]
+baseComparisonKeyPredictions = []
+for m in maxK:
+	baseComparisonKeyPredictions.append('KeyFindingErrorTesting_Base:' + str(m),'normal','normal')
+	baseComparisonKeyPredictions.append('KeyFindingErrorTesting_Base:' + str(m),'normal','normal')
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':

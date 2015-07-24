@@ -262,12 +262,12 @@ public class QueryEngine {
 		
 	}
 	
-	public Matrix[] getAllKStateQueries(int maxK, int base){
+	public Matrix[] getAllKStateQueries(int maxK, int maxPow, int base){
 		Matrix[] m = new Matrix[maxK];
 		
 		m[0] = this.a0;
 		for (int i = 1; i < m.length; i++) {
-			m[i] = this.alphaKQuery(i, this.maxPower, base );
+			m[i] = this.alphaKQuery(i, maxPow, base );
 			double normalizer = m[i].norm2();
 			//double normalizer = m[i].times(ainf).get(0, 0);
 			m[i] = m[i].times(1.0/normalizer);

@@ -20,19 +20,22 @@ public class LabyrinthGraph extends Environment{
 	private double[] prior;
 	private int stretchFactor;
 	private int key;
+	public boolean verbose;
 	private HashMap<Integer, ArrayList<Integer>> incomingEdges;
 	
 	
-	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor, int key){
+	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor, int key, boolean verbose){
 		super(workingFolder, workingFolder, desiredHankelSize);
 		this.graph = graph;
 		this.edges = edges;
 		this.transitions = transitions;
 		this.prior = prior;
 		this.key = key;
-		System.out.println("Key location is: ");
-		System.out.println(key);
-		
+		this.verbose = verbose;
+		if(verbose){
+			System.out.println("Key location is: ");
+			System.out.println(key);
+		}
 		this.stretchFactor = stretchFactor;
 		this.buildIncomingEdges();
 		super.initializeProbabilities();
@@ -75,11 +78,13 @@ public class LabyrinthGraph extends Environment{
 		Matrix p = new Matrix( new double[][]{ prior } ).transpose() ;
 		Matrix r = n.times( p );
 		
-		System.out.println("Probabilities:");
-		r.transpose().print(5, 5);
-		System.out.println("Sum");
-		System.out.println(LabyrinthGraph.sumArray(r.transpose().getArrayCopy()[0]));
-		System.out.println();
+		if (verbose){
+			System.out.println("Probabilities:");
+			r.transpose().print(5, 5);
+			System.out.println("Sum");
+			System.out.println(LabyrinthGraph.sumArray(r.transpose().getArrayCopy()[0]));
+			System.out.println();
+		}
 		return r.transpose().getArrayCopy()[0];
 	}
 	
@@ -131,7 +136,7 @@ public class LabyrinthGraph extends Environment{
 		return d3;
 	}
 	
-	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor, int key){
+	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor, int key, boolean verbose){
 			
 		 int[][] graph = new int[][]{   
 				 {},
@@ -184,7 +189,7 @@ public class LabyrinthGraph extends Environment{
 		 double[] prior = new double[edges.length];
 		 prior[3] = 1;
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor,key);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor,key, verbose);
 		 return l;
 	}
 	
@@ -210,7 +215,7 @@ public class LabyrinthGraph extends Environment{
 		return d;
 	}
 
-	public static LabyrinthGraph testLabyrinth(String workingFolder, int desiredHankelSize, int stretchFactor){
+	public static LabyrinthGraph testLabyrinth(String workingFolder, int desiredHankelSize, int stretchFactor, boolean verbose){
 		
 		 int[][] graph = new int[][]{   
 				 {},
@@ -242,7 +247,7 @@ public class LabyrinthGraph extends Environment{
 		 
 		 int key = 2;
 
-		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor, key);
+		 LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, stretchFactor, key, verbose);
 		 return l;
 		 
 	}
@@ -258,7 +263,7 @@ public class LabyrinthGraph extends Environment{
 	public static void main(String[] args){
 		String wf = "test";
 		int d = 100;
-		LabyrinthGraph.testLabyrinth(wf,  d, 1);
+		LabyrinthGraph.testLabyrinth(wf,  d, 1, false);
 	}
 	
 	
@@ -281,7 +286,6 @@ public class LabyrinthGraph extends Environment{
 				int nId = n.getId();
 				int lengthToN = n.getLengthToNode();
 				paths.put(n.getId(), lengthToN) ;
-				System.out.println(nId);
 				if (this.incomingEdges.get(nId) != null){
 					for (int i = 0; i < this.incomingEdges.get(nId).size(); i++) {
 						int outEdge = this.incomingEdges.get(nId).get(i);
@@ -355,14 +359,14 @@ public class LabyrinthGraph extends Environment{
  		Matrix A = new Matrix(a);
  		Matrix B = new Matrix(b);
  		
- 		System.out.println(A.times(theta).minus(B).norm2());
+ 		/*System.out.println(A.times(theta).minus(B).norm2());
  		System.out.println( norm2Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
  		System.out.println(A.times(theta).minus(B).norm1() );
  		System.out.println( norm1Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
 
  		System.out.println();
- 		
-		return A.times(theta).minus(B).norm2()/numSamples;
+ 		*/
+		return A.times(theta).minus(B).norm2();
 	}
 	
 	public double norm2Custom(double[] d){
@@ -378,7 +382,7 @@ public class LabyrinthGraph extends Environment{
 		for (int i = 0; i < d.length; i++) {
 			r += Math.abs(d[i]);
 		}
-		return Math.sqrt(r);
+		return r;
 	}
 	
 	public void testInverse(){

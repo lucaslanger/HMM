@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
 
 public class FlowControl {
 	
@@ -16,7 +17,9 @@ public class FlowControl {
 	
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base);
+		String f = "ErrorStorage";
+		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f);
+		FlowControl.printErrors(f);
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -32,7 +35,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5, false);
 		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
 		l.generateData(trajectorySizes, repetitions, false);
 		
@@ -74,19 +77,94 @@ public class FlowControl {
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 , true);
 	}
 	
-	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 3;
+	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f){
+		int repetitions = 10;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
 		int key = 5;
 		int samples = 1000;
-		double[] mS = new double[]{20, 40, 60, 240};	
-		double[] maxKs = new double[]{40, 60 , 80, 120, 160, 320};	// get all 0s when maxK is <= 20
 		
-		KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, base);
 		
-		ks.search(mS, maxKs);
+		double[] mS = new double[]{40,60,80};	
+		double[] maxKs = new double[]{40, 60};	// get all 0s when maxK is <= 20
+		
+		int maxPowers[] = {1,4,16,32,64,128};
+		double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
+		double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
+		double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
+		
+		for (int i=0;i<maxPowers.length;i++) {
+			KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, maxPowers[i], base);
+			ErrorPair e = ks.search(mS, maxKs);
+			double[][] t1 = e.getTrainingErrors();
+			double[][] t2 = e.getTestingErrors();
+			for (int j = 0; j < e.getTrainingErrors().length; j++) {
+				errorInfoTraining[j][i] = t1[j];
+				errorInfoTesting[j][i] = t2[j];
+				xAxes[j][i] = mS;
+			}
+		}
+
+		FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
+		
+	}
+	
+	
+	public static void printErrors(String f){
+		ModelKeySearchComparison r = FlowControl.readKeyErrorsToFile( f );
+		r.printOut();
+		double[][][] testing = r.getTestingData();
+		double[][][] training = r.getTrainingData();
+		double[][][] xAxes = r.getxAxes();
+		
+		String workingFolder = "keySearchPacMan/";
+		String empModels = "Models_Emperical_" + workingFolder;
+		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
+		
+		for (int i = 0; i < xAxes.length; i++) {
+			double[][] t1 = testing[i];
+			double[][] t2 = training[i];
+			double[][] x = xAxes[i];
+			
+			String filename = pltFolder + "KeySearchBaseComp";
+			System.out.println("Writing out " + filename);
+			String xaxisLabel = "ModelSize";
+			OutputData.outputData(filename + "Testing_" + Double.toString(xAxes[i][0][0]) , xaxisLabel, "", x, t1);
+			OutputData.outputData(filename + "Training_" + Double.toString(xAxes[i][0][0]), xaxisLabel, "", x, t2);
+		}
+	}
+	
+	public static void writeKeyErrorsToFile(double[][][] d1, double[][][] d2, double[][][] d3, String s){
+		try{
+			ObjectOutputStream oos = new ObjectOutputStream( new FileOutputStream(s) );
+			oos.writeObject(d1);
+			oos.writeObject(d2);
+			oos.writeObject(d3);
+			oos.close();
+		}
+		catch(Exception e){
+			System.out.println("Problem writing error data to file");
+			e.printStackTrace();
+		}
+	}
+	
+	public static ModelKeySearchComparison readKeyErrorsToFile( String s ){
+		try{
+			ObjectInputStream ois = new ObjectInputStream( new FileInputStream(s) );
+			double[][][] train = (double[][][]) ois.readObject();
+			double[][][] test = (double[][][]) ois.readObject();
+			double[][][] xaxis = (double[][][]) ois.readObject();
+	
+			ModelKeySearchComparison r = new ModelKeySearchComparison(train, test, xaxis);
+			ois.close();
+			return r;
+		}
+		catch(Exception e){
+			System.out.println("Problem writing error data to file");
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	public FlowControl(){
