@@ -18,8 +18,7 @@ public class FlowControl {
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		String f = "ErrorStorage";
-		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f);
-		FlowControl.printErrors(f);
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, false);
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -77,7 +76,7 @@ public class FlowControl {
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 , true);
 	}
 	
-	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f){
+	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, boolean compute){
 		int repetitions = 10;
 		int stretchFactor = 10;
 		int hSize = 500;
@@ -89,29 +88,33 @@ public class FlowControl {
 		double[] mS = new double[]{40,60,80};	
 		double[] maxKs = new double[]{40, 60};	// get all 0s when maxK is <= 20
 		
-		int maxPowers[] = {1,4,16,32,64,128};
-		double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
-		double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
-		double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
-		
-		for (int i=0;i<maxPowers.length;i++) {
-			KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, maxPowers[i], base);
-			ErrorPair e = ks.search(mS, maxKs);
-			double[][] t1 = e.getTrainingErrors();
-			double[][] t2 = e.getTestingErrors();
-			for (int j = 0; j < e.getTrainingErrors().length; j++) {
-				errorInfoTraining[j][i] = t1[j];
-				errorInfoTesting[j][i] = t2[j];
-				xAxes[j][i] = mS;
+		if (compute){
+			int maxPowers[] = {1,4,16,32,64,128};
+			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
+			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
+			double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
+			
+			for (int i=0;i<maxPowers.length;i++) {
+				KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, maxPowers[i], base);
+				ErrorPair e = ks.search(mS, maxKs);
+				double[][] t1 = e.getTrainingErrors();
+				double[][] t2 = e.getTestingErrors();
+				for (int j = 0; j < e.getTrainingErrors().length; j++) {
+					errorInfoTraining[j][i] = t1[j];
+					errorInfoTesting[j][i] = t2[j];
+					xAxes[j][i] = mS;
+				}
 			}
+	
+			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
 		}
-
-		FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
 		
+		FlowControl.printErrors(maxKs, f);
+
 	}
 	
 	
-	public static void printErrors(String f){
+	public static void printErrors(double[] maxKs, String f){
 		ModelKeySearchComparison r = FlowControl.readKeyErrorsToFile( f );
 		r.printOut();
 		double[][][] testing = r.getTestingData();
@@ -128,10 +131,13 @@ public class FlowControl {
 			double[][] x = xAxes[i];
 			
 			String filename = pltFolder + "KeySearchBaseComp";
-			System.out.println("Writing out " + filename);
 			String xaxisLabel = "ModelSize";
-			OutputData.outputData(filename + "Testing_" + Double.toString(xAxes[i][0][0]) , xaxisLabel, "", x, t1);
-			OutputData.outputData(filename + "Training_" + Double.toString(xAxes[i][0][0]), xaxisLabel, "", x, t2);
+
+			String s = Integer.toString( (int) maxKs[i] );
+			System.out.println("Writing out " + filename + "Testing_" + s );
+			OutputData.outputData(filename + "Testing_" + s, xaxisLabel, "", x, t1);
+			System.out.println("Writing out " + filename + "Training_" + s);
+			OutputData.outputData(filename + "Training_" + s, xaxisLabel, "", x, t2);
 		}
 	}
 	

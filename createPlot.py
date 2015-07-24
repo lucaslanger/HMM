@@ -110,13 +110,13 @@ for m in modelSizes:
 maxK = [40,60]
 baseComparisonKeyPredictions = []
 for m in maxK:
-	baseComparisonKeyPredictions.append('KeyFindingErrorTesting_Base:' + str(m),'normal','normal')
-	baseComparisonKeyPredictions.append('KeyFindingErrorTesting_Base:' + str(m),'normal','normal')
+	baseComparisonKeyPredictions.append(('KeySearchBaseCompTraining_' + str(m),'normal','normal'))
+	baseComparisonKeyPredictions.append(('KeySearchBaseCompTesting_' + str(m),'normal','normal'))
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
 elif t=='-k':
-	drawPlots(datafile, keyPredictions, colorsAnalysis, True)
+	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True)
 else:
 	print "invalid format"
