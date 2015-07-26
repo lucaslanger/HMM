@@ -18,7 +18,7 @@ public class FlowControl {
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		String f = "ErrorStorage";
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, false);
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, true);
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -27,16 +27,17 @@ public class FlowControl {
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
-		int[] modelSizes = new int[]{};
+		int fixedModelSize = 50;
+		int[] modelSizes = new int[]{50};
 
 		String workingFolder = "testLargeLabyrinth/";
 	
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5, false);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5, true);
 		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
-		l.generateData(trajectorySizes, repetitions, false);
+		l.generateData(trajectorySizes, repetitions, true);
 		
 		System.out.println("");
 		
@@ -45,7 +46,8 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, 50 ,1, true );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
+		a.makePlots();
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -77,7 +79,7 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, boolean compute){
-		int repetitions = 10;
+		int repetitions = 1;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
@@ -85,16 +87,19 @@ public class FlowControl {
 		int samples = 1000;
 		
 		
-		double[] mS = new double[]{40,60,80};	
-		double[] maxKs = new double[]{40, 60};	// get all 0s when maxK is <= 20
-		
+		double[] maxKs = new double[]{500};	// get all 0s when maxK is <= 20
+
 		if (compute){
-			int maxPowers[] = {1,4,16,32,64,128};
+			double[] mS = new double[]{50};
+			int maxPowers[] = {1,32,64,128};
+
 			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
 			
 			for (int i=0;i<maxPowers.length;i++) {
+				System.out.print("Current Maxpower: ");
+				System.out.println(maxPowers[i]);
 				KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, maxPowers[i], base);
 				ErrorPair e = ks.search(mS, maxKs);
 				double[][] t1 = e.getTrainingErrors();
@@ -108,6 +113,8 @@ public class FlowControl {
 	
 			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
 		}
+		System.out.println("Done generated error data");
+		System.out.println();
 		
 		FlowControl.printErrors(maxKs, f);
 

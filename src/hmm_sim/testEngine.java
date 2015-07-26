@@ -131,12 +131,13 @@ public class testEngine{
 		if(verbose){
 			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
 		}
+		
 	}
 	
 	private HashMap<Integer, Integer> initializeModelSizeToIndex(){
 		HashMap<Integer, Integer> t = new HashMap<Integer, Integer>();
 		for (int i = 0; i < modelSizes.length; i++) {
-			this.modelSizeToIndex.put(modelSizes[i], i);
+			t.put(modelSizes[i], i);
 		}
 		return t;
 	}
@@ -147,7 +148,7 @@ public class testEngine{
 		
 	}
 
-	private void makePlots(){
+	public void makePlots(){
 		
 		this.plotBaseDifferences(  );
 		System.out.println("Done Base Differences");

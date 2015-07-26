@@ -32,9 +32,70 @@ public class KeySearching {
 		this.trajectorySizes = trajectorySizes;
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
 		this.maxPower = maxPower;
+		System.out.println("PLEASE STANDARDIZE THE DATASET!");
+	}
+	
+	public ErrorPair searchOverBase(double[] mS, double[] bases, int maxK){
+		String workingFolder = "keySearchPacMan/";
+		String empModels = "Models_Emperical_" + workingFolder;
+		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
+		
+		FlowControl.createFolder(workingFolder);
+
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, key, false);
+		l.generateData(trajectorySizes, repetitions, false);
+		
+		FlowControl.readDataIntoModels(workingFolder, basisSize);
+
+		double[][] modelSizes = new double[][]{mS};
+		double[][] basesToTest = new double[][]{bases};
+		double[][] errorTestingVSModelSize = new double[basesToTest[0].length][modelSizes[0].length];
+		double[][] errorTrainingVSModelSize = new double[basesToTest[0].length][modelSizes[0].length];
+
+		double[][] xaxis = new double[basesToTest[0].length][modelSizes[0].length];
+
+		int[] shortestPaths = l.shortestPathsFromKey();
+
+		System.out.println("HACK ON PSEUDOINVERSE");
+			
+		for (int j = 0; j < basesToTest[0].length; j++) {
+			int base = (int) basesToTest[0][j]; 
+			//double[][] trueDistanceAhead = l.dynamicallyDetermineTrueDistanceKAhead(shortestPaths, k);
+			for (int r = 0; r < repetitions; r++) {
+				HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
+				HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
+
+				for (int i = 0; i < modelSizes[0].length; i++) {
+					int m = (int) modelSizes[0][i];
+					ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
+	
+					QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[0];
+					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, this.maxPower, base);
+					
+					Matrix theta = l.getAlphaFromSampledData(trainingSamples, alphaKStates);
+		
+					double eTesting = l.determineError(theta, alphaKStates, testingSamples);
+					double eTraining = l.determineError(theta, alphaKStates, trainingSamples);
+					errorTestingVSModelSize[j][i] += eTesting;
+					errorTrainingVSModelSize[j][i] += eTraining;
+				}
+			}
+		}
+		for (int j = 0; j < basesToTest[0].length; j++) {
+			for (int i = 0; i < modelSizes[0].length; i++) {
+				xaxis[j][i] = modelSizes[0][i];
+				errorTestingVSModelSize[j][i] /= repetitions*samples;
+				errorTrainingVSModelSize[j][i] /= repetitions*samples;
+			}
+		}
+		
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_MaxK:" + maxK , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_MaxK:" + maxK, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
+
+		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}
 
-	public ErrorPair search(double[] mS, double[] maxKs){
+	public ErrorPair searchOverMaxK(double[] mS, double[] maxKs, int base){
 		String workingFolder = "keySearchPacMan/";
 		String empModels = "Models_Emperical_" + workingFolder;
 		String pltFolder = workingFolder + "Plotting_" + empModels + "/";
@@ -55,7 +116,7 @@ public class KeySearching {
 
 		int[] shortestPaths = l.shortestPathsFromKey();
 
-		//System.out.println("HACK ON PSEUDOINVERSE");
+		System.out.println("HACK ON PSEUDOINVERSE");
 			
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
 			int k = (int) maxKsToTest[0][j]; 
@@ -95,19 +156,12 @@ public class KeySearching {
 				errorTrainingVSModelSize[j][i] /= repetitions*samples;
 			}
 		}
-	
 		
 		Matrix errTraining = new Matrix(errorTrainingVSModelSize);
 		Matrix errTesting = new Matrix(errorTestingVSModelSize);
 		
-		/*System.out.println("Training error:");
-		errTraining.print(5, 5);
-		System.out.println("Testing error");
-		errTesting.print(5, 5);
-		*/
-		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_Base:" + this.maxPower , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_Base:" + this.maxPower, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_Base:" + base , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_Base:" + base, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
 
 		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}

@@ -107,7 +107,7 @@ for m in modelSizes:
 	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
 
 
-maxK = [40,60]
+maxK = [200]
 baseComparisonKeyPredictions = []
 for m in maxK:
 	baseComparisonKeyPredictions.append(('KeySearchBaseCompTraining_' + str(m),'normal','normal'))
