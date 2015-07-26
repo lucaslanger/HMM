@@ -345,30 +345,6 @@ public class LabyrinthGraph extends Environment{
 		return theta;
 	}
 	
-	public double determineError(Matrix theta, Matrix[] alphaKStates, HashMap<String, int[]> testSamples){
-		int widthOfA = alphaKStates[0].getArrayCopy().length;
-		int numSamples = testSamples.get("Durations").length;
-		double[][] a = new double[numSamples][widthOfA];
-		double[][] b = new double[numSamples][1];
- 		for (int i = 0; i < numSamples; i++) {
-			int traj = testSamples.get("Durations")[i];
-			a[i] = alphaKStates[traj].getArrayCopy()[0];
-			b[i][0] = testSamples.get("Distances")[i];
-		}
-		
- 		Matrix A = new Matrix(a);
- 		Matrix B = new Matrix(b);
- 		
- 		/*System.out.println(A.times(theta).minus(B).norm2());
- 		System.out.println( norm2Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
- 		System.out.println(A.times(theta).minus(B).norm1() );
- 		System.out.println( norm1Custom(A.times(theta).minus(B).transpose().getArray()[0]) );
-
- 		System.out.println();
- 		*/
-		return A.times(theta).minus(B).norm2();
-	}
-	
 	public double norm2Custom(double[] d){
 		double r = 0;
 		for (int i = 0; i < d.length; i++) {

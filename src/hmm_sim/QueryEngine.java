@@ -271,6 +271,7 @@ public class QueryEngine {
 			double normalizer = m[i].norm2();
 			//double normalizer = m[i].times(ainf).get(0, 0);
 			m[i] = m[i].times(1.0/normalizer);
+			//System.out.println(m[i].norm2());
 		}	
 		return m;
 	}

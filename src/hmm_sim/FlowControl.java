@@ -18,17 +18,18 @@ public class FlowControl {
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		String f = "ErrorStorage";
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, true);
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
 		
-		int repetitions = 5;
+		int repetitions = 2;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
 		int fixedModelSize = 50;
-		int[] modelSizes = new int[]{50};
+		int[] modelSizes = new int[]{fixedModelSize};
 
 		String workingFolder = "testLargeLabyrinth/";
 	
@@ -78,30 +79,26 @@ public class FlowControl {
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 , true);
 	}
 	
-	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, boolean compute){
-		int repetitions = 1;
+	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, String computeType){
+		int repetitions = 10;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
-		int key = 5;
+		int key = 10;
 		int samples = 1000;
 		
-		
-		double[] maxKs = new double[]{500};	// get all 0s when maxK is <= 20
-
-		if (compute){
-			double[] mS = new double[]{50};
-			int maxPowers[] = {1,32,64,128};
+		/*if (computeType == "Over-MaxK"){
+			double[] maxKs = new double[]{ 300 };	// get all 0s when maxK is <= 20
+			double[] mS = new double[]{ 30, 50, 70 };
+			double maxPowers[] = { 1, 16, 32, 64, 128};
 
 			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
 			
 			for (int i=0;i<maxPowers.length;i++) {
-				System.out.print("Current Maxpower: ");
-				System.out.println(maxPowers[i]);
-				KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, maxPowers[i], base);
-				ErrorPair e = ks.search(mS, maxKs);
+				KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, base);
+				ErrorPair e = ks.searchOverMaxK(mS, maxKs, 128);
 				double[][] t1 = e.getTrainingErrors();
 				double[][] t2 = e.getTestingErrors();
 				for (int j = 0; j < e.getTrainingErrors().length; j++) {
@@ -112,14 +109,34 @@ public class FlowControl {
 			}
 	
 			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
+			FlowControl.printErrors(maxKs, f);
+		}*/
+		if (computeType == "Over-Base"){
+			double[] maxKs = new double[]{ 500 };	// get all 0s when maxK is <= 20
+			double[] mS = new double[]{ 40,50,60,70,80 };
+			double maxPowers[] = { 1, 16, 32, 64, 128};
+
+			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
+			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
+			double[][][] xAxes = new double[maxKs.length][maxPowers.length][mS.length];
+			
+			for (int i=0;i<maxKs.length;i++){
+				System.out.print("Current MaxK: ");
+				System.out.println(maxKs[i]);
+				KeySearching ks = new KeySearching(samples, key, basisSize, hSize, stretchFactor, trajectorySizes, dataSizeForFixedPlots, repetitions, base);
+				ErrorPair e = ks.searchOverBase(mS, maxPowers, (int) maxKs[i]);
+				double[][] t1 = e.getTrainingErrors();
+				double[][] t2 = e.getTestingErrors();
+				for (int j = 0; j < e.getTrainingErrors().length; j++) {
+					errorInfoTraining[i][j] = t1[j];
+					errorInfoTesting[i][j] = t2[j];
+					xAxes[i][j] = mS;
+				}
+			}
 		}
 		System.out.println("Done generated error data");
-		System.out.println();
-		
-		FlowControl.printErrors(maxKs, f);
-
+		System.out.println();	
 	}
-	
 	
 	public static void printErrors(double[] maxKs, String f){
 		ModelKeySearchComparison r = FlowControl.readKeyErrorsToFile( f );
