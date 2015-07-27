@@ -145,7 +145,7 @@ public class testEngine{
 	}
 
 	public void makePlots(){
-		/*
+		
 		this.plotBaseDifferences(  );
 		System.out.println("Done Base Differences");
 		
@@ -160,7 +160,7 @@ public class testEngine{
 				
 		this.compareH_Hbar();
 		System.out.println("Done H, Hbar comparisons");
-		*/
+		
 		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
 		
@@ -198,15 +198,19 @@ public class testEngine{
 		
 		for (int i = 0; i < this.modelSizes.length; i++) {
 			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+				xAxis[i][j] = modelSizes[i];
 				for (int q = 0; q < this.maxQuery; q++) {
-					double p = fixedDataSizeModelEngines[i][j].probabilityQuery(q, (int) Math.pow(2,j), base, true);
+					double p = fixedDataSizeModelEngines[i][0].probabilityQuery(q, (int) Math.pow(2,j), base, true);
 					errors[i][j] += Math.abs(p - trueP[q]);  
 				}
 			}
 		}
 		
 		Matrix ERR = new Matrix(errors);
-		ERR.print(5, 5);
+		ERR.transpose().print(5, 5);
+		System.out.println(pltFolder + "BaseImprovementOverModelSizes-Datasize:" + Integer.toString(fixedDataSize));
+		
+		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizes-Datasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve, lightplots --> lower Base", "", xAxis, errors);
 	}
 	
 	
@@ -264,6 +268,7 @@ public class testEngine{
 		new Matrix(testEngine.computeDifferenceWithNaive(errors)).print(5, this.digitsToPrint);
 		
 		double[][] datasize_differences = testEngine.makeDataSizeDifferences(dataSize);
+		
 		OutputData.outputData(pltFolder + "Difference Plot_FIXEDMS", "X:log(Data) Y:naive v.s different bases", "", datasize_differences, testEngine.computeDifferenceWithNaive(errors) );
 
 		

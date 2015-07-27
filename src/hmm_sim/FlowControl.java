@@ -15,11 +15,10 @@ public class FlowControl {
 		int dataSizeForFixedPlots = 256000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
-		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		String f = "ErrorStorage";
-		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -30,9 +29,9 @@ public class FlowControl {
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
-		int[] modelSizes = new int[]{fixedModelSize};
+		int[] modelSizes = new int[]{40, 60, 80, 100};
 
-		String workingFolder = "testLargeLabyrinth/";
+		String workingFolder = "keySearchPacMan/";
 	
 		System.out.println("Generating data:");
 		System.out.println("");
@@ -49,7 +48,7 @@ public class FlowControl {
 		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
-		a.makePlots();
+		//a.makePlots();
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
