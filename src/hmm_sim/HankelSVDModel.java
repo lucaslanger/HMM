@@ -15,7 +15,8 @@ public class HankelSVDModel implements Serializable{
 	private double[] probabilities;
 	private int basisSize;
 
-	private SymbolInfo symbolinfo;
+	private SymbolInfo fullData;
+	private SymbolInfo basis;
 	
 	private SingularValueDecomposition svd;
 
@@ -42,7 +43,7 @@ public class HankelSVDModel implements Serializable{
 	}
 
 	public HankelSVDModel(SymbolInfo si, int basisSize){
-		this.symbolinfo = symbolinfo;
+		this.fullData = fullData;
 		this.takeSVDMultipleObservations();
 	}
 
@@ -50,7 +51,7 @@ public class HankelSVDModel implements Serializable{
 	public HankelSVDModel(double[] probabilities , int basisSize){
 		this.probabilities = probabilities;
 		this.basisSize = basisSize;
-		this.svd = takeSVD();
+		takeSVD();
 	}
 	
 	public HankelSVDModel(double[] probabilities , int basisSize, SingularValueDecomposition s){
@@ -60,36 +61,88 @@ public class HankelSVDModel implements Serializable{
 	}
 	
 
-	private double[] getBasisMultipleObservations(int basisSize){
+	private SymbolProbabilityPair[] getBasisMultipleObservations(){
 		// Maybe improvement of the base is only due to how your picking basis
 		PriorityQueue<SymbolProbabilityPair> pq = new PriorityQueue<SymbolProbabilityPair>();
-		for( String s: this.symbolinfo.getSymbolToProbability().keySet()){
-			SymbolProbabilityPair spp = new SymbolProbabilityPair(symbolinfo.getSymbolToProbability().get(s), s);
+		for( String s: this.fullData.getSymbolToProbability().keySet()){
+			SymbolProbabilityPair spp = new SymbolProbabilityPair(fullData.getSymbolToProbability().get(s), s);
 			pq.add(spp);
 		}
 		
-		double[] basis = new double[basisSize];
-		for (int i = 0; i < basisSize; i++) {
-			
+		SymbolProbabilityPair[] d = new SymbolProbabilityPair[this.basisSize*2];
+		for (int i = 0; i < basisSize*2; i++) {
+			d[i] = pq.remove();
 		}
+		return d;
 		
 	}
 	
 	private void takeSVDMultipleObservations() {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public SingularValueDecomposition takeSVD(){
+		SymbolProbabilityPair[] spp = this.getBasisMultipleObservations();
 		try{
 			Matrix H = buildH(0, basisSize);
 			SingularValueDecomposition svd = H.svd();
-			return svd;
+			this.svd = svd;
+			
+			HashMap<String, Integer> symbolToIndex = new HashMap<String, Integer>();
+			HashMap<String, Double> symbolToProbability = new HashMap<String, Double>();
+			for (int i = 0; i < spp.length; i++) {
+				symbolToIndex.put(spp[i].getSymbol(), i);
+				symbolToProbability.put(spp[i].getSymbol(), spp[i].getProbability());
+			}
+			this.basis = new SymbolInfo(symbolToProbability, symbolToIndex);
+		}
+		catch(Exception e){
+			System.out.println("Problem making H in HankelSVDModel");
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void takeSVD(){
+		try{
+			Matrix H = buildH(0, basisSize);
+			SingularValueDecomposition svd = H.svd();
+			this.svd = svd;
 		}
 		catch(Exception e){
 			e.printStackTrace();
-			return null;
 		}
+	}
+	
+	public QueryEngine buildHankelBasedModelMultipleObservations(int basisSize, int base, int modelSize){
+		
+		HashMap<String, Matrix> truncatedSVD = this.truncateSVD(modelSize);
+		
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		
+		HashMap<String, Matrix> XSigmas = new HashMap<String, Matrix>();
+	
+		for(String symbol: this.symbols){
+			Matrix hx = buildHMultipleObservations(symbol);
+			XSigmas.put(symbol, hx);
+		}
+		
+		double[][] h_L = new double[basisSize][1];
+		for (int i = 0; i < basisSize; i++) {
+			h_L[i][0] = this.basis.getSymbolToIndex()[i];
+		}
+		
+		Matrix h_LS = new Matrix( h_L ).transpose();
+		Matrix h_PL = h_LS.transpose();
+				
+		Matrix alpha_0 = h_LS.times(sinv);
+		Matrix alpha_inf = pinv.times(h_PL);
+	
+		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base);
+		
+		//If Debugging Wanted
+		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
+
+		return q;
 	}
 	
 	public QueryEngine buildHankelBasedModel(int basisSize, int base, int modelSize){
