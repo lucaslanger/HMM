@@ -17,8 +17,8 @@ public class FlowControl {
 	
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		String f = "ErrorStorage";
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
-		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -112,7 +112,7 @@ public class FlowControl {
 			FlowControl.printErrors(maxKs, f);
 		}*/
 		if (computeType == "Over-Base"){
-			double[] maxKs = new double[]{ 500 };	// get all 0s when maxK is <= 20
+			double[] maxKs = new double[]{ 400 };	// get all 0s when maxK is <= 20
 			double[] mS = new double[]{ 40, 60, 80, 100, 120, 150};
 			double maxPowers[] = { 1, 2, 4 , 8 , 16, 32, 64, 128};
 

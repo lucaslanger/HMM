@@ -3,8 +3,12 @@ import sys
 import os
 import math
 
+numColors = 10
+print "Number of Shades: 10"
+print "Please make sure that this is enough! \n"
+
 colorsAnalysis = {}
-for i in range(6):
+for i in range(numColors):
 	r = 0
 	g = 200
 	b = 50
@@ -100,18 +104,21 @@ validityTests = [(i,'normal','normal') for i in temp]
 
 modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
 
-modelSizes = [1,4,16,32,64,128]
-keyPredictions = []
-for m in modelSizes:
-	keyPredictions.append(('KeyFindingErrorTesting_Base:' + str(m),'normal','normal'))
-	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
+
+#modelSizes = [1,4,16,32,64,128]
+#keyPredictions = []
+#for m in modelSizes:
+#	keyPredictions.append(('KeyFindingErrorTesting_Base:' + str(m),'normal','normal'))
+# 	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
 
 
-maxK = [200]
+maxK = [500, 400, 250]
 baseComparisonKeyPredictions = []
 for m in maxK:
-	baseComparisonKeyPredictions.append(('KeySearchBaseCompTraining_' + str(m),'normal','normal'))
-	baseComparisonKeyPredictions.append(('KeySearchBaseCompTesting_' + str(m),'normal','normal'))
+	baseComparisonKeyPredictions.append(('KeyFindingErrorTraining_MaxK:' + str(m),'normal','normal'))
+	baseComparisonKeyPredictions.append(('KeyFindingErrorTesting_MaxK:' + str(m),'normal','normal'))
+baseComparisonKeyPredictions.append(('BaseImprovementOverModelSizesDatasize:256000','normal','normal'))
+
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':

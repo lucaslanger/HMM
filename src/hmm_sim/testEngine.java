@@ -191,26 +191,26 @@ public class testEngine{
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
-		double[][] errors = new double[this.modelSizes.length][this.trueQueryEngine.getMaxExponent()+1];
-		double[][] xAxis = new double[this.modelSizes.length][this.trueQueryEngine.getMaxExponent()+1];
+		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
+		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
 		
 		double[] trueP = this.trueModel.getProbabilities();
 		
-		for (int i = 0; i < this.modelSizes.length; i++) {
-			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
-				xAxis[i][j] = modelSizes[i];
+		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+			for (int i = 0; i < this.modelSizes.length; i++) {
+				xAxis[j][i] = modelSizes[i];
 				for (int q = 0; q < this.maxQuery; q++) {
 					double p = fixedDataSizeModelEngines[i][0].probabilityQuery(q, (int) Math.pow(2,j), base, true);
-					errors[i][j] += Math.abs(p - trueP[q]);  
+					errors[j][i] += Math.abs(p - trueP[q]);  
 				}
 			}
 		}
 		
 		Matrix ERR = new Matrix(errors);
-		ERR.transpose().print(5, 5);
-		System.out.println(pltFolder + "BaseImprovementOverModelSizes-Datasize:" + Integer.toString(fixedDataSize));
+		ERR.print(5, 5);
+		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		
-		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizes-Datasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve, lightplots --> lower Base", "", xAxis, errors);
+		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve, lightplots --> lower Base", "", xAxis, errors);
 	}
 	
 	
