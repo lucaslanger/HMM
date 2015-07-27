@@ -63,21 +63,33 @@ public class KeySearching {
 		System.out.println(rank);
 		QueryEngine trueQE = trueHSVD.buildHankelBasedModel(basisSize, base, rank); 
 		
+		QueryEngine[] learnedModels = new QueryEngine[modelSizes[0].length];
+		for (int i = 0; i < learnedModels.length; i++) {
+			learnedModels[i] = mr.getSpecificModelSizeQueryEngines(1, (int) modelSizes[0][i]).get(dataSizeForFixedPlots)[0];
+			checkQEForDifferences(trueQE, learnedModels[i], bases, 500);
+		}
+		
+		Matrix[][][] alphaKStatesOver_MS_bases = new Matrix[modelSizes[0].length][basesToTest[0].length][maxK];
+		for (int i = 0; i < alphaKStatesOver_MS_bases.length; i++) {
+			for (int j = 0; j < basesToTest[0].length; j++) {
+				alphaKStatesOver_MS_bases[i][j] = learnedModels[i].getAllKStateQueries(maxK, (int) basesToTest[0][j], base);
+			}
+		}
+
 		for (int r = 0; r < repetitions; r++) {
 			
 			HashMap<String, int[]> trainingSamples = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
 			HashMap<String, int[]> testingSamples = l.createObservationDistanceSamples(shortestPaths, maxK, samples);
 			
 			for (int i = 0; i < modelSizes[0].length; i++) {
-				int m = (int) modelSizes[0][i];
-			
-				QueryEngine learnedModel = mr.getSpecificModelSizeQueryEngines(repetitions, m).get(dataSizeForFixedPlots)[0];
-				checkQEForDifferences(trueQE, learnedModel, bases, 500);
-										
+				
+				//QueryEngine learnedModel = learnedModels[i];
+				
 				for (int j = 0; j < basesToTest[0].length; j++) {
 				
 					int maxPow = (int) basesToTest[0][j];
-					Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, maxPow, base);
+					//Matrix[] alphaKStates = learnedModel.getAllKStateQueries(maxK, maxPow, base);
+					Matrix[] alphaKStates = alphaKStatesOver_MS_bases[i][j];
 					
 					Matrix theta = l.getAlphaFromSampledData(trainingSamples, alphaKStates);
 		

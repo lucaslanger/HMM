@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{25,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
 		int dataSizeForFixedPlots = 256000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
@@ -29,6 +29,7 @@ public class FlowControl {
 		int hSize = 500;
 		int basisSize = 300;
 		int fixedModelSize = 50;
+		int keyLocation = 10;
 		int[] modelSizes = new int[]{fixedModelSize};
 
 		String workingFolder = "testLargeLabyrinth/";
@@ -36,7 +37,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, 5, true);
+		LabyrinthGraph l = LabyrinthGraph.pacMan(workingFolder, hSize, stretchFactor, keyLocation, true);
 		//LabyrinthGraph l = LabyrinthGraph.testLabyrinth(workingFolder, hSize, stretchFactor);
 		l.generateData(trajectorySizes, repetitions, true);
 		
@@ -80,7 +81,7 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, String computeType){
-		int repetitions = 10;
+		int repetitions = 5;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
@@ -113,8 +114,8 @@ public class FlowControl {
 		}*/
 		if (computeType == "Over-Base"){
 			double[] maxKs = new double[]{ 500 };	// get all 0s when maxK is <= 20
-			double[] mS = new double[]{ 40,50,60,70,80 };
-			double maxPowers[] = { 1, 16, 32, 64, 128};
+			double[] mS = new double[]{ 40, 60, 80, 100, 120, 150};
+			double maxPowers[] = { 1, 2, 4 , 8 , 16, 32, 64, 128};
 
 			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];

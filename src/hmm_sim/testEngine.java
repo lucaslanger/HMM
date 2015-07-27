@@ -1,15 +1,8 @@
 package hmm_sim;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 import Jama.Matrix;
@@ -132,6 +125,9 @@ public class testEngine{
 			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
 		}
 		
+		int fixedData = 256000;
+		this.modelSizeEffectOverBaseImprovement(fixedData);
+		
 	}
 	
 	private HashMap<Integer, Integer> initializeModelSizeToIndex(){
@@ -149,7 +145,7 @@ public class testEngine{
 	}
 
 	public void makePlots(){
-		
+		/*
 		this.plotBaseDifferences(  );
 		System.out.println("Done Base Differences");
 		
@@ -164,7 +160,7 @@ public class testEngine{
 				
 		this.compareH_Hbar();
 		System.out.println("Done H, Hbar comparisons");
-		
+		*/
 		this.sizeOfModelPlots( );
 		System.out.println("Done Model Differences");
 		
@@ -186,6 +182,31 @@ public class testEngine{
 		this.compareASigmas();
 		
 		this.compareQueryErrors(fixedModelSizeEngine);
+		
+	}
+	
+	public void modelSizeEffectOverBaseImprovement(int fixedDataSize){
+		QueryEngine[][] fixedDataSizeModelEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
+		for (int i = 0; i < fixedDataSizeModelEngines.length; i++) {
+			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
+		}
+		
+		double[][] errors = new double[this.modelSizes.length][this.trueQueryEngine.getMaxExponent()+1];
+		double[][] xAxis = new double[this.modelSizes.length][this.trueQueryEngine.getMaxExponent()+1];
+		
+		double[] trueP = this.trueModel.getProbabilities();
+		
+		for (int i = 0; i < this.modelSizes.length; i++) {
+			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+				for (int q = 0; q < this.maxQuery; q++) {
+					double p = fixedDataSizeModelEngines[i][j].probabilityQuery(q, (int) Math.pow(2,j), base, true);
+					errors[i][j] += Math.abs(p - trueP[q]);  
+				}
+			}
+		}
+		
+		Matrix ERR = new Matrix(errors);
+		ERR.print(5, 5);
 	}
 	
 	
@@ -360,6 +381,8 @@ public class testEngine{
 		OutputData.outputData(pltFolder + "True_H_vs_Emp", "X:Data Seen Y:Fnorm","", dataSize, error );
 	
 	}
+			
+	
 	
 	public void compareASigmas(){
 		QueryEngine[] chosenSizeQueryEngine = this.trueRankQueryEngines.get(this.dataSizeForFixedPlots);
@@ -557,7 +580,7 @@ public class testEngine{
 		
 		int baseSize;
 		for (int c = 0; c <= this.trueQueryEngine.getMaxExponent(); c++) {
-			baseSize = (int) Math.pow(2, c);
+			baseSize = (int) Math.pow(this.base, c);
 			
 			double[][] errors;
 			double[] argMinArray = new double[this.keySetSorted.length];
