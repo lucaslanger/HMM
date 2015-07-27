@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.PriorityQueue;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -12,8 +13,11 @@ import Jama.SingularValueDecomposition;
 public class HankelSVDModel implements Serializable{
 	
 	private double[] probabilities;
-	private SingularValueDecomposition svd;
 	private int basisSize;
+
+	private SymbolInfo symbolinfo;
+	
+	private SingularValueDecomposition svd;
 
 	
 	public static void main(String[] args){
@@ -27,12 +31,19 @@ public class HankelSVDModel implements Serializable{
 	public SingularValueDecomposition getSvd() {
 		return svd;
 	}
-
+	
+	
 	public int getBasisSize() {
 		return basisSize;
 	}
-
+	
 	public HankelSVDModel(){
+		
+	}
+
+	public HankelSVDModel(SymbolInfo si, int basisSize){
+		this.symbolinfo = symbolinfo;
+		this.takeSVDMultipleObservations();
 	}
 
 
@@ -46,6 +57,27 @@ public class HankelSVDModel implements Serializable{
 		this.probabilities = probabilities;
 		this.basisSize = basisSize;
 		this.svd = s;
+	}
+	
+
+	private double[] getBasisMultipleObservations(int basisSize){
+		// Maybe improvement of the base is only due to how your picking basis
+		PriorityQueue<SymbolProbabilityPair> pq = new PriorityQueue<SymbolProbabilityPair>();
+		for( String s: this.symbolinfo.getSymbolToProbability().keySet()){
+			SymbolProbabilityPair spp = new SymbolProbabilityPair(symbolinfo.getSymbolToProbability().get(s), s);
+			pq.add(spp);
+		}
+		
+		double[] basis = new double[basisSize];
+		for (int i = 0; i < basisSize; i++) {
+			
+		}
+		
+	}
+	
+	private void takeSVDMultipleObservations() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	public SingularValueDecomposition takeSVD(){

@@ -21,12 +21,15 @@ public class SymbolCounts {
 		}
 	}
 	
-	public HashMap<String, Double>() getProbabilityMap(){
+	public SymbolInfo getProbabilityMap(){
 		HashMap<String, Double> symbolToProbability = new HashMap<String, Double>();
-		for (String s : this.symbolToFrequency.keySet()) {
+		HashMap<String, Integer> symbolToIndex = new HashMap<String, Integer>();
+		int c = 0;
+		for (java.lang.String s : this.symbolToFrequency.keySet()) {
 			symbolToProbability.put(s, ((double) this.symbolToFrequency.get(s))/ dataCount );
+			symbolToIndex.put(s,  c);
 		}
-		return symbolToProbability;
+		return new SymbolInfo( symbolToProbability,  symbolToIndex );
 	}
 
 }
