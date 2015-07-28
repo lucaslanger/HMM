@@ -122,8 +122,8 @@ public class KeySearching {
 		errTraining.print(5, 5);
 		errTesting.print(5, 5);
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_MaxK:" + maxK , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_MaxK:" + maxK, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_MaxK:" + maxK , "ModelSize | NOTE: Lighter curves --> Lower Base", "Error Norm2()", xaxis, errorTrainingVSModelSize);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_MaxK:" + maxK, "ModelSize | NOTE: Lighter curves --> Lower Base", "Error Norm2()", xaxis, errorTestingVSModelSize);
 
 		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}

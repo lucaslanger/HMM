@@ -16,7 +16,6 @@ public class HankelSVDModel implements Serializable{
 	private int basisSize;
 
 	private SymbolInfo fullData;
-	private SymbolInfo basis;
 	
 	private SingularValueDecomposition svd;
 
@@ -79,18 +78,23 @@ public class HankelSVDModel implements Serializable{
 	
 	private void takeSVDMultipleObservations() {
 		SymbolProbabilityPair[] spp = this.getBasisMultipleObservations();
+		
+		SymbolCountPair[] scp;
 		try{
-			Matrix H = buildH(0, basisSize);
+			HashMap<String, Integer> prefixes = new HashMap<String, Integer>();
+			HashMap<String, Integer> suffixes = new HashMap<String, Integer>();
+			
+			for (int i = 0; i < spp.length; i++) {
+				SymbolProbabilityPair sp = spp[i];
+				for( String p: sp.getPrefixes()){
+					instantiateOrIncrementHashMapCounter(prefixes, p, spp[i].getCount());
+				}
+			}
+			
+			
 			SingularValueDecomposition svd = H.svd();
 			this.svd = svd;
-			
-			HashMap<String, Integer> symbolToIndex = new HashMap<String, Integer>();
-			HashMap<String, Double> symbolToProbability = new HashMap<String, Double>();
-			for (int i = 0; i < spp.length; i++) {
-				symbolToIndex.put(spp[i].getSymbol(), i);
-				symbolToProbability.put(spp[i].getSymbol(), spp[i].getProbability());
-			}
-			this.basis = new SymbolInfo(symbolToProbability, symbolToIndex);
+		
 		}
 		catch(Exception e){
 			System.out.println("Problem making H in HankelSVDModel");
@@ -99,15 +103,44 @@ public class HankelSVDModel implements Serializable{
 		
 	}
 	
-	public void takeSVD(){
-		try{
-			Matrix H = buildH(0, basisSize);
-			SingularValueDecomposition svd = H.svd();
-			this.svd = svd;
+	public Matrix buildHankelMultipleObservations(HashMap<String, Integer> dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes){
+		double[][] hankel = new double[prefixes.keySet().size()][suffixes.keySet().size()];
+		int freqCounter = determineTotalFrequencyIncluded(dataCounts, prefixes, suffixes);
+		
+		int pC = 0;
+		for (String prefkey: prefixes.keySet() ){
+			int pS = 0;
+			for(String suffkey: suffixes.keySet()){
+				String s = prefkey + suffkey;
+				hankel[pC][pS] = (double) dataCounts.get(s)/freqCounter;
+				pS++;
+			}
+			pC ++;
 		}
-		catch(Exception e){
-			e.printStackTrace();
+		Matrix H = new Matrix(hankel);
+		return H;
+	}
+	
+	public int determineTotalFrequencyIncluded(HashMap<String, Integer> dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes){
+		int freqCounter = 0;
+		for (String prefkey: prefixes.keySet() ){
+			for(String suffkey: suffixes.keySet()){
+				String s = prefkey + suffkey;
+				freqCounter += dataCounts.get(s);
+			}
 		}
+		return freqCounter;
+	}
+	
+	public HashMap<String, Integer> instantiateOrIncrementHashMapCounter(HashMap<String,Integer> h, String k ,int i){
+		if (h.containsKey(k)){
+			int t = h.get(k);
+			h.put(k, t + i);
+		}
+		else{
+			h.put(k, i);
+		}
+		return h;
 	}
 	
 	public QueryEngine buildHankelBasedModelMultipleObservations(int basisSize, int base, int modelSize){
@@ -144,6 +177,19 @@ public class HankelSVDModel implements Serializable{
 
 		return q;
 	}
+	
+	public void takeSVD(){
+		try{
+			Matrix H = buildH(0, basisSize);
+			SingularValueDecomposition svd = H.svd();
+			this.svd = svd;
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	
 	
 	public QueryEngine buildHankelBasedModel(int basisSize, int base, int modelSize){
 		
