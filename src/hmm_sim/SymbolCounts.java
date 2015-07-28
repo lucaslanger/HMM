@@ -11,25 +11,14 @@ public class SymbolCounts {
 		this.dataCount = 0;
 	}
 	
-	public void updateFrequency(String s){
-		this.dataCount += 1;
+	public void updateFrequency(String s, int update){
+		this.dataCount += update;
 		if (symbolToFrequency.containsKey(s)){
-			symbolToFrequency.put(s, symbolToFrequency.get(s) + 1);
+			symbolToFrequency.put(s, symbolToFrequency.get(s) + update);
 		}
 		else{
-			symbolToFrequency.put(s, 1);
+			symbolToFrequency.put(s, update);
 		}
-	}
-	
-	public SymbolInfo getProbabilityMap(){
-		HashMap<String, Double> symbolToProbability = new HashMap<String, Double>();
-		HashMap<String, Integer> symbolToIndex = new HashMap<String, Integer>();
-		int c = 0;
-		for (java.lang.String s : this.symbolToFrequency.keySet()) {
-			symbolToProbability.put(s, ((double) this.symbolToFrequency.get(s))/ dataCount );
-			symbolToIndex.put(s,  c);
-		}
-		return new SymbolInfo( symbolToProbability,  symbolToIndex );
 	}
 
 }

@@ -1,72 +1,38 @@
 package hmm_sim;
 
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 import Jama.Matrix;
-import Jama.SingularValueDecomposition;
 
-public class HankelSVDModel implements Serializable{
-	
-	private double[] probabilities;
-	private int basisSize;
-	
-	private SingularValueDecomposition svd;
-	
+public class HankelSVDModelMultipleObservations {
 	
 	private SymbolCounts fullData;
 	private int numDimensions;
-
 	
 	public static void main(String[] args){
-	}
-
-	
-	public double[] getProbabilities() {
-		return probabilities;
-	}
-
-	public SingularValueDecomposition getSvd() {
-		return svd;
-	}
-	
-	
-	public int getBasisSize() {
-		return basisSize;
-	}
-	
-	public HankelSVDModel(){
+		String[] samples = {"aa" , "ba"};
+		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
+		for (int i = 0; i < samples.length; i++) {
+			String s = samples[i];
+			SymbolCountPair sc = new SymbolCountPair(1, s);
+			l.add(sc);
+		}
 		
+		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 3, 2);
 	}
-	/*
-	public HankelSVDModelMultipleObservations(SymbolCountPair[] scp, int basisSize, int numDimensions){
+	
+	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
 		this.numDimensions = numDimensions;
 		fullData = new SymbolCounts(numDimensions);
-		for (int i = 0; i < scp.length; i++) {
-			fullData.updateFrequency(scp[i].getSymbol(), scp[i].getCount());
+		for (SymbolCountPair s: scp) {
+			fullData.updateFrequency(s.getSymbol(), s.getCount());
 		}
 		this.takeSVDMultipleObservations();
 	}
-	*/
-
-
-	public HankelSVDModel(double[] probabilities , int basisSize){
-		this.probabilities = probabilities;
-		this.basisSize = basisSize;
-		takeSVD();
-	}
 	
-	public HankelSVDModel(double[] probabilities , int basisSize, SingularValueDecomposition s){
-		this.probabilities = probabilities;
-		this.basisSize = basisSize;
-		this.svd = s;
-	}
 	
-	/*
 	private SymbolCountPair[] getBasisMultipleObservations(){
 		// Maybe improvement of the base is only due to how your picking basis
 		PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
@@ -162,21 +128,12 @@ public class HankelSVDModel implements Serializable{
 
 		return q;
 	}
-	*/
-
-
-	public void takeSVD(){
-		try{
-			Matrix H = buildH(0, basisSize);
-			SingularValueDecomposition svd = H.svd();
-			this.svd = svd;
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
+	
+	private HashMap<String, Matrix> truncateSVDMultipleObservations(Matrix h,
+			int modelSize) {
+		// TODO Auto-generated method stub
+		return null;
 	}
-	
-	
 	
 	public QueryEngine buildHankelBasedModel(int basisSize, int base, int modelSize){
 		
@@ -240,32 +197,6 @@ public class HankelSVDModel implements Serializable{
 		return q;
 	}
 	
-	public static double[] getDiagonalArray(Matrix m){
-		double[] r = new double[m.getArrayCopy()[0].length];
-		for (int i = 0; i < r.length; i++) {
-			r[i] = m.get(i, i);
-		}
-		return r;
-	}
-	
-	public Matrix buildH(int startingIndex, int endingIndex) throws Exception{		
-		int hSize = (endingIndex - startingIndex);
-		if ( (hSize + startingIndex)*2 > this.probabilities.length){
-			throw new Exception("You asked for too large a Hankel Matrix. Increase the max durations recorded in your Environment.");
-		} 
-		else{
-			double[][] hankel = new double[hSize][hSize];
-			for (int i = 0; i < hSize; i++) {
-				for (int j = 0; j < hSize; j++) {
-					hankel[i][j] = this.probabilities[i+j+startingIndex];
-				}
-			}
-			Matrix H = new Matrix(hankel);
-			return H;
-		}
-		
-	}
-	
 	public HashMap<String, Matrix> truncateSVD(int nStates){
 		boolean debug = false;
 		
@@ -326,90 +257,4 @@ public class HankelSVDModel implements Serializable{
 	    return r;
 	    
 	}
-	
-	public int getRank(){
-		return this.svd.getS().rank();
-	}
-	
-	public Matrix getHankel(){
-		return this.svd.getU().times(this.svd.getS()).times(this.svd.getV().transpose());
-	}
-	
-	private synchronized void writeObject(java.io.ObjectOutputStream stream) throws java.io.IOException{
-		stream.writeInt(this.probabilities.length);
-		for (int i=0; i<this.probabilities.length; i++){
-			stream.writeObject(this.probabilities[i]);
-		}
-		stream.writeInt(this.basisSize);
-		stream.writeObject(this.svd);
-	}
-	
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException{
-		int l = in.readInt();
-		double[] probabilities = new double[l];
-		for (int i = 0; i < l; i++) {
-			probabilities[i] = (double) in.readObject();
-		}
-		this.probabilities = probabilities;
-		this.basisSize = in.readInt();
-		this.svd = (SingularValueDecomposition) in.readObject();
-	}
-	
-	public static void testHankelSingleObservation(){
-		Matrix Hbar = new Matrix( new double[][]{ {0,0.2,0.14}, {0.2,0.22,0.15}, {0.14,0.45,0.31} }).transpose();
-		
-		Matrix Ha = new Matrix(new double[][]{ {0.2,0.22,0.15},{0.22,0.19,0.13},{0.45,0.45,0.32} }).transpose();
-		Matrix Hb = new Matrix(new double[][]{ {0.14,0.45,0.31}, {0.15,0.29,0.13}, {0.31,0.85,0.58} } ).transpose();
-		Matrix hls = new Matrix(new double[][]{ {0, 0.2, 0.14} } );
-		Matrix hpl = new Matrix(new double[][]{ {0, 0.2, 0.14} } ).transpose();
-			
-		Hbar.print(5,5);
-		
-		SingularValueDecomposition svd = Hbar.svd();
-		Matrix p = svd.getU().times( svd.getS() );
-		Matrix s = svd.getV().transpose();
-		
-		Matrix pinv = p.inverse();
-		
-		System.out.println("INVERSE TEST");
-		p.times(pinv).print(5, 5);
-		
-		Matrix sinv = s.inverse();
-		s.times(sinv).print(5, 5);
-		
-		Matrix Aa = pinv.times(Ha).times(sinv); 
-		Matrix Ab = pinv.times(Hb).times(sinv); 
-		
-		Matrix alpha0 = hls.times(sinv);	//alpha0 row
-		Matrix alphainf = pinv.times(hpl);	//alphainf column
-		
-		Matrix test1 = alpha0.times(Aa).times(alphainf);
-		Matrix test2 = alpha0.times(Ab).times(alphainf);
-		Matrix test3 = alpha0.times(Aa).times(Ab).times(alphainf);
-		Matrix test4 = alpha0.times(Ab).times(Aa).times(alphainf);
-		Matrix test5 = alpha0.times(Aa).times(Aa).times(alphainf);
-		Matrix test6 = alpha0.times(Ab).times(Ab).times(alphainf);
-		
-		test1.print(5,5);
-		test2.print(5,5);
-		test3.print(5,5);
-		test4.print(5,5);
-		test5.print(5,5);
-		test6.print(5,5);
-	}
-	
-	public static Matrix pseudoInvDiagonal(Matrix m){
-		double[][] a = m.getArrayCopy();
-		for (int i = 0; i < a.length; i++) {
-			if (a[i][i] != 0){
-				a[i][i] = 1/a[i][i];
-			}
-			else{
-				a[i][i] = 0;
-			}
-		}
-		return new Matrix(a);
-	}
-		
-
 }
