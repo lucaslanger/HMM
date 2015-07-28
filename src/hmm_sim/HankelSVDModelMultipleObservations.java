@@ -5,11 +5,14 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 public class HankelSVDModelMultipleObservations {
 	
 	private SymbolCounts fullData;
 	private int numDimensions;
+	private int basisSize;
+	private SingularValueDecomposition svdOfH;
 	
 	public static void main(String[] args){
 		String[] samples = {"aa" , "ba"};
@@ -25,11 +28,12 @@ public class HankelSVDModelMultipleObservations {
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
 		this.numDimensions = numDimensions;
+		this.basisSize = basisSize;
 		fullData = new SymbolCounts(numDimensions);
 		for (SymbolCountPair s: scp) {
 			fullData.updateFrequency(s.getSymbol(), s.getCount());
 		}
-		this.takeSVDMultipleObservations();
+		svdOfH = this.takeSVDMultipleObservations();
 	}
 	
 	
