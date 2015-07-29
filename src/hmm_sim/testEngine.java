@@ -79,7 +79,7 @@ public class testEngine{
 		//this.trueModel = this.readTrueModel(workingFolder + fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
 		this.modelSizeToIndex = this.initializeModelSizeToIndex();
-		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(this.basisSize, base, this.maxStates);		
+		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(base, this.maxStates);		
 		this.maxQuery = this.trueQueryEngine.getMaxPower()*base*base; 
 	
 		double capturedProbability = 0;

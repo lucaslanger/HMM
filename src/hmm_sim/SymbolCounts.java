@@ -1,10 +1,12 @@
 package hmm_sim;
 
-import java.util.HashMap;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.TreeMap;
 
 public class SymbolCounts {
 	
-	public HashMap<String, Integer> getSymbolToFrequency() {
+	public TreeMap<String, Integer> getSymbolToFrequency() {
 		return symbolToFrequency;
 	}
 
@@ -12,10 +14,11 @@ public class SymbolCounts {
 		return dataCount;
 	}
 
-	HashMap<String, Integer> symbolToFrequency;
+	TreeMap<String, Integer> symbolToFrequency;
 	int dataCount;
+	
 	public SymbolCounts(int numDimensions){
-		this.symbolToFrequency = new HashMap<String, Integer>();
+		this.symbolToFrequency = new TreeMap<String, Integer>();
 		this.dataCount = 0;
 	}
 	
@@ -27,6 +30,14 @@ public class SymbolCounts {
 		else{
 			symbolToFrequency.put(s, update);
 		}
+	}
+	
+	public NavigableMap<String, Integer> SortedKeys(){
+		return symbolToFrequency.descendingMap();
+	}
+
+	public NavigableSet<String> descKeySet() {
+		return symbolToFrequency.descendingKeySet();
 	}
 
 }

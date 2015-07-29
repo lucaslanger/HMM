@@ -12,7 +12,7 @@ public class QueryEngineMultipleObservations {
 		
 	private Matrix a0;
 	private Matrix ainf;
-	private Matrix[] Asigmas;
+	private HashMap<String, Matrix> Asigmas;
 	private int maxExponent;
 	private int maxPower;
 	
@@ -24,23 +24,20 @@ public class QueryEngineMultipleObservations {
 	private HashMap<String, Matrix> truncatedSVD;
 	private SingularValueDecomposition originalSVD;
 	
-	public QueryEngine(Matrix a0, Matrix ainf, Matrix[] Asigmas, int maxExponent, int base){
+	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<String, Matrix> Asigmas, int base){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
-		this.maxExponent = maxExponent;
-		this.maxPower = (int) Math.pow(base, maxExponent);
+
 		this.debug = false;
 	}
 	
-	public QueryEngine(Matrix a0, Matrix ainf, Matrix[] Asigmas, int maxExponent, int base, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
+	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<String, Matrix> Asigmas, int base, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
-		this.maxExponent = maxExponent;
-		this.maxPower = (int) Math.pow(base, maxExponent);
-		this.debug = true;
 		
+		this.debug = true;
 		this.pinv = pinv;
 		this.sinv = sinv;
 		this.truncatedSVD = truncatedSVD;
@@ -55,7 +52,7 @@ public class QueryEngineMultipleObservations {
 		return ainf;
 	}
 
-	public Matrix[] getAsigmas() {
+	public HashMap<String, Matrix> getAsigmas() {
 		return Asigmas;
 	}
 

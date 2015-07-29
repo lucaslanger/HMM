@@ -37,13 +37,13 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 	}
 
 
-	public HankelSVDModel(double[] probabilities , int basisSize){
+	public HankelSVDModel(double[] probabilities, int basisSize){
 		this.probabilities = probabilities;
 		this.basisSize = basisSize;
 		takeSVD();
 	}
 	
-	public HankelSVDModel(double[] probabilities , int basisSize, SingularValueDecomposition s){
+	public HankelSVDModel(double[] probabilities, int basisSize, SingularValueDecomposition s){
 		this.probabilities = probabilities;
 		this.basisSize = basisSize;
 		this.svd = s;
