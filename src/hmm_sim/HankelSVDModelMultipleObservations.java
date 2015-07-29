@@ -6,6 +6,8 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.PriorityQueue;
 
+import javax.swing.text.StyleContext.SmallAttributeSet;
+
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
@@ -22,10 +24,10 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	private SingularValueDecomposition svdOfH;
 	
 	public static void main(String[] args){
-		
+		HankelSVDModelMultipleObservations.test();
 	}
 		
-	public void test(){
+	public static void test(){
 		String[] samples = {"1:2" , "2:1,1:1"};
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
 		for (int i = 0; i < samples.length; i++) {
@@ -53,9 +55,55 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	}
 	
 	private SymbolCounts getPrefixes(Iterable<SymbolCountPair> spp){
-		return null;
+
+		SymbolCounts preFixes = new SymbolCounts(this.numDimensions);
+		for (SymbolCountPair symbolCountPair : spp) {
+			String symbol = symbolCountPair.getSymbol();
+			LinkedList<String> prefixesFromSymbol = getPrefixesFromSymbolString(symbol);
+			for (String s: prefixesFromSymbol) {
+				preFixes.updateFrequency(s, symbolCountPair.getCount() );
+			}
+		}
+		
+		SymbolCounts scReturn = new SymbolCounts(this.numDimensions);
+		NavigableSet<String> prefixesSorted = preFixes.descKeySet();
+		int i=0;
+		for (String s: prefixesSorted) {
+			if (i >= basisSize){
+				break;
+			}
+			else{
+				scReturn.updateFrequency(s, preFixes.getDataCount() );
+				i++;
+			}
+		}
+		
+		return scReturn;
+		
 	}
 	
+	//Should be safe since strings are immutable
+	private LinkedList<String> getPrefixesFromSymbolString(String sequence) { 	//second parameter should be an emptyLinkedlist
+		LinkedList<String> currentList = new LinkedList<String>();
+		while(sequence != ""){
+			currentList.add(sequence);
+			
+			String lastStreak = this.getLastStreak(sequence);
+			int streak = this.getStreakFromString(lastStreak);
+			int symbol = this.getSymbolFromString(lastStreak);
+			if(streak > 1){
+				String t = Integer.toString(symbol) + ":" + Integer.toString(streak-1);
+				sequence = sequence.substring(0, sequence.length() - lastStreak.length()) + t;
+			}
+			else{	
+				sequence = sequence.substring(0, sequence.length() - lastStreak.length() - 1);		// -1 to Take care of the comma
+			}
+			
+		}
+		return currentList;
+		
+	}
+
 	private SymbolCounts getSuffixes(SymbolCounts prefixes, Iterable<SymbolCountPair> spp){
 		return null;
 	}

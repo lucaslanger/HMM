@@ -14,9 +14,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	
 	
 	public abstract QueryEngine buildHankelBasedModel(int base, int modelSize);
-	
-	public abstract void test();
-	
+		
 	public static Matrix pseudoInvDiagonal(Matrix m){
 		double[][] a = m.getArrayCopy();
 		for (int i = 0; i < a.length; i++) {
