@@ -81,7 +81,8 @@ public abstract class HankelSVDModelParent implements Serializable{
 		}
 	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
 
-	    SingularValueDecomposition svdToReturn = new SingularValueDecomposition(U.times(S).times(Vtrunc));
+	    System.out.println("DIVSION");
+	    SingularValueDecomposition svdToReturn = new SingularValueDecomposition(Utrunc.times(Strunc).times(Vtrunc));
 	    
 	    /*
 	    HashMap<String, Matrix> r = new HashMap<String, Matrix>();

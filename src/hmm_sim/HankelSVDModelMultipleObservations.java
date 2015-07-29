@@ -93,10 +93,10 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			int symbol = this.getSymbolFromString(lastStreak);
 			if(streak > 1){
 				String t = Integer.toString(symbol) + ":" + Integer.toString(streak-1);
-				sequence = sequence.substring(0, sequence.length() - lastStreak.length()) + t;
+				sequence = sequence.substring(0, sequence.length() - lastStreak.length() + 1) + t;
 			}
 			else{	
-				sequence = sequence.substring(0, sequence.length() - lastStreak.length() - 1);		// -1 to Take care of the comma
+				sequence = sequence.substring(0, sequence.length() - lastStreak.length() );		// -1 to Take care of the comma
 			}
 			
 		}
@@ -235,6 +235,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			}
 		}
 		System.out.println("Weird input or bad behavior");
+		System.out.println(info + "\n");
 		return -1;
 	}
 
