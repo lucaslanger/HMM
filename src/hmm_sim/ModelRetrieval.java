@@ -59,7 +59,7 @@ public class ModelRetrieval {
 					HankelSVDModel h = new HankelSVDModel();
 					h = (HankelSVDModel) ois.readObject();
 					for (int j = 0; j < numberOfModels; j++) {
-						q = h.buildHankelBasedModel(this.basisSize, this.base, modelSizes[j]);
+						q = h.buildHankelBasedModel(this.base, modelSizes[j]);
 						enginesModelSizeTrajectorySize[j][i] = q;
 					}
 					ha[i] = h;
@@ -96,7 +96,7 @@ public class ModelRetrieval {
 				
 				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
 					h = (HankelSVDModel) ois.readObject();
-					q = h.buildHankelBasedModel(this.basisSize, this.base, modelSize);
+					q = h.buildHankelBasedModel(this.base, modelSize);
 					enginesTrajectorySize[i] = q;
 				}
 				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);

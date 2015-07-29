@@ -61,7 +61,7 @@ public class KeySearching {
 		int rank = trueHSVD.getRank();
 		System.out.println("Rank");
 		System.out.println(rank);
-		QueryEngine trueQE = trueHSVD.buildHankelBasedModel(basisSize, base, rank); 
+		QueryEngine trueQE = trueHSVD.buildHankelBasedModel(base, rank); 
 		
 		QueryEngine[] learnedModels = new QueryEngine[modelSizes[0].length];
 		for (int i = 0; i < learnedModels.length; i++) {

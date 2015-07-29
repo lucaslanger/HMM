@@ -15,8 +15,6 @@ public abstract class HankelSVDModelParent implements Serializable{
 	
 	public abstract QueryEngine buildHankelBasedModel(int base, int modelSize);
 	
-	public abstract SingularValueDecomposition truncateSVD(int nStates);
-	
 	public abstract void test();
 	
 	public static Matrix pseudoInvDiagonal(Matrix m){

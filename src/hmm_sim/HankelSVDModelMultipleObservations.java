@@ -9,13 +9,22 @@ import Jama.SingularValueDecomposition;
 
 public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
+	//String formatting: 	"31:15,21:12", IDofSymbol:Count,IDofSymbol:Count ... etc
+	
 	private SymbolCounts fullData;
+	private HashMap<String, Integer> prefixes;
+	private HashMap<String, Integer> suffixes;
+	
 	private int numDimensions;
 	private int basisSize;
 	private SingularValueDecomposition svdOfH;
 	
 	public static void main(String[] args){
-		String[] samples = {"aa" , "ba"};
+		
+	}
+		
+	public void test(){
+		String[] samples = {"1:2" , "2:1,1:1"};
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
 		for (int i = 0; i < samples.length; i++) {
 			String s = samples[i];
@@ -29,39 +38,27 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
 		this.numDimensions = numDimensions;
 		this.basisSize = basisSize;
-		fullData = new SymbolCounts(numDimensions);
+		this.fullData = new SymbolCounts(numDimensions);
 		for (SymbolCountPair s: scp) {
-			fullData.updateFrequency(s.getSymbol(), s.getCount());
+			this.fullData.updateFrequency(s.getSymbol(), s.getCount());
 		}
-		svdOfH = this.takeSVDMultipleObservations();
+		HashMap<String, Integer> prefixes = getPrefixes(scp);
+		HashMap<String, Integer> suffixes = getSuffixes(prefixes, scp);
+		
+		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, "");
+		
+		this.svdOfH =  new SingularValueDecomposition(Hlambda);
 	}
 	
-	
-	private SymbolCountPair[] getBasisMultipleObservations(){
-		// Maybe improvement of the base is only due to how your picking basis
-		PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
-		for( String s: this.fullData.getSymbolToProbability().keySet()){
-			SymbolCountPair spp = new SymbolCountPair(fullData.getSymbolToProbability().get(s), s);
-			pq.add(spp);
-		}
-		
-		SymbolCountPair[] d = new SymbolCountPair[this.basisSize*2];
-		for (int i = 0; i < basisSize*2; i++) {
-			d[i] = pq.remove();
-		}
-		return d;
-		
-	}
-	
-	private HashMap<String, Integer> getPrefixes(SymbolCountPair[] spp){
+	private HashMap<String, Integer> getPrefixes(Iterable<SymbolCountPair> spp){
 		return null;
 	}
 	
-	private HashMap<String, Integer> getSuffixes(HashMap<String, Integer> prefixes, SymbolCountPair[] spp){
+	private HashMap<String, Integer> getSuffixes(HashMap<String, Integer> prefixes, Iterable<SymbolCountPair> spp){
 		return null;
 	}
 	
-	public Matrix buildHankelMultipleObservations(HashMap<String, Integer> dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes, String X){
+	public Matrix buildHankelMultipleObservations(SymbolCounts dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes, String X){
 		double[][] hankel = new double[prefixes.keySet().size()][suffixes.keySet().size()];
 		int freqCounter = determineTotalFrequencyIncluded(dataCounts, prefixes, suffixes);
 		
@@ -70,8 +67,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			int pS = 0;
 			for(String suffkey: suffixes.keySet()){
 				String s = prefkey + X + suffkey;
-				if (dataCounts.containsKey(s)){
-					hankel[pC][pS] = (double) dataCounts.get(s)/freqCounter;
+				if (dataCounts.getSymbolToFrequency().containsKey(s)){
+					hankel[pC][pS] = (double) dataCounts.getSymbolToFrequency().get(s)/freqCounter;
 				}
 				else{
 					hankel[pC][pS] = 0;
@@ -85,33 +82,38 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		return H;
 	}
 	
-	public int determineTotalFrequencyIncluded(HashMap<String, Integer> dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes){
+	public int determineTotalFrequencyIncluded(SymbolCounts dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes){
 		int freqCounter = 0;
 		for (String prefkey: prefixes.keySet() ){
 			for(String suffkey: suffixes.keySet()){
 				String s = prefkey + suffkey;
-				freqCounter += dataCounts.get(s);
+				freqCounter += dataCounts.getSymbolToFrequency().get(s);
 			}
 		}
 		return freqCounter;
 	}
 	
-	public QueryEngine buildHankelBasedModelMultipleObservations(HashMap<String, Integer> dataCounts, HashMap<String, Integer> prefixes, HashMap<String, Integer> suffixes, int base, int modelSize){
+	public QueryEngine buildHankelBasedModel(int base, int modelSize){
+		SymbolCounts dataCounts = this.fullData;
+		HashMap<String, Integer > prefixes = this.prefixes;
+		HashMap<String, Integer > suffixes = this.prefixes;
+
 		
 		Matrix H = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, "");
 				
-		HashMap<String, Matrix> truncatedSVD = this.truncateSVDMultipleObservations(H , modelSize);
+		SingularValueDecomposition truncatedSVD = super.truncateSVD(H , modelSize);
 		
-		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
-		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
-		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		Matrix di = pseudoInvDiagonal(truncatedSVD.getS());
+		Matrix pinv = di.times(truncatedSVD.getU().transpose());
+		Matrix sinv = (truncatedSVD.getV().transpose()).transpose();
 		
 		HashMap<String, Matrix> XSigmas = new HashMap<String, Matrix>();
 	
-		for(String symbol: this.symbols){
-			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, symbol);
+		for (int i = 1; i < this.numDimensions; i++) {
+			String iString = Integer.toString(i);
+			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, iString );
 			Matrix Ax = pinv.times(Hx).times(sinv);
-			XSigmas.put(symbol, Ax);
+			XSigmas.put(iString, Ax);
 		}
 		
 		double[][] h_L = new double[basisSize][1];
@@ -125,18 +127,12 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix alpha_0 = h_LS.times(sinv);
 		Matrix alpha_inf = pinv.times(h_PL);
 	
-		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base);
+		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Xsigmas, maxExponent, base);
 		
 		//If Debugging Wanted
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 
 		return q;
-	}
-	
-	private HashMap<String, Matrix> truncateSVDMultipleObservations(Matrix h,
-			int modelSize) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 	
 	

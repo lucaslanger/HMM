@@ -4,6 +4,14 @@ import java.util.HashMap;
 
 public class SymbolCounts {
 	
+	public HashMap<String, Integer> getSymbolToFrequency() {
+		return symbolToFrequency;
+	}
+
+	public int getDataCount() {
+		return dataCount;
+	}
+
 	HashMap<String, Integer> symbolToFrequency;
 	int dataCount;
 	public SymbolCounts(int numDimensions){
