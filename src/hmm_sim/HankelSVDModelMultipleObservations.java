@@ -7,7 +7,7 @@ import java.util.PriorityQueue;
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
 
-public class HankelSVDModelMultipleObservations {
+public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	private SymbolCounts fullData;
 	private int numDimensions;
@@ -139,126 +139,8 @@ public class HankelSVDModelMultipleObservations {
 		return null;
 	}
 	
-	public QueryEngine buildHankelBasedModel(int basisSize, int base, int modelSize){
-		
-		HashMap<String, Matrix> truncatedSVD = this.truncateSVD(modelSize);
-		
-		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
-		
-		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
-		Matrix sinv = (truncatedSVD.get("VT")).transpose();
-		
-		/*System.out.println("Testing inverses");
-		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));
-		Matrix test2 = truncatedSVD.get("VT").times(sinv);
-		System.out.println(Arrays.toString( getDiagonalArray(test1) ));
-		System.out.println(Arrays.toString( getDiagonalArray(test2) ));
-		*/
-		
-		int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
-
-		Matrix[] H_Matrices = new Matrix[maxExponent+1];
-				
-		int freq;
-		Matrix h;
-		//System.out.println("Building queryEngine");
-		for (int l = 0; l <= maxExponent; l++) {
-			freq = (int) Math.pow(base,l);
-			try {
-				h = this.buildH(freq, freq+basisSize);
-				H_Matrices[l] = h;
-			} catch (Exception e) {
-				System.out.println("Problem Building Model when creating Hankel");
-				e.printStackTrace();
-				return null;
-			}
-		}
-		
-		Matrix Asigmas[] = new Matrix[maxExponent+1];
-		Matrix t;
-
-		for (int i = 0; i <= maxExponent; i++) {
-			t = pinv.times(H_Matrices[i]).times( sinv );
-			Asigmas[i] = pinv.times(H_Matrices[i]).times( sinv );
-		}
-		
-		double[][] h_L = new double[basisSize][1];
-		for (int i = 0; i < basisSize; i++) {
-			h_L[i][0] = this.probabilities[i];
-		}
-		
-		Matrix h_LS = new Matrix( h_L ).transpose();
-		Matrix h_PL = h_LS.transpose();
-				
-		Matrix alpha_0 = h_LS.times(sinv);
-		Matrix alpha_inf = pinv.times(h_PL);
 	
-		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base);
-		
-		//If Debugging Wanted
-		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
-
-		return q;
-	}
+	public synchronized void writeObject(java.io.ObjectOutputStream stream){}
 	
-	public HashMap<String, Matrix> truncateSVD(int nStates){
-		boolean debug = false;
-		
-	    Matrix U = this.svd.getU();
-	    Matrix S = this.svd.getS();
-	    Matrix V = this.svd.getV();
-	    
-	    double[][] utemp = U.getArrayCopy();
-	    double[][] utrunc = new double[utemp.length][nStates];
-	    for (int i = 0; i < utrunc.length; i++) {
-	    	for (int j = 0; j < nStates; j++) {
-	    		utrunc[i][j] = utemp[i][j];
-			}
-			
-		}
-	    Matrix Utrunc = new Matrix(utrunc);
-	    
-	    double[][] stemp = S.getArrayCopy();
-	    double[][] strunc = new double[nStates][nStates];
-	    for (int i = 0; i < nStates; i++) {
-	    	for (int j = 0; j < nStates; j++) {
-	    		strunc[i][j] = stemp[i][j];
-			}
-		}
-	    Matrix Strunc = new Matrix(strunc);
-	    
-	    double[][] vtemp = V.getArrayCopy();			//Double check to make sure this isnt going wrong
-	    double[][] vtrunc = new double[utemp.length][nStates];
-	    for (int i = 0; i < vtrunc.length; i++) {
-	    	for (int j = 0; j < nStates; j++) {
-	    		vtrunc[i][j] = vtemp[i][j];
-			}
-		}
-	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
-
-	    HashMap<String, Matrix> r = new HashMap<String, Matrix>();
-	    r.put("U", Utrunc);
-	    r.put("VT", Vtrunc);
-	    r.put("S", Strunc);
-	    
-	    if (debug) {
-	    	System.out.println("Before trunc");
-	    	System.out.print("Size");
-	    	System.out.println(S.getArrayCopy()[0].length);
-	   	    //U.print(5, 5);
-	   	    S.print(5, 5);
-	   	    
-	   	    //V.transpose().print(5, 5);
-	   	    
-	   	    System.out.println("After trunc");
-	   	    System.out.print("Size");
-	    	System.out.println(Strunc.getArrayCopy()[0].length);
-	   	    //Utrunc.print(5, 5);
-	   	    Strunc.print(5, 5);
-	   	    //Vtrunc.print(5, 5);
-		}    
-	    
-	    return r;
-	    
-	}
+	public void readObject(java.io.ObjectInputStream in){}
 }
