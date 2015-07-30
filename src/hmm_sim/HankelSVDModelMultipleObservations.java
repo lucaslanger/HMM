@@ -32,7 +32,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
 		for (int i = 0; i < samples.length; i++) {
 			String s = samples[i];
-			SymbolCountPair sc = new SymbolCountPair(1, s);
+			SequenceOfSymbols seq = new SequenceOfSymbols(s);
+			SymbolCountPair sc = new SymbolCountPair(1, seq);
 			l.add(sc);
 		}
 		
@@ -58,17 +59,17 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 
 		SymbolCounts preFixes = new SymbolCounts(this.numDimensions);
 		for (SymbolCountPair symbolCountPair : spp) {
-			String symbol = symbolCountPair.getSymbol();
-			LinkedList<String> prefixesFromSymbol = getPrefixesFromSymbolString(symbol);
-			for (String s: prefixesFromSymbol) {
-				preFixes.updateFrequency(s, symbolCountPair.getCount() );
+			SequenceOfSymbols s = symbolCountPair.getSymbol();
+			LinkedList<SequenceOfSymbols> prefixesFromSymbol = s.getPrefixesFromSequence();
+			for (SequenceOfSymbols seq: prefixesFromSymbol) {
+				preFixes.updateFrequency(seq, symbolCountPair.getCount() );
 			}
 		}
 		
 		SymbolCounts scReturn = new SymbolCounts(this.numDimensions);
-		NavigableSet<String> prefixesSorted = preFixes.descKeySet();
+		NavigableSet<SequenceOfSymbols> prefixesSorted = preFixes.descKeySet();
 		int i=0;
-		for (String s: prefixesSorted) {
+		for (SequenceOfSymbols s: prefixesSorted) {
 			if (i >= basisSize){
 				break;
 			}
@@ -81,28 +82,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		return scReturn;
 		
 	}
-	
-	//Should be safe since strings are immutable
-	private LinkedList<String> getPrefixesFromSymbolString(String sequence) { 	//second parameter should be an emptyLinkedlist
-		LinkedList<String> currentList = new LinkedList<String>();
-		while(sequence != ""){
-			currentList.add(sequence);
-			
-			String lastStreak = this.getLastStreak(sequence);
-			int streak = this.getStreakFromString(lastStreak);
-			int symbol = this.getSymbolFromString(lastStreak);
-			if(streak > 1){
-				String t = Integer.toString(symbol) + ":" + Integer.toString(streak-1);
-				sequence = sequence.substring(0, sequence.length() - lastStreak.length() + 1) + t;
-			}
-			else{	
-				sequence = sequence.substring(0, sequence.length() - lastStreak.length() );		// -1 to Take care of the comma
-			}
-			
-		}
-		return currentList;
-		
-	}
 
 	private SymbolCounts getSuffixes(SymbolCounts prefixes, Iterable<SymbolCountPair> spp){
 		return null;
@@ -113,12 +92,12 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int freqCounter = determineTotalFrequencyIncluded(dataCounts, prefixes, suffixes);
 		
 		int pC = 0;
-		NavigableSet<String> prefixKeySetSorted = prefixes.descKeySet(); 
-		NavigableSet<String> suffixKeySetSorted = suffixes.descKeySet(); 
+		NavigableSet<SequenceOfSymbols> prefixKeySetSorted = prefixes.descKeySet(); 
+		NavigableSet<SequenceOfSymbols> suffixKeySetSorted = suffixes.descKeySet(); 
 
-		for (String prefkey: prefixKeySetSorted) {
+		for (SequenceOfSymbols prefkey: prefixKeySetSorted) {
 			int pS = 0;
-			for(String suffkey: suffixKeySetSorted){
+			for(SequenceOfSymbols suffkey: suffixKeySetSorted){
 				String s = prefkey + X + suffkey;
 				if (dataCounts.getSymbolToFrequency().containsKey(s)){
 					hankel[pC][pS] = (double) dataCounts.getSymbolToFrequency().get(s)/freqCounter;
@@ -137,9 +116,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	public int determineTotalFrequencyIncluded(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes){
 		int freqCounter = 0;
-		for (String prefkey: prefixes.descKeySet() ){
-			for(String suffkey: suffixes.descKeySet() ){
-				String s = prefkey + suffkey;
+		for (SequenceOfSymbols prefkey: prefixes.descKeySet() ){
+			for(SequenceOfSymbols suffkey: suffixes.descKeySet() ){
+				SequenceOfSymbols s = SequenceOfSymbols.concatenate(prefkey, suffkey);
 				freqCounter += dataCounts.getSymbolToFrequency().get(s);
 			}
 		}
@@ -170,7 +149,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		double[][] h_L = new double[1][basisSize];
 		int i = 0;
-		for (String s: this.prefixes.descKeySet()) {
+		for (SequenceOfSymbols s: this.prefixes.descKeySet()) {
 			int counts = this.prefixes.getSymbolToFrequency().get(s);
 			h_L[0][i] = counts;
 			i++;
@@ -179,7 +158,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		int j = 0; 
 		double[][] h_t = new double[basisSize][1];
-		for (String s: this.suffixes.descKeySet()) {
+		for (SequenceOfSymbols s: this.suffixes.descKeySet()) {
 			int counts = this.suffixes.getSymbolToFrequency().get(s);
 			h_t[j][0] = counts;
 			j++;
@@ -198,88 +177,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 
 		return q;
-	}
-	
-	public String concatenateSymbols(String s1, String s2){
-		String lastStreakOfS1 = getLastStreak(s1);
-		String firstStreakOfS2 = getFirstStreak(s2);
-		int firstsymbol = getSymbolFromString(lastStreakOfS1);
-		int secondsymbol = getSymbolFromString(firstStreakOfS2);
-		if (firstsymbol == secondsymbol){
-			int newStreak = getStreakFromString(firstStreakOfS2) + getStreakFromString(lastStreakOfS1);
-			
-			String mid = firstsymbol + ":" + Integer.toString(newStreak);
-			
-			String returnString =  s1.substring(0, s1.length() - lastStreakOfS1.length()) + mid + s2.substring(firstStreakOfS2.length(), s2.length());
-			return returnString;
-		}
-		else{
-			if(s2 != ""){
-				return s1 + "," + s2;
-			}
-			else{
-				return s1;
-			}
-		}
-	}
-	
-	private int getStreakFromString(String info) {
-		String streak = "";
-		for (int i = info.length()-1; i >= 0  ; i--) {
-			char c = info.charAt(i);
-			if (c == ':'){
-				return Integer.parseInt(streak);
-			}
-			else{
-				streak = c + streak;
-			}
-		}
-		System.out.println("Weird input or bad behavior");
-		System.out.println(info + "\n");
-		return -1;
-	}
-
-	private int getSymbolFromString(String info) {
-		String streak = "";
-		for (int i = 0; i < info.length(); i++) {
-			char c = info.charAt(i);
-			if (c == ':'){
-				return Integer.parseInt(streak);
-			}
-			else{
-				streak = c + streak;
-			}
-		}
-		System.out.println("Weird input or bad behavior");
-		return -1;
-	}
-
-	private String getFirstStreak(String s) {
-		String r = "";
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			if(c == ','){
-				return r;
-			}
-			else{
-				r = r + c;
-			}
-		}
-		return r;
-	}
-
-	private String getLastStreak(String s) {
-		String r = "";
-		for (int i = s.length()-1; i >= 0; i--) {
-			char c = s.charAt(i);
-			if (c == ',') {
-				return r;
-			} 
-			else {
-				r = c + r;
-			}
-		}
-		return r;
 	}
 
 	public synchronized void writeObject(java.io.ObjectOutputStream stream){}

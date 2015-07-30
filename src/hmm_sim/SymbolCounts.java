@@ -6,7 +6,7 @@ import java.util.TreeMap;
 
 public class SymbolCounts {
 	
-	public TreeMap<String, Integer> getSymbolToFrequency() {
+	public TreeMap<SequenceOfSymbols, Integer> getSymbolToFrequency() {
 		return symbolToFrequency;
 	}
 
@@ -14,15 +14,15 @@ public class SymbolCounts {
 		return dataCount;
 	}
 
-	TreeMap<String, Integer> symbolToFrequency;
+	TreeMap<SequenceOfSymbols, Integer> symbolToFrequency;
 	int dataCount;
 	
 	public SymbolCounts(int numDimensions){
-		this.symbolToFrequency = new TreeMap<String, Integer>();
+		this.symbolToFrequency = new TreeMap<SequenceOfSymbols, Integer>();
 		this.dataCount = 0;
 	}
 	
-	public void updateFrequency(String s, int update){
+	public void updateFrequency(SequenceOfSymbols s, int update){
 		this.dataCount += update;
 		if (symbolToFrequency.containsKey(s)){
 			symbolToFrequency.put(s, symbolToFrequency.get(s) + update);
@@ -32,11 +32,11 @@ public class SymbolCounts {
 		}
 	}
 	
-	public NavigableMap<String, Integer> SortedKeys(){
+	public NavigableMap<SequenceOfSymbols, Integer> SortedKeys(){
 		return symbolToFrequency.descendingMap();
 	}
 
-	public NavigableSet<String> descKeySet() {
+	public NavigableSet<SequenceOfSymbols> descKeySet() {
 		return symbolToFrequency.descendingKeySet();
 	}
 

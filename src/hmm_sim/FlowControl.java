@@ -6,13 +6,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{128000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 128000;
+		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 256000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
@@ -29,7 +28,7 @@ public class FlowControl {
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
-		int[] modelSizes = new int[]{10, 20, 30, 40, 60, 80, 100};
+		int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
 
 		String workingFolder = "keySearchPacMan/";
 	

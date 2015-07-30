@@ -101,7 +101,7 @@ public class QueryEngineMultipleObservations {
 		machine.get("1").minus(tru.get("1")).print(5,5);
 	}*/
 
-
+	
 	public static Matrix matrixPower(Matrix m, int exp){
 		
 		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
@@ -117,5 +117,20 @@ public class QueryEngineMultipleObservations {
 			}
 		}
 	}
+
+	public double probabilityQuery(SequenceOfSymbols sequence){
+		Matrix r = this.a0;
+		while(sequence.getSequence() != ""){
+			
+			SequenceOfSymbols nextstreak = sequence.getFirstStreak();
+			int power = nextstreak.getStreakFromString();
+			String symbol = nextstreak.getSymbolFromString();
+			for (int i = 0; i < power; i++) {
+				r = r.times( Asigmas.get(symbol) );
+			}
+			sequence = sequence.substring(nextstreak.length(), sequence.length()); //+1 may be needed to get rid of comma
+		}
+	}
+	
 		
 }

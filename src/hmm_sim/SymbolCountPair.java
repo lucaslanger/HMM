@@ -6,14 +6,14 @@ public class SymbolCountPair{
 		return count;
 	}
 
-	public String getSymbol() {
+	public SequenceOfSymbols getSymbol() {
 		return symbol;
 	}
 
 	private int count;
-	private String symbol;
+	private SequenceOfSymbols symbol;
 
-	public SymbolCountPair(int count, String symbol) {
+	public SymbolCountPair(int count, SequenceOfSymbols symbol) {
 		this.count = count;
 		this.symbol = symbol;
 	}
