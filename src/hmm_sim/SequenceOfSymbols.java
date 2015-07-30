@@ -2,9 +2,7 @@ package hmm_sim;
 
 import java.util.LinkedList;
 
-import javax.sound.midi.Sequence;
-
-public class SequenceOfSymbols {
+public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 	
 	private String sequence;
 	
@@ -16,20 +14,25 @@ public class SequenceOfSymbols {
 	
 	public LinkedList<SequenceOfSymbols> getPrefixesFromSequence() { 	//second parameter should be an emptyLinkedlist
 		LinkedList<SequenceOfSymbols> currentList = new LinkedList<SequenceOfSymbols>();
-		String s = this.sequence;
-		while(s != ""){
-			currentList.add( new SequenceOfSymbols(s) );
+		SequenceOfSymbols s = this;
+		while(s.getSequence().equals("") == false){
 			
-			SequenceOfSymbols lastStreak = this.getLastStreak();
+			currentList.add( s );
+			
+			SequenceOfSymbols lastStreak = s.getLastStreak();
 			int streak = lastStreak.getStreakFromString();
 			String symbol = lastStreak.getSymbolFromString();
 			
 			if(streak > 1){
 				String t = symbol + ":" + Integer.toString(streak-1);
-				s = s.substring(0, s.length() - lastStreak.length() + 1) + t;
+				SequenceOfSymbols seq = new SequenceOfSymbols( s.substring(0, s.length() - lastStreak.length()).getSequence() + t );
+				s = seq;
 			}
 			else{	
 				s = s.substring(0, s.length() - lastStreak.length() );		// -1 to Take care of the comma
+				if (s.getSequence().charAt(s.length()-1) == ','){
+					s = s.substring(0, s.length() -1 );
+				}
 			}
 			
 		}
@@ -80,7 +83,8 @@ public class SequenceOfSymbols {
 		return -1;
 	}
 
-	public String getSymbolFromString() {
+	public String getSymbolFromString(){
+		
 		String streak = "";
 		for (int i = 0; i < this.sequence.length(); i++) {
 			char c = this.sequence.charAt(i);
@@ -141,6 +145,15 @@ public class SequenceOfSymbols {
 	
 	public int hashCode(){
 		return sequence.hashCode();
+	}
+
+	@Override
+	public int compareTo(SequenceOfSymbols s2) {
+		return this.sequence.compareTo(s2.getSequence());
+	}
+	
+	public String toString(){
+		return sequence;
 	}
 
 

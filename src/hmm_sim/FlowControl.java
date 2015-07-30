@@ -28,7 +28,10 @@ public class FlowControl {
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
-		int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
+		
+		int[] modelSizes = new int[]{35, 40, 60, 80, 100};
+		
+		// INTERESTING JUMPS: int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
 
 		String workingFolder = "keySearchPacMan/";
 	
