@@ -165,9 +165,13 @@ public class ModelRetrieval {
 		for (int i = 0; i <= q.getMaxExponent(); i++) {
 			int pow = (int) Math.pow(this.base,i);
 		
+			//System.out.println("True Probabilities Length: " + Integer.toString(trueModel.getProbabilities().length));
 			double[] r = new double[trueModel.getProbabilities().length];
 			for (int i1 = 0; i1 < r.length; i1++) {
 				r[i1] = Math.abs(trueModel.getProbabilities()[i1] - q.probabilityQuery(i1, pow, this.base, true));
+				//System.out.println(trueModel.getProbabilities()[i1]);
+				//System.out.println(q.probabilityQuery(i1, pow, this.base, true));
+				//System.out.println();
 			}
 			System.out.print ("Qerrors maxpower: " + Integer.toString(pow) + ":  ");
 			System.out.print( Arrays.toString(getTopErrorIndices(r, topCount)[0]) );

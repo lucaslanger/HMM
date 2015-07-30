@@ -153,11 +153,11 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 
 		Matrix H = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, "");
 				
-		SingularValueDecomposition truncatedSVD = super.truncateSVD(H , modelSize);
+		HashMap<String, Matrix> truncatedSVD = super.truncateSVD(H , modelSize);
 		
-		Matrix di = pseudoInvDiagonal(truncatedSVD.getS());
-		Matrix pinv = di.times(truncatedSVD.getU().transpose());
-		Matrix sinv = (truncatedSVD.getV().transpose()).transpose();
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
 		HashMap<String, Matrix> XSigmas = new HashMap<String, Matrix>();
 	

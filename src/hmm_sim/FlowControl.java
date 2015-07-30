@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int[] trajectorySizes = new int[]{128000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
 		int dataSizeForFixedPlots = 128000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	

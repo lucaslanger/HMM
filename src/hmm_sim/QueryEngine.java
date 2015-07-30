@@ -176,6 +176,7 @@ public class QueryEngine {
 			r = this.ainf;
 		}
 		while(power != 0){
+			//r.print(5, 5);
 			
 			while (p > power){
 				p = p/base;

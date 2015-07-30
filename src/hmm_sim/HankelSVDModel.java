@@ -2,12 +2,8 @@ package hmm_sim;
 
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.PriorityQueue;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -64,12 +60,21 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 	public QueryEngine buildHankelBasedModel(int base, int modelSize){
 		//Matrix H = SVD.getU().times(SVD.getU()).times(SVD.getV().transpose());
 		Matrix H = this.getHankel();
-		SingularValueDecomposition truncatedSVD = HankelSVDModelParent.truncateSVD(H ,modelSize);
+		HashMap<String, Matrix> truncatedSVD = HankelSVDModelParent.truncateSVD(H ,modelSize);
+		SingularValueDecomposition svd = new SingularValueDecomposition(H);
 		
-		Matrix di = pseudoInvDiagonal(truncatedSVD.getS());
+		//System.out.println("U difference");
+		//truncatedSVD.getU().print(5, 5);
+		//svd.getU().print(5, 5);
 		
-		Matrix pinv = di.times(truncatedSVD.getU().transpose());
-		Matrix sinv = (truncatedSVD.getV().transpose()).transpose(); // Double transpose isn't neccesary computationally but makes it clear what is being done
+		//System.out.println("S difference HankelSVDModel");
+		//System.out.println(Arrays.toString(getDiagonalArray(truncatedSVD.getS())));
+		//System.out.println(Arrays.toString(getDiagonalArray(svd.getS())));
+		
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
 		/*System.out.println("Testing inverses");
 		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));

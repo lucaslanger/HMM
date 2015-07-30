@@ -125,7 +125,7 @@ public class testEngine{
 			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
 		}
 		
-		int fixedData = 256000;
+		int fixedData = dataSizeForFixedPlots;
 		this.modelSizeEffectOverBaseImprovement(fixedData);
 		
 	}

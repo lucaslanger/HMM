@@ -45,7 +45,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	}
 
 	
-	public static SingularValueDecomposition truncateSVD(Matrix H, int nStates){
+	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
 		boolean debug = false;
 		
 		SingularValueDecomposition svdLocal = H.svd();
@@ -79,17 +79,23 @@ public abstract class HankelSVDModelParent implements Serializable{
 	    		vtrunc[i][j] = vtemp[i][j];
 			}
 		}
-	    Matrix Vtrunc = new Matrix(vtrunc).transpose();
+	    Matrix VTtrunc = new Matrix(vtrunc).transpose();
 
-	    System.out.println("DIVSION");
-	    SingularValueDecomposition svdToReturn = new SingularValueDecomposition(Utrunc.times(Strunc).times(Vtrunc));
-	    
-	    /*
+	    /*System.out.println("DIVSION");
+	    SingularValueDecomposition svdToReturn = new SingularValueDecomposition(Utrunc.times(Strunc).times(VTtrunc));
+	    System.out.println("TESTING HANKELSVDMODEPARENT");
+	    System.out.println(Utrunc.rank());
+	    System.out.println(svdToReturn.getU().rank());
+	    System.out.println(Utrunc.minus(svdToReturn.getU()).norm2());
+	    System.out.println(Strunc.minus(svdToReturn.getS()).norm2());
+	    System.out.println(VTtrunc.minus(svdToReturn.getV().transpose()).norm2());
+
+	    */
 	    HashMap<String, Matrix> r = new HashMap<String, Matrix>();
 	    r.put("U", Utrunc);
-	    r.put("VT", Vtrunc);
+	    r.put("VT", VTtrunc);
 	    r.put("S", Strunc);
-	    */
+	    
 	    
 	    if (debug) {
 	    	System.out.println("Before trunc");
@@ -108,7 +114,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	   	    //Vtrunc.print(5, 5);
 		}    
 	    
-	    return svdToReturn;
+	    return r;
 	    
 	}
 }
