@@ -31,13 +31,15 @@ public class SymbolCounts {
 			symbolToFrequency.put(s, update);
 		}
 	}
-	
-	public NavigableMap<SequenceOfSymbols, Integer> SortedKeys(){
-		return symbolToFrequency.descendingMap();
-	}
 
 	public NavigableSet<SequenceOfSymbols> descKeySet() {
+		//System.out.println("Double check that this sorts by value not key");
 		return symbolToFrequency.descendingKeySet();
+	}
+	
+	public NavigableSet<SequenceOfSymbols> incrKeySet() {
+		//System.out.println("Double check that this sorts by value not key");
+		return symbolToFrequency.navigableKeySet();
 	}
 	
 	public String toString(){
