@@ -25,19 +25,19 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			
 			if(streak > 1){
 				String t = symbol + ":" + Integer.toString(streak-1);
-				SequenceOfSymbols seq = new SequenceOfSymbols( s.substring(0, s.length() - lastStreak.length()).getSequence() + t );
+				SequenceOfSymbols seq = new SequenceOfSymbols( s.substring(0, s.rawStringLength() - lastStreak.rawStringLength()) + t );
 				s = seq;
 			}
 			else{	
-				s = s.substring(0, s.length() - lastStreak.length() );		// -1 to Take care of the comma
-				if (s.getSequence().charAt(s.length()-1) == ','){
-					s = s.substring(0, s.length() -1 );
+				s = s.substring(0, s.rawStringLength() - lastStreak.rawStringLength() );		// -1 to Take care of the comma
+				if (s.getSequence().equals("") == false && s.getSequence().charAt(s.rawStringLength() - 1) == ','){
+					s = s.substring(0, s.rawStringLength() -1 );
 				}
 			}
 			
 		}
-		System.out.println("Please make sure that sequence did not mutate");
-		System.out.println(this.sequence);
+		//System.out.println("Please make sure that sequence did not mutate - From: SequenceOfSymbols.getPrefixesFromSequence");
+		//System.out.println(this.sequence);
 		
 		return currentList;
 		
@@ -53,7 +53,7 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			
 			String mid = firstsymbol + ":" + Integer.toString(newStreak);
 			
-			String returnString =  s1.substring(0, s1.length() - lastStreakOfS1.length()) + mid + s2.substring(firstStreakOfS2.length(), s2.length());
+			String returnString =  s1.substring(0, s1.rawStringLength() - lastStreakOfS1.rawStringLength()) + mid + s2.substring(firstStreakOfS2.rawStringLength(), s2.rawStringLength());
 			SequenceOfSymbols s = new SequenceOfSymbols(returnString);
 			return s;
 		}
@@ -112,6 +112,32 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		}
 		return new SequenceOfSymbols(r);
 	}
+	
+	
+	public LinkedList<SequenceOfSymbols> getSuffixesOfSequence(){
+		SequenceOfSymbols t = this;
+		
+		LinkedList<SequenceOfSymbols> L = new LinkedList<SequenceOfSymbols>();
+		while(t.getSequence().equals("") == false){
+			L.add(t);
+			SequenceOfSymbols firstStreak = t.getFirstStreak();
+			int streak = firstStreak.getStreakFromString();
+			String symbol = firstStreak.getSymbolFromString();
+			if (streak > 1){
+				t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + "," + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
+			}
+			else{
+				if (t.rawStringLength() > firstStreak.rawStringLength() ){	//Delete comma
+					t = new SequenceOfSymbols(t.substring(firstStreak.rawStringLength()+1, t.rawStringLength()).getSequence() );
+				}
+				else{
+					t = new SequenceOfSymbols(t.substring(firstStreak.rawStringLength(), t.rawStringLength()).getSequence() );
+					}
+				}
+			}
+		
+		return L;
+	}
 
 	private SequenceOfSymbols getLastStreak() {
 		String r = "";
@@ -135,7 +161,11 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		return this.sequence;
 	}
 	
-	public int length(){
+	public int sequenceLength(){
+		
+	}
+	
+	public int rawStringLength(){
 		return sequence.length();
 	}
 	

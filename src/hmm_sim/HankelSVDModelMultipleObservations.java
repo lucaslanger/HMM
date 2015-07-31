@@ -45,10 +45,14 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		this.basisSize = basisSize;
 		this.fullData = new SymbolCounts(numDimensions);
 		for (SymbolCountPair s: scp) {
-			this.fullData.updateFrequency(s.getSymbol(), s.getCount());
+			LinkedList<SequenceOfSymbols> prefixesOfscp = s.getSymbol().getPrefixesFromSequence();
+			for (SequenceOfSymbols spre : prefixesOfscp) {
+				this.fullData.updateFrequency(spre, s.getCount());
+			}
 		}
+		
 		SymbolCounts prefixes = getPrefixes(scp);
-		SymbolCounts suffixes = getSuffixes(prefixes, scp);
+		SymbolCounts suffixes = getSuffixes(prefixes);
 		
 		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, "");
 		
@@ -79,17 +83,34 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			}
 		}
 		
+		System.out.println("Done choosing Prefixes: -HankelSVDModelMultipleObservations.getPrefixes");
+		System.out.println("Here they are: ");
+		System.out.println(preFixes);
+		System.out.println();
+		
 		return scReturn;
 		
 	}
 
-	private SymbolCounts getSuffixes(SymbolCounts prefixes, Iterable<SymbolCountPair> spp){
-		return null;
+	private SymbolCounts getSuffixes(SymbolCounts prefixes){
+		SymbolCounts suffixes = new SymbolCounts(this.numDimensions);
+		for (SequenceOfSymbols prefix : prefixes.descKeySet() ) {
+			LinkedList<SequenceOfSymbols> L = prefix.getSuffixesOfSequence();
+			for (SequenceOfSymbols sequenceOfSymbols : L) {
+				suffixes.updateFrequency(sequenceOfSymbols, 1); 	//suffix frequency is irrelevant in the way we choose the basis
+			}
+		}
+		System.out.println("Done choosing Suffixes: -HankelSVDModelMultipleObservations.getSuffixes");
+		System.out.println("Here they are: ");
+		System.out.println(suffixes);
+		System.out.println();
+		
+		return suffixes;
 	}
 	
 	public Matrix buildHankelMultipleObservations(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes, String X){
 		double[][] hankel = new double[prefixes.SortedKeys().size()][suffixes.SortedKeys().size()];
-		int freqCounter = determineTotalFrequencyIncluded(dataCounts, prefixes, suffixes);
+		int[] freqCounter = determineTotalFrequencyIncludedPerMinKLength(dataCounts, prefixes, suffixes);
 		
 		int pC = 0;
 		NavigableSet<SequenceOfSymbols> prefixKeySetSorted = prefixes.descKeySet(); 
@@ -114,15 +135,33 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		return H;
 	}
 	
-	public int determineTotalFrequencyIncluded(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes){
-		int freqCounter = 0;
+	private int determineTotalFrequencyIncludedPerMinKLength(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes){
+		int L = getLengthOfLongestSequence(dataCounts);
+		int[] freqCounter = new int[L];
 		for (SequenceOfSymbols prefkey: prefixes.descKeySet() ){
 			for(SequenceOfSymbols suffkey: suffixes.descKeySet() ){
 				SequenceOfSymbols s = SequenceOfSymbols.concatenate(prefkey, suffkey);
-				freqCounter += dataCounts.getSymbolToFrequency().get(s);
+				if (dataCounts.getSymbolToFrequency().containsKey(s) ){
+					for (int i = s.sequenceLength(); i < L; i++) {
+						
+					}
+					freqCounter += dataCounts.getSymbolToFrequency().get(s);
+				}
 			}
 		}
 		return freqCounter;
+	}
+	
+	private int getLengthOfLongestSequence(SymbolCounts dataCounts){
+		int l = 0;
+		
+		for (SequenceOfSymbols s: dataCounts.descKeySet()) {
+			int sl = s.sequenceLength();
+			if (sl> l){
+				l = sl;
+			}
+		}
+		return l;
 	}
 	
 	public QueryEngineMultipleObservations buildHankelBasedModelMultipleObservations(int base, int modelSize){

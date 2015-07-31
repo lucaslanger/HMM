@@ -128,7 +128,7 @@ public class QueryEngineMultipleObservations {
 			for (int i = 0; i < power; i++) {
 				r = r.times( Asigmas.get(symbol) );
 			}
-			sequence = sequence.substring(nextstreak.length(), sequence.length()); //+1 may be needed to get rid of comma
+			sequence = sequence.substring(nextstreak.rawStringLength(), sequence.rawStringLength()); //+1 may be needed to get rid of comma
 		}
 		
 		assert(Math.abs(r.times(ainf).get(0, 0)) == r.norm1() );

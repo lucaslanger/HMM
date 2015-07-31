@@ -39,5 +39,13 @@ public class SymbolCounts {
 	public NavigableSet<SequenceOfSymbols> descKeySet() {
 		return symbolToFrequency.descendingKeySet();
 	}
+	
+	public String toString(){
+		String output = "";
+		for (SequenceOfSymbols s : this.symbolToFrequency.keySet()) {
+			output = output + "Sequence: " + s.getSequence() + " Occurences: " + this.symbolToFrequency.get(s) + ", "; 
+		}
+		return output;
+	}
 
 }

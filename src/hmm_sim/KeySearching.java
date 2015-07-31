@@ -54,6 +54,8 @@ public class KeySearching {
 		int[] shortestPaths = l.shortestPathsFromKey();
 
 		System.out.println("HACK ON PSEUDOINVERSE");
+		System.out.println("HACK ON PSEUDOINVERSE");
+		System.out.println("HACK ON PSEUDOINVERSE");
 			
 		ModelRetrieval mr = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
 		ModelRetrieval trueModel = new ModelRetrieval(workingFolder, empModels, "Models_True_" + workingFolder, basisSize, base);
@@ -201,6 +203,9 @@ public class KeySearching {
 
 		int[] shortestPaths = l.shortestPathsFromKey();
 
+		System.out.println("HACK ON PSEUDOINVERSE");
+		System.out.println("HACK ON PSEUDOINVERSE");
+		System.out.println("HACK ON PSEUDOINVERSE");
 		System.out.println("HACK ON PSEUDOINVERSE");
 			
 		for (int j = 0; j < maxKsToTest[0].length; j++) {
