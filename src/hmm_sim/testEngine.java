@@ -74,8 +74,15 @@ public class testEngine{
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
 		
 		this.ModelRetrieval = new ModelRetrieval(workingFolder, empModels, fileNameOfTrueModel, basisSize, base);
+		
 		this.keySetSorted = ModelRetrieval.getKeySetSorted();
 		this.trueModel = ModelRetrieval.readTrueModel(fileNameOfTrueModel);
+		
+		int topSingularValuesToPrint = 35;
+		System.out.println("Printing out top " + Integer.toString(topSingularValuesToPrint) + " Singular Values!");
+		double[] singularValues = putDiagonalToArray(this.trueModel.getSvd().getS(), topSingularValuesToPrint);
+		System.out.println( Arrays.toString(singularValues) );
+		
 		//this.trueModel = this.readTrueModel(workingFolder + fileNameOfTrueModel);
 		this.maxStates = this.trueModel.getRank();
 		this.modelSizeToIndex = this.initializeModelSizeToIndex();
@@ -128,6 +135,14 @@ public class testEngine{
 		int fixedData = dataSizeForFixedPlots;
 		this.modelSizeEffectOverBaseImprovement(fixedData);
 		
+	}
+	
+	private double[] putDiagonalToArray(Matrix a, int size){
+		double[] r = new double[size];
+		for (int i = 0; i < size; i++) {
+			r[i] = a.get(i, i);
+		}
+		return r;
 	}
 	
 	private HashMap<Integer, Integer> initializeModelSizeToIndex(){

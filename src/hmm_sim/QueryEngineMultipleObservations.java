@@ -130,6 +130,10 @@ public class QueryEngineMultipleObservations {
 			}
 			sequence = sequence.substring(nextstreak.length(), sequence.length()); //+1 may be needed to get rid of comma
 		}
+		
+		assert(Math.abs(r.times(ainf).get(0, 0)) == r.norm1() );
+		return r.times(ainf).get(0, 0);
+		
 	}
 	
 		
