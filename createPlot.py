@@ -4,8 +4,6 @@ import os
 import math
 
 numColors = 10
-print "Number of Shades: 10"
-print "Please make sure that this is enough! \n"
 
 colorsAnalysis = {}
 for i in range(numColors):
@@ -17,6 +15,7 @@ for i in range(numColors):
 colorsTests = {0:'g', 1:'r', 2:'b', 3:'y'}
 
 def getDataFromFile(datafile):
+	print "Plotting " + datafile
 	with open(datafile) as f:
 		first = True
 		xaxisLabel = "" 
@@ -58,17 +57,18 @@ def getDataFromFile(datafile):
 def takeLogOfArray(a):
 	return [math.log(i) for i in a]
 
-def drawPlots(folder, names, colors, alpha_scaling):	
-	l = len(names)
-
+def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizontalPlotSize=-1):
+	l = len(names)	
+	if horizontalPlotSize == -1:
+		horizontalPlotSize = math.ceil(l**0.5)	
+		verticalPlotSize = math.ceil(l**0.5)	
 	i = 1
-	s = math.ceil(l**0.5)
 	L = ''
 	for name in names:
 		n = name[0]
 		try:
 			d = getDataFromFile(folder+"/" + n)
-			plt.subplot(s,s,i)
+			plt.subplot(horizontalPlotSize,verticalPlotSize,i)
 			for j in range(len(d[2])):
 				xdata = d[2][j]
 				ydata = d[3][j]		
@@ -77,7 +77,7 @@ def drawPlots(folder, names, colors, alpha_scaling):
 				if name[2] == 'log':
 					ydata = takeLogOfArray(ydata)
 				if alpha_scaling:
-					a=(1.0*(j%len(colors)))/len(colors)
+					a=(1.0*(j+1))/len(colors)
 				else:
 					a = 1.0				
 				plt.plot(xdata,ydata, colors[j%len(colors)], alpha=a)
@@ -112,18 +112,22 @@ modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','n
 # 	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
 
 
-maxK = [500, 400, 250]
+maxK = []#[500, 400, 250]
 baseComparisonKeyPredictions = []
 for m in maxK:
 	baseComparisonKeyPredictions.append(('KeyFindingErrorTraining_MaxK:' + str(m),'normal','normal'))
 	baseComparisonKeyPredictions.append(('KeyFindingErrorTesting_MaxK:' + str(m),'normal','normal'))
-baseComparisonKeyPredictions.append(('BaseImprovementOverModelSizesDatasize:256000','normal','normal'))
+
+fixedSizeModelBaseComparison = [1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000]
+for s in fixedSizeModelBaseComparison:
+	baseComparisonKeyPredictions.append(('BaseImprovementOverModelSizesDatasize:' + str(s),'normal','normal'))
+baseComparisonKeyPredictions.append(('SingularValues','normal','normal'))
 
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
 elif t=='-k':
-	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True)
+	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True, 2, 5)
 else:
 	print "invalid format"

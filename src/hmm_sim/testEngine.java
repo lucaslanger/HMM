@@ -133,8 +133,7 @@ public class testEngine{
 			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
 		}
 		
-		int fixedData = dataSizeForFixedPlots;
-		this.modelSizeEffectOverBaseImprovement(fixedData);
+//		int fixedData = dataSizeForFixedPlots;
 		
 	}
 	
@@ -239,7 +238,7 @@ public class testEngine{
 		ERR.print(5, 5);
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		
-		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve, lightplots --> lower Base", "", xAxis, errors);
+		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve light curve --> lower Base", "", xAxis, errors);
 	}
 	
 	

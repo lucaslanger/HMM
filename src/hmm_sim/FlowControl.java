@@ -14,9 +14,15 @@ public class FlowControl {
 		int dataSizeForFixedPlots = 256000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
-		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		/*for (int i : trajectorySizes) {
+			int[] temp = new int[]{i};
+			FlowControl.testLabyrinths(temp, i, base);
+		}*/
 		String f = "ErrorStorage";
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots, base);
+
+		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+
 		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
@@ -50,8 +56,8 @@ public class FlowControl {
 		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
-		a.modelSizeEffectOverBaseImprovement(dataSizeForFixedPlots);
-
+		//a.modelSizeEffectOverBaseImprovement(dataSizeForFixedPlots);
+		a.plotSingularValues(100);
 		//a.makePlots();
 	}
 	
