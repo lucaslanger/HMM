@@ -6,16 +6,16 @@ public class SymbolCountPair{
 		return count;
 	}
 
-	public SequenceOfSymbols getSymbol() {
-		return symbol;
+	public SequenceOfSymbols getSequence() {
+		return sequence;
 	}
 
 	private int count;
-	private SequenceOfSymbols symbol;
+	private SequenceOfSymbols sequence;
 
-	public SymbolCountPair(int count, SequenceOfSymbols symbol) {
+	public SymbolCountPair(int count, SequenceOfSymbols sequence) {
 		this.count = count;
-		this.symbol = symbol;
+		this.sequence = sequence;
 	}
 
 }

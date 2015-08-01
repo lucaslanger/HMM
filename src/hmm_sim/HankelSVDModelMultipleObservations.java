@@ -49,7 +49,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		this.basisSize = basisSize;
 		this.fullData = new SymbolCounts(numDimensions);
 		for (SymbolCountPair s: scp) {
-			this.fullData.updateFrequency(s.getSymbol(), 1);
+			for (SequenceOfSymbols seq : s.getSequence().getPrefixesFromSequence()) {
+				this.fullData.updateFrequency(seq, 1);									//Count all prefixes as having appeared
+			}
 		}
 		//System.out.println("FullData");
 		//System.out.println(fullData);
@@ -67,7 +69,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 
 		SymbolCounts preFixes = new SymbolCounts(this.numDimensions);
 		for (SymbolCountPair symbolCountPair : spp) {
-			SequenceOfSymbols s = symbolCountPair.getSymbol();
+			SequenceOfSymbols s = symbolCountPair.getSequence();
 			LinkedList<SequenceOfSymbols> prefixesFromSymbol = s.getPrefixesFromSequence();
 			for (SequenceOfSymbols seq: prefixesFromSymbol) {
 				preFixes.insertKeyTreatAsHashSet(seq); 
@@ -120,7 +122,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	public Matrix buildHankelMultipleObservations(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes, SequenceOfSymbols X){
 		double[][] hankel = new double[prefixes.incrKeySet().size()][suffixes.incrKeySet().size()];
-		int[] freqCounter = determineTotalFrequencyIncludedPerMinKLength(dataCounts, prefixes, suffixes);
+		int[] freqCounter = determineTotalFrequencyIncludedPerMinKLength(dataCounts);
 		/*System.out.println("Frequency Counter - buildHankelMultipleObsverations");
 		System.out.println(Arrays.toString(freqCounter));
 		System.out.println();
@@ -132,6 +134,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int L = getLengthOfLongestSequence(dataCounts);
 		double[] sumOfSymbolLengthK = new double[L+1];
 				
+		HashSet<String> seenSequences = new HashSet<String>();
+		
 		for (SequenceOfSymbols prefkey: prefixKeySetSorted) {
 			int pS = 0;
 			for(SequenceOfSymbols suffkey: suffixKeySetSorted){
@@ -139,9 +143,18 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				SequenceOfSymbols s = SequenceOfSymbols.concatenateSymbols(t, suffkey);
 				
 				if (dataCounts.getSymbolToFrequency().containsKey(s)){
-					double tempDouble = (double) dataCounts.getSymbolToFrequency().get(s)/freqCounter[s.sequenceLength()];
-					sumOfSymbolLengthK[s.sequenceLength()] += tempDouble;
-					hankel[pC][pS] = tempDouble;
+					double occurancesOfS = (double) dataCounts.getSymbolToFrequency().get(s);
+					double numStringsLengthSuffLarge = freqCounter[s.sequenceLength()];
+					hankel[pC][pS] = occurancesOfS/numStringsLengthSuffLarge;
+					
+					if(seenSequences.contains(s.getSequence()) == false ){
+						//System.out.println(s);
+						//System.out.println(occurancesOfS/numStringsLengthSuffLarge);
+						//System.out.println();
+					
+						sumOfSymbolLengthK[s.sequenceLength()] += occurancesOfS/numStringsLengthSuffLarge;
+						seenSequences.add(s.getSequence());
+					}
 				}
 				else{
 					hankel[pC][pS] = 0;
@@ -153,6 +166,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		
 		System.out.println("Verifying that F computes probabilities in the right way:");
+		System.out.println( Arrays.toString(freqCounter) );
 		System.out.println( Arrays.toString(sumOfSymbolLengthK) );
 		System.out.println();
 		
@@ -173,14 +187,12 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		return H;
 	}
 	
-	private int[] determineTotalFrequencyIncludedPerMinKLength(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes){
+	private int[] determineTotalFrequencyIncludedPerMinKLength(SymbolCounts dataCounts){
 		int L = getLengthOfLongestSequence(dataCounts)+1;
 		int[] freqCounter = new int[L];
 		
 		for (SequenceOfSymbols d: dataCounts.incrKeySet()) {
-			for (int i = 0 ; i <= d.sequenceLength(); i++) {
-				freqCounter[i] ++;
-			}
+			freqCounter[d.sequenceLength()] += dataCounts.getSymbolToFrequency().get(d);
 		}
 			
 		/* Only including coverage of prefixes and suffixes. NA for borjas algorithm 
