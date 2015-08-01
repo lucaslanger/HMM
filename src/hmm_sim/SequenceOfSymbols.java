@@ -1,5 +1,6 @@
 package hmm_sim;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import Jama.Matrix;
@@ -18,7 +19,6 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		LinkedList<SequenceOfSymbols> L = new LinkedList<SequenceOfSymbols>();
 		SequenceOfSymbols s = this;
 		while(s.getSequence().equals("") == false){
-			
 			L.add( s );
 			
 			SequenceOfSymbols lastStreak = s.getLastStreak();
@@ -89,8 +89,8 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 				streak = c + streak;
 			}
 		}
-		System.out.println("Weird input or bad behavior");
-		System.out.println(this.sequence + "\n");
+		//System.out.println("Weird input or bad behavior");
+		//System.out.println(this.sequence + "\n");
 		return -1;
 	}
 
@@ -108,7 +108,8 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		}
 		if (streak == ""){return streak;}
 		
-		System.out.println("Weird input or bad behavior");
+		//System.out.println("Weird input or bad behavior getting symbol");
+		//System.out.println(this.sequence);
 		return null;
 	}
 
@@ -137,7 +138,12 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			int streak = firstStreak.getStreakFromString();
 			String symbol = firstStreak.getSymbolFromString();
 			if (streak > 1){
-				t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + "," + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
+				if (t.rawStringLength() > firstStreak.rawStringLength()){ 
+					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + "," + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
+				}
+				else{
+					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1));
+				}
 			}
 			else{
 				if (t.rawStringLength() > firstStreak.rawStringLength() ){	//Delete comma
@@ -213,36 +219,39 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 	public String getRawSequence(){
 		String r = "";
 		SequenceOfSymbols t = this;
-		while (t.getSequence() != ""){
-			System.out.println(t);
+
+		while (t.getSequence().equals("") == false){
 			SequenceOfSymbols firstStreak = t.getFirstStreak();
 			String symbol = firstStreak.getSymbolFromString();
 			int streak = firstStreak.getStreakFromString();
 			for (int i = 0; i < streak; i++) {
 				r = r + symbol;
 			}
-			t = t.substring(firstStreak.rawStringLength(), t.rawStringLength() ) ;
+			if ( t.rawStringLength() > firstStreak.rawStringLength()){
+				t = t.substring(firstStreak.rawStringLength()+1, t.rawStringLength() ) ;
+			}
+			else{
+				t = t.substring(firstStreak.rawStringLength(), t.rawStringLength() ); 
+			}
 		}
+
 		return r;
 	}
 	
-	public static Matrix getRawSequencesRowVector(SymbolCounts sequences){
-		double[] t = new double[sequences.dataCount];
+	public static int[] getRawSequencesRowVector(SymbolCounts sequences){
+		int[] t = new int[sequences.dataCount];
 		int i = 0;
 		for (SequenceOfSymbols s: sequences.incrKeySet()){
-			if ( s.getRawSequence().equals("")){
+			String rawSeq = s.getRawSequence();
+			if ( rawSeq.equals("") ){
 				t[i] = 0;
 			}
 			else{
-				t[i] = Integer.parseInt( s.getRawSequence() );
+				t[i] = Integer.parseInt( rawSeq );
 			}
 			i++;
-		}
-		return new Matrix( new double[][]{t} );
-	}
-	
-	public static Matrix getRawSequencesColumnVector(SymbolCounts sequences){
-		return getRawSequencesRowVector(sequences).transpose();
+		}		
+		return t;
 	}
 
 

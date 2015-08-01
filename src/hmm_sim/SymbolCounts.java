@@ -31,6 +31,13 @@ public class SymbolCounts {
 			symbolToFrequency.put(s, update);
 		}
 	}
+	
+	public void insertKeyTreatAsHashSet(SequenceOfSymbols s){
+		if (symbolToFrequency.containsKey(s) == false){
+			symbolToFrequency.put(s, 1);
+			this.dataCount += 1 ;
+		}
+	}
 
 	public NavigableSet<SequenceOfSymbols> descKeySet() {
 		//System.out.println("Double check that this sorts by value not key");

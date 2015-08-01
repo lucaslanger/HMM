@@ -3,7 +3,6 @@ package hmm_sim;
 
 import java.util.HashMap;
 
-import javax.management.Query;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;

@@ -31,7 +31,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	}
 		
 	public static void test(){
-		String[] samples = {"1:2" , "2:1,1:1"};
+		//String[] samples = {"1:2" , "2:1,1:1"};
+		String[] samples = {"1:1","1:1,2:1","1:2,2:1","1:1,2:1,1:1", "2:1,1:2"};
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
 		for (int i = 0; i < samples.length; i++) {
 			String s = samples[i];
@@ -40,7 +41,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			l.add(sc);
 		}
 		
-		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 3, 2);
+		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
 	}
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
@@ -69,7 +70,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			SequenceOfSymbols s = symbolCountPair.getSymbol();
 			LinkedList<SequenceOfSymbols> prefixesFromSymbol = s.getPrefixesFromSequence();
 			for (SequenceOfSymbols seq: prefixesFromSymbol) {
-				preFixes.updateFrequency(seq, 1 );	//symbolCountPair.getCount()
+				preFixes.insertKeyTreatAsHashSet(seq); 
 			}
 		}
 		
@@ -104,7 +105,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		for (SequenceOfSymbols prefix : prefixes.incrKeySet() ) {
 			LinkedList<SequenceOfSymbols> L = prefix.getSuffixesOfSequence();
 			for (SequenceOfSymbols sequenceOfSymbols : L) {
-				suffixes.updateFrequency(sequenceOfSymbols, 1); 	//suffix frequency is irrelevant in the way we choose the basis
+				suffixes.insertKeyTreatAsHashSet(sequenceOfSymbols); 	//suffix frequency is irrelevant in the way we choose the basis
 			}
 		}
 		/*
@@ -128,6 +129,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		NavigableSet<SequenceOfSymbols> prefixKeySetSorted = prefixes.incrKeySet(); 
 		NavigableSet<SequenceOfSymbols> suffixKeySetSorted = suffixes.incrKeySet(); 
 
+		int L = getLengthOfLongestSequence(dataCounts);
+		double[] sumOfSymbolLengthK = new double[L+1];
+				
 		for (SequenceOfSymbols prefkey: prefixKeySetSorted) {
 			int pS = 0;
 			for(SequenceOfSymbols suffkey: suffixKeySetSorted){
@@ -135,7 +139,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				SequenceOfSymbols s = SequenceOfSymbols.concatenateSymbols(t, suffkey);
 				
 				if (dataCounts.getSymbolToFrequency().containsKey(s)){
-					hankel[pC][pS] = (double) dataCounts.getSymbolToFrequency().get(s)/freqCounter[s.sequenceLength()];
+					double tempDouble = (double) dataCounts.getSymbolToFrequency().get(s)/freqCounter[s.sequenceLength()];
+					sumOfSymbolLengthK[s.sequenceLength()] += tempDouble;
+					hankel[pC][pS] = tempDouble;
 				}
 				else{
 					hankel[pC][pS] = 0;
@@ -145,11 +151,24 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			}
 			pC ++;
 		}
+		
+		System.out.println("Verifying that F computes probabilities in the right way:");
+		System.out.println( Arrays.toString(sumOfSymbolLengthK) );
+		System.out.println();
+		
 		System.out.println("Printing out Hankel");
 		Matrix H = new Matrix(hankel);
 		H.print(5, 5);
-		SequenceOfSymbols.getRawSequencesRowVector(prefixes);
-		SequenceOfSymbols.getRawSequencesRowVector(suffixes);
+		System.out.println("Prefixes");
+		int[] prefArray = SequenceOfSymbols.getRawSequencesRowVector(prefixes);
+		System.out.println("Number of prefixes: " + Integer.toString(prefArray.length));
+		System.out.println(	Arrays.toString( prefArray )) ;
+		System.out.println();
+		System.out.println("Suffixes");
+		int[] suffArray = SequenceOfSymbols.getRawSequencesRowVector(suffixes) ;
+		System.out.println("Number of suffixes: " + Integer.toString(suffArray.length));
+		System.out.println(	Arrays.toString( suffArray )) ;
+		System.out.println();
 		
 		return H;
 	}
