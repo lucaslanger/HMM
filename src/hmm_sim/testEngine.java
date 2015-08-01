@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 public class testEngine{
 	
@@ -199,6 +200,19 @@ public class testEngine{
 		this.compareQueryErrors(fixedModelSizeEngine);
 		
 	}
+	
+	public void plotSingularValues(int numberOfValues){
+		Matrix s = this.trueModel.getSvd().getS();
+		
+		double[][] yaxis = new double[1][numberOfValues];
+		double[][] xaxis = new double[1][numberOfValues];
+		for (int i = 0; i < numberOfValues; i++) {
+			xaxis[0][i] = i;
+			yaxis[0][i] = s.get(i,i);
+		}
+		OutputData.outputData(pltFolder + "SingularValues", "X:ModelSize Y:ith singular value","", xaxis, yaxis);
+	}
+	
 	
 	public void modelSizeEffectOverBaseImprovement(int fixedDataSize){
 		QueryEngine[][] fixedDataSizeModelEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];

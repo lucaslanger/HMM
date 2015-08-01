@@ -46,7 +46,6 @@ public abstract class HankelSVDModelParent implements Serializable{
 
 	
 	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
-		boolean debug = false;
 		
 		SingularValueDecomposition svdLocal = H.svd();
 	    Matrix U = svdLocal.getU();
@@ -96,7 +95,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	    r.put("VT", VTtrunc);
 	    r.put("S", Strunc);
 	    
-	    
+	    boolean debug = false;
 	    if (debug) {
 	    	System.out.println("Before trunc");
 	    	System.out.print("Size");

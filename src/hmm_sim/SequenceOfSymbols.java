@@ -59,6 +59,13 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		SequenceOfSymbols firstStreakOfS2 = s2.getFirstStreak();
 		String firstsymbol = lastStreakOfS1.getSymbolFromString();
 		String secondsymbol = firstStreakOfS2.getSymbolFromString();
+		
+		System.out.println(s1);
+		System.out.println(s2);
+		System.out.println(lastStreakOfS1);
+		System.out.println(firstStreakOfS2);
+		System.out.println(firstsymbol);
+		System.out.println(secondsymbol);
 		if (firstsymbol.equals(secondsymbol) ){
 			int newStreak = firstStreakOfS2.getStreakFromString() + lastStreakOfS1.getStreakFromString();
 			
@@ -134,12 +141,13 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		LinkedList<SequenceOfSymbols> L = new LinkedList<SequenceOfSymbols>();
 		while(t.getSequence().equals("") == false){
 			L.add(t);
+	
 			SequenceOfSymbols firstStreak = t.getFirstStreak();
 			int streak = firstStreak.getStreakFromString();
 			String symbol = firstStreak.getSymbolFromString();
 			if (streak > 1){
 				if (t.rawStringLength() > firstStreak.rawStringLength()){ 
-					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + "," + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
+					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
 				}
 				else{
 					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1));
