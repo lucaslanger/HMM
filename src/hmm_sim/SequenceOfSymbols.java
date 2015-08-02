@@ -298,6 +298,18 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		}		
 		return t;
 	}
+	
+	@Override
+	public boolean equals(Object o){
+		//System.out.println("Comparing");
+		SequenceOfSymbols s = (SequenceOfSymbols) o;
+		if (s.getSequence().equals( this.getSequence() )){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 
 }

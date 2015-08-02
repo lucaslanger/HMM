@@ -42,7 +42,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		
 		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
-		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 5);
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 6);
 		for (String sa : samples) {
 			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa) ));
 		}
@@ -79,6 +79,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols( ""), true );
 		System.out.println("Printing Hlambda");
 		Hlambda.print(5, 5);
+		
+		System.out.println("Rank");
+		System.out.println(Hlambda.rank());
 		this.svdOfH =  new SingularValueDecomposition(Hlambda);
 	
 	}
@@ -255,14 +258,15 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
-		HashMap<String, Matrix> XSigmas = new HashMap<String, Matrix>();
+		HashMap<SequenceOfSymbols, Matrix> XSigmas = new HashMap<SequenceOfSymbols, Matrix>();
 	
 		for (int i = 1; i <= this.numDimensions; i++) {
 			String iString = Integer.toString(i) + ":" + "1";
+			SequenceOfSymbols seq = new SequenceOfSymbols(iString);
 			
-			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, new SequenceOfSymbols( iString ), false );
+			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, seq, false );
 			Matrix Ax = pinv.times(Hx).times(sinv);
-			XSigmas.put(iString, Ax);
+			XSigmas.put(seq, Ax);
 		}
 		
 		int widthOfH = H.getArrayCopy()[0].length;

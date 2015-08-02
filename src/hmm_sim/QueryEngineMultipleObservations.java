@@ -11,7 +11,7 @@ public class QueryEngineMultipleObservations {
 		
 	private Matrix a0;
 	private Matrix ainf;
-	private HashMap<String, Matrix> Asigmas;
+	private HashMap<SequenceOfSymbols, Matrix> Asigmas;
 	private int maxExponent;
 	private int maxPower;
 	
@@ -23,7 +23,7 @@ public class QueryEngineMultipleObservations {
 	private HashMap<String, Matrix> truncatedSVD;
 	private SingularValueDecomposition originalSVD;
 	
-	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<String, Matrix> Asigmas, int base){
+	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
@@ -31,7 +31,7 @@ public class QueryEngineMultipleObservations {
 		this.debug = false;
 	}
 	
-	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<String, Matrix> Asigmas, int base, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
+	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
@@ -51,7 +51,7 @@ public class QueryEngineMultipleObservations {
 		return ainf;
 	}
 
-	public HashMap<String, Matrix> getAsigmas() {
+	public HashMap<SequenceOfSymbols, Matrix> getAsigmas() {
 		return Asigmas;
 	}
 
@@ -124,10 +124,17 @@ public class QueryEngineMultipleObservations {
 			SequenceOfSymbols nextstreak = sequence.getFirstStreak();
 			int power = nextstreak.getStreakFromString();
 			String symbol = nextstreak.getSymbolFromString();
+		
+			SequenceOfSymbols s = new SequenceOfSymbols( symbol + ":1"  );
 			for (int i = 0; i < power; i++) {
-				r = r.times( Asigmas.get(symbol) );
+				r = r.times( Asigmas.get(s) );
 			}
-			sequence = sequence.substring(nextstreak.rawStringLength(), sequence.rawStringLength()); //+1 may be needed to get rid of comma
+			if (sequence.rawStringLength() > nextstreak.rawStringLength()){
+				sequence = sequence.substring(nextstreak.rawStringLength()+1, sequence.rawStringLength());
+			}
+			else{
+				sequence = new SequenceOfSymbols("");
+			}
 		}
 		
 		assert(Math.abs(r.times(ainf).get(0, 0)) == r.norm1() );
