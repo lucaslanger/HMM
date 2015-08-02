@@ -42,7 +42,10 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		
 		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
-		h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 5);
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 5);
+		for (String sa : samples) {
+			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa) ));
+		}
 	}
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
@@ -74,8 +77,10 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		 */
 		
 		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols( ""), true );
-		
+		System.out.println("Printing Hlambda");
+		Hlambda.print(5, 5);
 		this.svdOfH =  new SingularValueDecomposition(Hlambda);
+	
 	}
 	
 	private SymbolCounts getPrefixes(Iterable<SymbolCountPair> spp){
@@ -195,6 +200,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			System.out.println();
 		}
 		Matrix H = new Matrix(hankel);
+		
+		System.out.println("Hankel Matrix:");
+		System.out.println("Subscript " + X.getSequence());
 		H.print(5, 5);
 		return H;
 	}
@@ -249,8 +257,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		HashMap<String, Matrix> XSigmas = new HashMap<String, Matrix>();
 	
-		for (int i = 1; i < this.numDimensions; i++) {
-			String iString = Integer.toString(i);
+		for (int i = 1; i <= this.numDimensions; i++) {
+			String iString = Integer.toString(i) + ":" + "1";
+			
 			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, new SequenceOfSymbols( iString ), false );
 			Matrix Ax = pinv.times(Hx).times(sinv);
 			XSigmas.put(iString, Ax);
@@ -280,7 +289,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		//If Debugging Wanted
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
-
+		
 		return q;
 	}
 

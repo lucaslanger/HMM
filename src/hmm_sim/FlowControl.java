@@ -35,7 +35,7 @@ public class FlowControl {
 		int fixedModelSize = 50;
 		int keyLocation = 10;
 		
-		int[] modelSizes = new int[]{35, 40, 60, 80, 100};
+		int[] modelSizes = new int[]{27,28,29,30,31,32,33,34,35, 40, 60, 80, 100};
 		
 		// INTERESTING JUMPS: int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
 
@@ -56,8 +56,8 @@ public class FlowControl {
 		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
-		//a.modelSizeEffectOverBaseImprovement(dataSizeForFixedPlots);
-		a.plotSingularValues(100);
+		a.modelSizeEffectOverBaseImprovement(dataSizeForFixedPlots);
+		//a.plotSingularValues(100);
 		//a.makePlots();
 	}
 	

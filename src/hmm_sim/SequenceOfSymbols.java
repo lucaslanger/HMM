@@ -10,7 +10,28 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 	private String sequence;
 	
 	public SequenceOfSymbols(String s){
+		checkSyntaxValidity(s);
 		this.sequence = s;
+	}
+	
+	private void checkSyntaxValidity(String s){
+		if (s.equals("")){}
+		else{
+			try{
+				String[] streaks = s.split(",");
+				for (String string : streaks) {
+					String [] sa = string.split(":");
+					int symbol = Integer.parseInt(sa[0]);
+					int streak = Integer.parseInt(sa[1]);
+				}
+			}
+			catch(Exception e){
+				System.out.println("Not a valid string to make a sequence out of");
+				e.printStackTrace();
+				System.out.println(s);
+				System.out.println();
+			}
+		}
 	}
 	
 	//Should be safe since strings are immutable
@@ -60,20 +81,28 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		String firstsymbol = lastStreakOfS1.getSymbolFromString();
 		String secondsymbol = firstStreakOfS2.getSymbolFromString();
 		
-		System.out.println(s1);
+		/*System.out.println(s1);
 		System.out.println(s2);
 		System.out.println(lastStreakOfS1);
 		System.out.println(firstStreakOfS2);
 		System.out.println(firstsymbol);
 		System.out.println(secondsymbol);
+		*/
 		if (firstsymbol.equals(secondsymbol) ){
 			int newStreak = firstStreakOfS2.getStreakFromString() + lastStreakOfS1.getStreakFromString();
-			
 			String mid = firstsymbol + ":" + Integer.toString(newStreak);
 			
-			String returnString =  s1.substring(0, s1.rawStringLength() - lastStreakOfS1.rawStringLength()) + mid + s2.substring(firstStreakOfS2.rawStringLength(), s2.rawStringLength());
-			SequenceOfSymbols s = new SequenceOfSymbols(returnString);
-			return s;
+			if (s2.rawStringLength() > firstStreakOfS2.rawStringLength()){
+				String returnString =  s1.substring(0, s1.rawStringLength() - lastStreakOfS1.rawStringLength()) + mid +  "," + s2.substring(firstStreakOfS2.rawStringLength() + 1, s2.rawStringLength());
+				SequenceOfSymbols s = new SequenceOfSymbols(returnString);
+				return s;
+			}
+			
+			else{
+				String returnString =  s1.substring(0, s1.rawStringLength() - lastStreakOfS1.rawStringLength()) + mid;
+				SequenceOfSymbols s = new SequenceOfSymbols(returnString);
+				return s;
+			}
 		}
 		else{
 			if(s2.getSequence() != ""){
@@ -107,6 +136,7 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		for (int i = 0; i < this.sequence.length(); i++) {
 			char c = this.sequence.charAt(i);
 			if (c == ':'){
+				Integer.parseInt(streak);
 				return streak;
 			}
 			else{
@@ -145,20 +175,27 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			SequenceOfSymbols firstStreak = t.getFirstStreak();
 			int streak = firstStreak.getStreakFromString();
 			String symbol = firstStreak.getSymbolFromString();
+
+			String n;
 			if (streak > 1){
+				
 				if (t.rawStringLength() > firstStreak.rawStringLength()){ 
-					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1)  + t.substring(firstStreak.rawStringLength(), t.rawStringLength() ).getSequence() );
+					n = symbol + ":" + Integer.toString(streak-1) + "," + t.substring(firstStreak.rawStringLength()+1, t.rawStringLength() ).getSequence();
+					t = new SequenceOfSymbols( n );
 				}
 				else{
-					t = new SequenceOfSymbols( symbol + ":" + Integer.toString(streak-1));
+					n = symbol + ":" + Integer.toString(streak-1);
+					t = new SequenceOfSymbols( n );
 				}
 			}
 			else{
 				if (t.rawStringLength() > firstStreak.rawStringLength() ){	//Delete comma
-					t = new SequenceOfSymbols(t.substring(firstStreak.rawStringLength()+1, t.rawStringLength()).getSequence() );
+					n = t.substring(firstStreak.rawStringLength()+1, t.rawStringLength()).getSequence();
+					t = new SequenceOfSymbols( n );
 				}
 				else{
-					t = new SequenceOfSymbols(t.substring(firstStreak.rawStringLength(), t.rawStringLength()).getSequence() );
+					n = t.substring(firstStreak.rawStringLength(), t.rawStringLength()).getSequence();
+					t = new SequenceOfSymbols( n );
 					}
 				}
 		}
