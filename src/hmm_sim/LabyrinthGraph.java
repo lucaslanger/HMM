@@ -193,6 +193,49 @@ public class LabyrinthGraph extends Environment{
 		 return l;
 	}
 	
+	public static void multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize, boolean verbose){
+		int[][] graph = new int[][]{
+				{1,2},
+				{0},
+				{0}
+		};
+		
+		int[][] edges = new int[][]{
+				{6,10},
+				{6},
+				{9}
+		};
+		
+		double[][] transitions = new double[][]{
+				{0.5,0.5},
+				{1},
+				{1}
+		};
+		
+		double[] prior = new double[]{1,0,0};
+		
+		LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, 1, 1, verbose);
+		
+		l.generateMultipleObservationSequence();
+	}
+	
+	private void generateMultipleObservationSequence(int startingLocation , int maxLength) {
+		SequenceOfSymbols s = new SequenceOfSymbols("");
+		Random r = new Random();
+		int trajLength = r.nextInt(maxLength);
+		int lengthTravelled = 0;
+		
+		int currentLocation = startingLocation;
+		while(lengthTravelled < trajLength){
+			double[] nextStates = this.transitions[currentLocation];
+			int nextState = getNextState(r, nextStates);
+			int travelled = this.edges[currentLocation][nextState];
+			String a = Integer.toString(nextState) + ":" + Integer.toString(travelled);
+			s = SequenceOfSymbols.concatenate(s, new SequenceOfSymbols(a));
+		}
+		
+	}
+
 	private static double[] equalVector(int length) {
 		double[] d = new double[length];
 		for (int i = 0; i < d.length; i++) {

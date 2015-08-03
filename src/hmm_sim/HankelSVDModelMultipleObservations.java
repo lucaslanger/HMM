@@ -119,8 +119,25 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		System.out.println();
 		*/
 		
+		scReturn = verifyPrefixCompleteness(scReturn);
+
 		return scReturn;
 		
+	}
+
+	private SymbolCounts verifyPrefixCompleteness(SymbolCounts scReturn) {
+		for (SequenceOfSymbols sp: scReturn.getSymbolToFrequency().keySet()) {
+			for (SequenceOfSymbols s : sp.getSuffixesOfSequence()) {
+				if( scReturn.getSymbolToFrequency().containsKey( s ) == false ){
+					System.out.println("Prefix incomplete");
+					System.out.println("In: " + sp.toString());
+					System.out.println("Missing: " + s.toString());
+					System.out.println();
+					scReturn.insertKeyTreatAsHashSet(s);
+				}
+			}
+		}
+		return scReturn;
 	}
 
 	private SymbolCounts getSuffixes(SymbolCounts prefixes){
