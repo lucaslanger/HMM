@@ -25,18 +25,38 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	private int numDimensions;
 	private int basisSize;
 	private SingularValueDecomposition svdOfH;
+	private int rank;
+	
+	public int getRank(){
+		return this.rank;
+	}
 	
 	public static void main(String[] args){
+		//HankelSVDModelMultipleObservations.initialtest();
 		HankelSVDModelMultipleObservations.doubleLoopTest();
 	}
 		
 	public static void doubleLoopTest(){
 		String workingFolder = "DoubleLoopMO";
-		int desiredHankelSize = 100;
+		int desiredHankelSize = 10;
 
 		SequenceOfSymbols[] seqs = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize);
 		SequenceOfSymbols.printArray(seqs);
-		makeEngineFromSamples(seqs);
+		
+		int numDimensions = 2;
+		int basisSize = 25;
+		int base = 2; 
+		int modelSize = 31;
+		QueryEngineMultipleObservations q = makeEngineFromSamples(seqs, numDimensions, basisSize, base, modelSize);
+		
+		String[] tests = new String[]{"1:1", "2:1", "1:20"};
+		for (String string : tests) {
+			SequenceOfSymbols seq = new SequenceOfSymbols(string);
+			System.out.println("Query");
+			System.out.println(seq);
+			System.out.println(q.probabilityQuery(seq));
+			System.out.println();
+		}
 	}
 	
 	public static void initialtest(){
@@ -50,23 +70,32 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			l.add(sc);
 		}
 		
-		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
-		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 31);
+		int numDimensions = 2;
+		int basisSize = 15;
+		
+		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 6);
 		for (String sa : samples) {
 			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa) ));
 		}
 	}
 	
-	public static void makeEngineFromSamples(SequenceOfSymbols[] seqs){
+	public static QueryEngineMultipleObservations makeEngineFromSamples(SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int modelSize){
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
 		for (SequenceOfSymbols s : seqs) {
 			SymbolCountPair sc = new SymbolCountPair(1, s);
 			l.add(sc);
 		}
 		
-		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
-		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 6);
+		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
 		
+		if (h.getRank() < modelSize){
+			modelSize = h.getRank();
+			System.out.println("Truncation downgraded to trueModel size, too big a model!");
+		}
+		
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, modelSize);
+		return a;
 	}
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
@@ -85,24 +114,15 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		this.prefixes = prefixes;
 		this.suffixes = suffixes;
 		
-		/*
-		System.out.println("FullData");
-		System.out.println(fullData);
-		System.out.println();
-		
-		System.out.println("Prefixes");
-		System.out.println(prefixes.incrKeySet());
-		System.out.println("Suffixes");
-		System.out.println(suffixes.incrKeySet());
-		System.out.println();
-		 */
-		
-		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), false );
-		System.out.println("Printing Hlambda");
+		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), true );
+		this.rank = Hlambda.rank();
+
 		Hlambda.print(5, 5);
-		
+		System.out.println("Add in a direct hashmap for Hlambda to debug it!");
+		System.out.println();
 		System.out.println("Rank");
-		System.out.println(Hlambda.rank());
+		System.out.println(this.getRank());
+		System.out.println();
 		this.svdOfH =  new SingularValueDecomposition(Hlambda);
 	
 	}
@@ -230,26 +250,31 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		if (printOuts){
 			System.out.println("Verifying that F computes probabilities in the right way:");
+			System.out.println();
+			System.out.println("Occurances");
 			System.out.println( Arrays.toString(freqCounter) );
+			System.out.println("Coverage:");
 			System.out.println( Arrays.toString(sumOfSymbolLengthK) );
 			System.out.println();
 			
 			System.out.println("Printing out Hankel");
 			
+			System.out.println("Number of prefixes: " + Integer.toString(prefixes.getSymbolToFrequency().keySet().size()));
+			System.out.println("Number of suffixes: " + Integer.toString(suffixes.getSymbolToFrequency().keySet().size()));
+			System.out.println();
 			try{
 				System.out.println("Prefixes");
 				int[] prefArray = SequenceOfSymbols.getRawSequencesRowVector(prefixes);
-				System.out.println("Number of prefixes: " + Integer.toString(prefArray.length));
 				System.out.println(	Arrays.toString( prefArray )) ;
 				System.out.println();
 				System.out.println("Suffixes");
 				int[] suffArray = SequenceOfSymbols.getRawSequencesRowVector(suffixes) ;
-				System.out.println("Number of suffixes: " + Integer.toString(suffArray.length));
 				System.out.println(	Arrays.toString( suffArray )) ;
 				System.out.println();
 			}
 			catch(NumberFormatException e){
 				System.out.println("Streaks too long to be printed out");
+				System.out.println();
 			}
 			
 		}
@@ -269,21 +294,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			freqCounter[d.sequenceLength()] += dataCounts.getSymbolToFrequency().get(d);
 		}
 			
-		/* Only including coverage of prefixes and suffixes. NA for borjas algorithm 
-		HashSet<SequenceOfSymbols> seenSequences = new HashSet<SequenceOfSymbols>();
-		for (SequenceOfSymbols prefkey: prefixes.incrKeySet() ){
-			for(SequenceOfSymbols suffkey: suffixes.incrKeySet() ){
-				SequenceOfSymbols s = SequenceOfSymbols.concatenate(prefkey, suffkey);
-				if (seenSequences.contains(s) == false && dataCounts.getSymbolToFrequency().containsKey(s)){
-					System.out.println(s);
-					seenSequences.add(s);
-					for (int i = 0 ; i <= s.sequenceLength(); i++) {
-						freqCounter[i] ++;
-					}
-				}
-			}
-		}
-		*/
 		return freqCounter;
 	}
 	
@@ -301,6 +311,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	public QueryEngineMultipleObservations buildHankelBasedModelMultipleObservations(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes, int base, int modelSize){
 
+		System.out.println("Chosen model Size: " + modelSize + "\n");
+
 		Matrix H = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, new SequenceOfSymbols(""), false);
 				
 		HashMap<String, Matrix> truncatedSVD = super.truncateSVD(H , modelSize);
@@ -308,6 +320,14 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		
+		System.out.println("Double check this computation!");
+		pinv = extendMatrixWithZeroes(pinv.transpose(), H.getArrayCopy().length ).transpose();
+		sinv = extendMatrixWithZeroes(sinv, H.getArrayCopy()[0].length );
+		
+		printMatrixDimensions(H, "hankel");
+		printMatrixDimensions(pinv, "pinv");
+		printMatrixDimensions(sinv, "sinv");
 		
 		HashMap<SequenceOfSymbols, Matrix> XSigmas = new HashMap<SequenceOfSymbols, Matrix>();
 	
@@ -346,6 +366,33 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 		
 		return q;
+	}
+	
+	private Matrix extendMatrixWithZeroes(Matrix m, int extendTo) {
+		assert extendTo >= m.getArrayCopy().length;
+		
+		double[][] n = new double[extendTo][m.getArrayCopy()[0].length];
+		for (int i = 0; i < n.length; i++) {
+			if (i < m.getArrayCopy().length){
+				for (int j = 0; j < n[i].length; j++) {
+					n[i][j] = m.get(i, j);
+				}
+			}
+			else{
+				for (int j = 0; j < n[i].length; j++) {
+					n[i][j] = 0;
+				}
+			}
+		}
+		Matrix N = new Matrix(n);
+		return N;
+	}
+
+	private static void printMatrixDimensions(Matrix h, String id){
+		//System.out.println("Number of columns: " + h.getArrayCopy()[0].length);
+		//System.out.println("Number of rows: " + h.getArrayCopy().length);
+		System.out.println( "Dimensions of: " + id + " " + h.getArrayCopy().length + "x" + h.getArrayCopy()[0].length);
+		System.out.println();
 	}
 
 	public synchronized void writeObject(java.io.ObjectOutputStream stream){}

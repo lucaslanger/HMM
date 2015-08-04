@@ -202,9 +202,9 @@ public class LabyrinthGraph extends Environment{
 		};
 		
 		int[][] edges = new int[][]{
-				{6,10},
-				{6},
-				{9}
+				{1,2},
+				{1},
+				{2}
 		};
 		
 		double[][] transitions = new double[][]{

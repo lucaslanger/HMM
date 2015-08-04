@@ -45,22 +45,43 @@ public abstract class HankelSVDModelParent implements Serializable{
 	}
 
 	public static HashMap<String, Matrix> takeSVD(Matrix H){
+		printMatrixDimensions(H, "Hankel");
+		
 		HashMap<String, Matrix> s = new HashMap<String, Matrix>();
 		if (H.getArrayCopy().length < H.getArrayCopy()[0].length){
 			SingularValueDecomposition svd = new SingularValueDecomposition(H.transpose());
-			s.put("S", svd.getS().transpose());
-			s.put("U", svd.getU().transpose());
-			s.put("VT", svd.getV());
 			
-			s.get("U").times(s.get("S")).times(s.get("VT") );
+			System.out.println("Careful with assignments below, make sure they are correct!");
+			System.out.println();
+			s.put("S", svd.getS().transpose());
+			s.put("U", svd.getV().transpose());
+			s.put("VT", svd.getU().transpose());
+			
+			printMatrixDimensions(s.get("U"), "U");
+			printMatrixDimensions(s.get("S"), "S");
+			printMatrixDimensions(s.get("VT"), "VT");
+
+			Matrix t = s.get("U").times(s.get("S"));
+			t.times(s.get("VT") );
 		}
 		else{
 			SingularValueDecomposition svd = new SingularValueDecomposition(H);
 			s.put("S", svd.getS());
 			s.put("U", svd.getU());
 			s.put("VT", svd.getV().transpose());
+			
+			printMatrixDimensions(s.get("U"), "U");
+			printMatrixDimensions(s.get("S"), "S");
+			printMatrixDimensions(s.get("VT"), "VT");
 		}
 		return s;
+	}
+	
+	private static void printMatrixDimensions(Matrix h, String id){
+		//System.out.println("Number of columns: " + h.getArrayCopy()[0].length);
+		//System.out.println("Number of rows: " + h.getArrayCopy().length);
+		System.out.println( "Dimensions of: " + id + " " + h.getArrayCopy().length + "x" + h.getArrayCopy()[0].length);
+		System.out.println();
 	}
 	
 	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
