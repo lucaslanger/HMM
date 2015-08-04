@@ -44,13 +44,32 @@ public abstract class HankelSVDModelParent implements Serializable{
 		return this.svdOfH.getU().times(this.svdOfH.getS()).times(this.svdOfH.getV().transpose());
 	}
 
+	public static HashMap<String, Matrix> takeSVD(Matrix H){
+		HashMap<String, Matrix> s = new HashMap<String, Matrix>();
+		if (H.getArrayCopy().length < H.getArrayCopy()[0].length){
+			SingularValueDecomposition svd = new SingularValueDecomposition(H.transpose());
+			s.put("S", svd.getS().transpose());
+			s.put("U", svd.getU().transpose());
+			s.put("VT", svd.getV());
+			
+			s.get("U").times(s.get("S")).times(s.get("VT") );
+		}
+		else{
+			SingularValueDecomposition svd = new SingularValueDecomposition(H);
+			s.put("S", svd.getS());
+			s.put("U", svd.getU());
+			s.put("VT", svd.getV().transpose());
+		}
+		return s;
+	}
 	
 	public static HashMap<String, Matrix> truncateSVD(Matrix H, int nStates){
 		
-		SingularValueDecomposition svdLocal = H.svd();
-	    Matrix U = svdLocal.getU();
-	    Matrix S = svdLocal.getS();
-	    Matrix V = svdLocal.getV();
+		HashMap<String, Matrix> svdLocal = takeSVD(H);
+	    Matrix U = svdLocal.get("U");
+	    Matrix V = svdLocal.get("VT").transpose();
+	    Matrix S = svdLocal.get("S");
+	  
 	    
 	    double[][] utemp = U.getArrayCopy();
 	    double[][] utrunc = new double[utemp.length][nStates];

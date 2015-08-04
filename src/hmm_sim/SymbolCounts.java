@@ -13,13 +13,19 @@ public class SymbolCounts {
 	public int getDataCount() {
 		return dataCount;
 	}
+	
+	public int getNumDimensions(){
+		return this.numDimensions;
+	}
 
 	TreeMap<SequenceOfSymbols, Integer> symbolToFrequency;
 	int dataCount;
+	private int numDimensions;
 	
 	public SymbolCounts(int numDimensions){
 		this.symbolToFrequency = new TreeMap<SequenceOfSymbols, Integer>();
 		this.dataCount = 0;
+		this.numDimensions = numDimensions;
 	}
 	
 	public void updateFrequency(SequenceOfSymbols s, int update){

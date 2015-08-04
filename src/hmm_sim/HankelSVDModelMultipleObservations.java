@@ -36,6 +36,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 
 		SequenceOfSymbols[] seqs = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize);
 		SequenceOfSymbols.printArray(seqs);
+		makeEngineFromSamples(seqs);
 	}
 	
 	public static void initialtest(){
@@ -50,10 +51,22 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		
 		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
-		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 6);
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 31);
 		for (String sa : samples) {
 			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa) ));
 		}
+	}
+	
+	public static void makeEngineFromSamples(SequenceOfSymbols[] seqs){
+		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
+		for (SequenceOfSymbols s : seqs) {
+			SymbolCountPair sc = new SymbolCountPair(1, s);
+			l.add(sc);
+		}
+		
+		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, 15, 2);
+		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, 2, 6);
+		
 	}
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
@@ -84,7 +97,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		System.out.println();
 		 */
 		
-		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols( ""), true );
+		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), false );
 		System.out.println("Printing Hlambda");
 		Hlambda.print(5, 5);
 		
@@ -134,18 +147,25 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	}
 
 	private SymbolCounts verifyPrefixCompleteness(SymbolCounts scReturn) {
+		int count = 0;
+		SymbolCounts returnCounts = new SymbolCounts(scReturn.getNumDimensions());
 		for (SequenceOfSymbols sp: scReturn.getSymbolToFrequency().keySet()) {
-			for (SequenceOfSymbols s : sp.getSuffixesOfSequence()) {
-				if( scReturn.getSymbolToFrequency().containsKey( s ) == false ){
-					System.out.println("Prefix incomplete");
+			for (SequenceOfSymbols s : sp.getPrefixesFromSequence()) {
+				if( scReturn.getSymbolToFrequency().containsKey( s ) == false && returnCounts.getSymbolToFrequency().containsKey( s ) == false){
+					/*System.out.println("Prefix incomplete");
 					System.out.println("In: " + sp.toString());
 					System.out.println("Missing: " + s.toString());
-					System.out.println();
-					scReturn.insertKeyTreatAsHashSet(s);
+					System.out.println();*/
+					returnCounts.insertKeyTreatAsHashSet(s);
+					count++;
 				}
 			}
+			returnCounts.insertKeyTreatAsHashSet(sp);
 		}
-		return scReturn;
+		System.out.println("Number of extra prefixes added: " + Integer.toString(count));
+		System.out.println();
+		
+		return returnCounts;
 	}
 
 	private SymbolCounts getSuffixes(SymbolCounts prefixes){
@@ -215,23 +235,29 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			System.out.println();
 			
 			System.out.println("Printing out Hankel");
-		
-			System.out.println("Prefixes");
-			int[] prefArray = SequenceOfSymbols.getRawSequencesRowVector(prefixes);
-			System.out.println("Number of prefixes: " + Integer.toString(prefArray.length));
-			System.out.println(	Arrays.toString( prefArray )) ;
-			System.out.println();
-			System.out.println("Suffixes");
-			int[] suffArray = SequenceOfSymbols.getRawSequencesRowVector(suffixes) ;
-			System.out.println("Number of suffixes: " + Integer.toString(suffArray.length));
-			System.out.println(	Arrays.toString( suffArray )) ;
-			System.out.println();
+			
+			try{
+				System.out.println("Prefixes");
+				int[] prefArray = SequenceOfSymbols.getRawSequencesRowVector(prefixes);
+				System.out.println("Number of prefixes: " + Integer.toString(prefArray.length));
+				System.out.println(	Arrays.toString( prefArray )) ;
+				System.out.println();
+				System.out.println("Suffixes");
+				int[] suffArray = SequenceOfSymbols.getRawSequencesRowVector(suffixes) ;
+				System.out.println("Number of suffixes: " + Integer.toString(suffArray.length));
+				System.out.println(	Arrays.toString( suffArray )) ;
+				System.out.println();
+			}
+			catch(NumberFormatException e){
+				System.out.println("Streaks too long to be printed out");
+			}
+			
 		}
 		Matrix H = new Matrix(hankel);
 		
-		System.out.println("Hankel Matrix:");
+		/*System.out.println("Hankel Matrix:");
 		System.out.println("Subscript " + X.getSequence());
-		H.print(5, 5);
+		H.print(5, 5);	*/
 		return H;
 	}
 	
