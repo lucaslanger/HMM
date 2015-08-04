@@ -1,13 +1,23 @@
 package hmm_sim;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedList;
 
 import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
-public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
+public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Serializable {
 	
 	private String sequence;
+	
+	public SequenceOfSymbols(){
+	}
+	
+	public void initialize(String s){
+		this.sequence = s;
+	}
 	
 	public SequenceOfSymbols(String s){
 		checkSyntaxValidity(s);
@@ -69,10 +79,10 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 	}
 	
 	public static SequenceOfSymbols concatenateSymbols(SequenceOfSymbols s1, SequenceOfSymbols s2){
-		if (s1.getSequence() == ""){
+		if (s1.getSequence().equals( "") ){
 			return s2;
 		}
-		else if (s2.getSequence() == ""){
+		else if (s2.getSequence().equals("")){
 			return s1;
 		}
 		
@@ -80,14 +90,7 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		SequenceOfSymbols firstStreakOfS2 = s2.getFirstStreak();
 		String firstsymbol = lastStreakOfS1.getSymbolFromString();
 		String secondsymbol = firstStreakOfS2.getSymbolFromString();
-		
-		/*System.out.println(s1);
-		System.out.println(s2);
-		System.out.println(lastStreakOfS1);
-		System.out.println(firstStreakOfS2);
-		System.out.println(firstsymbol);
-		System.out.println(secondsymbol);
-		*/
+	
 		if (firstsymbol.equals(secondsymbol) ){
 			int newStreak = firstStreakOfS2.getStreakFromString() + lastStreakOfS1.getStreakFromString();
 			String mid = firstsymbol + ":" + Integer.toString(newStreak);
@@ -101,16 +104,12 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			else{
 				String returnString =  s1.substring(0, s1.rawStringLength() - lastStreakOfS1.rawStringLength()) + mid;
 				SequenceOfSymbols s = new SequenceOfSymbols(returnString);
+
 				return s;
 			}
 		}
 		else{
-			if(s2.getSequence() != ""){
-				return new SequenceOfSymbols(s1.getSequence() + "," + s2.getSequence());
-			}
-			else{
-				return s1;
-			}
+			return new SequenceOfSymbols( s1.getSequence() + ","  + s2.getSequence() );
 		}
 	}
 	
@@ -244,10 +243,6 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 		return sequence.length();
 	}
 	
-	public static SequenceOfSymbols concatenate(SequenceOfSymbols s1, SequenceOfSymbols s2){
-		return s2;
-	}
-	
 	public int hashCode(){
 		return sequence.hashCode();
 	}
@@ -310,6 +305,24 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols> {
 			return false;
 		}
 	}
+	
+	private synchronized void writeObject(java.io.ObjectOutputStream stream) throws java.io.IOException{
+		stream.writeObject(this.sequence);
+
+	}
+	
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException{
+		String sequence = (String) in.readObject();
+		this.initialize(sequence);
+	}
+
+	public static void printArray(SequenceOfSymbols[] seqs) {
+		for (SequenceOfSymbols sequenceOfSymbols : seqs) {
+			System.out.print(sequenceOfSymbols.toString() + ", ");
+		}
+		System.out.println();
+	}
+	
 
 
 }

@@ -1,6 +1,7 @@
 package hmm_sim;
 
 import java.awt.AlphaComposite;
+import java.awt.image.SampleModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -193,7 +194,7 @@ public class LabyrinthGraph extends Environment{
 		 return l;
 	}
 	
-	public static void multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize, boolean verbose){
+	public static SequenceOfSymbols[] multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize){
 		int[][] graph = new int[][]{
 				{1,2},
 				{0},
@@ -212,29 +213,55 @@ public class LabyrinthGraph extends Environment{
 				{1}
 		};
 		
+		int[][] wallColors = new int[][]{
+				{1,2},
+				{1},
+				{2}
+		};
+		
 		double[] prior = new double[]{1,0,0};
 		
-		LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, 1, 1, verbose);
+		LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, 1, 1, false);
 		
-		l.generateMultipleObservationSequence();
+		int numberOfTrajectories = 100;
+		SequenceOfSymbols[] seqs = l.generateSequencesMO(wallColors, numberOfTrajectories, desiredHankelSize, 0);
+		return seqs;
 	}
 	
-	private void generateMultipleObservationSequence(int startingLocation , int maxLength) {
+	public SequenceOfSymbols[] generateSequencesMO(int[][] wallColors, int numberOfTrajectories, int maxLength, int startingLocation){
+		SequenceOfSymbols[] seqs = new SequenceOfSymbols[numberOfTrajectories];
+		for (int i = 0; i < numberOfTrajectories; i++) {
+			seqs[i] = generateMultipleObservationSequence( wallColors, startingLocation, maxLength);
+		}
+		return seqs;
+	}
+	
+	private SequenceOfSymbols generateMultipleObservationSequence(int[][] wallColors, int startingLocation , int maxLength) {
 		SequenceOfSymbols s = new SequenceOfSymbols("");
 		Random r = new Random();
 		int trajLength = r.nextInt(maxLength);
 		int lengthTravelled = 0;
 		
-		int currentLocation = startingLocation;
+		int currentState = startingLocation;
 		while(lengthTravelled < trajLength){
-			double[] nextStates = this.transitions[currentLocation];
-			int nextState = getNextState(r, nextStates);
-			int travelled = this.edges[currentLocation][nextState];
-			String a = Integer.toString(nextState) + ":" + Integer.toString(travelled);
-			s = SequenceOfSymbols.concatenate(s, new SequenceOfSymbols(a));
+			double[] nextStates = this.transitions[currentState];
+			int nextStateIndex = sampleState( nextStates, r.nextDouble());
+			int nextState = graph[currentState][nextStateIndex];
+			int travelled = this.edges[currentState][nextStateIndex];
+			int wallColor = wallColors[currentState][nextStateIndex];
+			
+			String a = Integer.toString(wallColor) + ":" + Integer.toString(travelled);
+			SequenceOfSymbols seq = new SequenceOfSymbols(a);
+			
+			s = SequenceOfSymbols.concatenateSymbols(s, seq);
+			
+			lengthTravelled += travelled;
+			currentState = nextState;
 		}
+		return s;
 		
 	}
+
 
 	private static double[] equalVector(int length) {
 		double[] d = new double[length];
@@ -475,11 +502,11 @@ public class LabyrinthGraph extends Environment{
 
 	private int sampleDistance(int[] shortestPaths, int r, Random random, double[] initialStates) {
 		while(true){
-			int state = sampleState(initialStates, random);
+			int state = sampleState(initialStates, random.nextDouble());
 			//System.out.println("Initial State is: " + Integer.toString(state));
 			int d = r;
 			while(true){
-				int desiredNextStateIndex = sampleState(transitions[state], random);
+				int desiredNextStateIndex = sampleState(transitions[state], random.nextDouble());
 				if (desiredNextStateIndex == 0 && graph[state][0] == 0){
 					break;
 				}
@@ -494,9 +521,8 @@ public class LabyrinthGraph extends Environment{
 		}
 	}
 	
-	public int sampleState(double[] d, Random random){
-		double[] c = super.cumulativeSum(d);
-		double r = random.nextDouble();
+	public static int sampleState(double[] a, double r){
+		double[] c = cumulativeSum(a);
 		
 		int index = Arrays.binarySearch(c, r);
 		if (index < 0 ){

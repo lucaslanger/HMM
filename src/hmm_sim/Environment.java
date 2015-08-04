@@ -63,7 +63,7 @@ public abstract class Environment {
 		
 	}
 	
-	public double[] cumulativeSum( double[] d){
+	public static double[] cumulativeSum( double[] d){
 		double[] r = new double[d.length];
 		r[0] = d[0];
 		for (int i = 1; i < r.length; i++) {

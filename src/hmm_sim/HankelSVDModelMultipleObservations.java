@@ -27,10 +27,18 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	private SingularValueDecomposition svdOfH;
 	
 	public static void main(String[] args){
-		HankelSVDModelMultipleObservations.test();
+		HankelSVDModelMultipleObservations.doubleLoopTest();
 	}
 		
-	public static void test(){
+	public static void doubleLoopTest(){
+		String workingFolder = "DoubleLoopMO";
+		int desiredHankelSize = 100;
+
+		SequenceOfSymbols[] seqs = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize);
+		SequenceOfSymbols.printArray(seqs);
+	}
+	
+	public static void initialtest(){
 		//String[] samples = {"1:2" , "2:1,1:1"};
 		String[] samples = {"1:1","1:1,2:1","1:2,2:1","1:1,2:1,1:1", "2:1,1:2"};
 		LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
