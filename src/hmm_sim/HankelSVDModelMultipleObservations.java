@@ -41,7 +41,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int desiredHankelSize = 10;
 
 		SequenceOfSymbols[] seqs = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize);
+		System.out.println("Trajectories: ");
 		SequenceOfSymbols.printArray(seqs);
+		System.out.println();
 		
 		int numDimensions = 2;
 		int basisSize = 25;
@@ -107,7 +109,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				this.fullData.updateFrequency(seq, 1);									//Count all prefixes as having appeared
 			}
 		}
-
 		
 		SymbolCounts prefixes = getPrefixes(scp);
 		SymbolCounts suffixes = getSuffixes(prefixes);
@@ -134,20 +135,32 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			SequenceOfSymbols s = symbolCountPair.getSequence();
 			LinkedList<SequenceOfSymbols> prefixesFromSymbol = s.getPrefixesFromSequence();
 			for (SequenceOfSymbols seq: prefixesFromSymbol) {
-				preFixes.insertKeyTreatAsHashSet(seq); 
+				preFixes.updateFrequency(seq, 1);  
 			}
 		}
 		
+		PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
+		for (SequenceOfSymbols sequenceOfSymbols : preFixes.incrKeySet()) {
+			SymbolCountPair scp = new SymbolCountPair(-1*preFixes.getSymbolToFrequency().get(sequenceOfSymbols), sequenceOfSymbols);
+			pq.add( scp );
+		}
+		
 		SymbolCounts scReturn = new SymbolCounts(this.numDimensions);
-		NavigableSet<SequenceOfSymbols> prefixesSorted = preFixes.incrKeySet();
+		NavigableSet<SequenceOfSymbols> prefixesSorted = preFixes.descKeySet();
 		int i=0;
-		for (SequenceOfSymbols s: prefixesSorted) {
+		
+		System.out.println();
+		System.out.println("Prefix ordering info: ");
+		while(true){
 			
 			if (i >= basisSize){
 				break;
 			}
 			else{
-				scReturn.updateFrequency(s, preFixes.symbolToFrequency.get(s) );
+				SymbolCountPair scp = pq.remove();
+				scReturn.updateFrequency(scp.getSequence(), scp.getCount() );
+				System.out.print(scp.getSequence() + " ");
+				System.out.print(scp.getCount()*-1 + ", ");
 				i++;
 			}
 		}
@@ -187,7 +200,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		return returnCounts;
 	}
-
+	
 	private SymbolCounts getSuffixes(SymbolCounts prefixes){
 		SymbolCounts suffixes = new SymbolCounts(this.numDimensions);
 		for (SequenceOfSymbols prefix : prefixes.incrKeySet() ) {
@@ -249,9 +262,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			pC ++;
 		}
 		if (printOuts){
-			System.out.println("Verifying that F computes probabilities in the right way:");
-			System.out.println();
-			System.out.println("Occurances");
+			System.out.println("Verifying that F computes probabilities in the right way.");
+			System.out.println("Occurances:");
 			System.out.println( Arrays.toString(freqCounter) );
 			System.out.println("Coverage:");
 			System.out.println( Arrays.toString(sumOfSymbolLengthK) );
@@ -321,13 +333,15 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
-		System.out.println("Double check this computation!");
 		pinv = extendMatrixWithZeroes(pinv.transpose(), H.getArrayCopy().length ).transpose();
 		sinv = extendMatrixWithZeroes(sinv, H.getArrayCopy()[0].length );
 		
+		/*System.out.println("Double check this computation!");
+
 		printMatrixDimensions(H, "hankel");
 		printMatrixDimensions(pinv, "pinv");
 		printMatrixDimensions(sinv, "sinv");
+		*/
 		
 		HashMap<SequenceOfSymbols, Matrix> XSigmas = new HashMap<SequenceOfSymbols, Matrix>();
 	

@@ -45,21 +45,22 @@ public abstract class HankelSVDModelParent implements Serializable{
 	}
 
 	public static HashMap<String, Matrix> takeSVD(Matrix H){
-		printMatrixDimensions(H, "Hankel");
+		//printMatrixDimensions(H, "Hankel");
 		
 		HashMap<String, Matrix> s = new HashMap<String, Matrix>();
-		if (H.getArrayCopy().length < H.getArrayCopy()[0].length){
+		if (H.getArrayCopy().length <= H.getArrayCopy()[0].length){
+			System.out.println("Doing tranpose trick! \n");
 			SingularValueDecomposition svd = new SingularValueDecomposition(H.transpose());
 			
-			System.out.println("Careful with assignments below, make sure they are correct!");
-			System.out.println();
+			//System.out.println("Careful with assignments below, make sure they are correct!");
+			//System.out.println();
 			s.put("S", svd.getS().transpose());
-			s.put("U", svd.getV().transpose());
+			s.put("U", svd.getV());
 			s.put("VT", svd.getU().transpose());
 			
-			printMatrixDimensions(s.get("U"), "U");
-			printMatrixDimensions(s.get("S"), "S");
-			printMatrixDimensions(s.get("VT"), "VT");
+			//printMatrixDimensions(s.get("U"), "U");
+			//printMatrixDimensions(s.get("S"), "S");
+			//printMatrixDimensions(s.get("VT"), "VT");
 
 			Matrix t = s.get("U").times(s.get("S"));
 			t.times(s.get("VT") );
@@ -70,9 +71,6 @@ public abstract class HankelSVDModelParent implements Serializable{
 			s.put("U", svd.getU());
 			s.put("VT", svd.getV().transpose());
 			
-			printMatrixDimensions(s.get("U"), "U");
-			printMatrixDimensions(s.get("S"), "S");
-			printMatrixDimensions(s.get("VT"), "VT");
 		}
 		return s;
 	}
@@ -91,7 +89,6 @@ public abstract class HankelSVDModelParent implements Serializable{
 	    Matrix V = svdLocal.get("VT").transpose();
 	    Matrix S = svdLocal.get("S");
 	  
-	    
 	    double[][] utemp = U.getArrayCopy();
 	    double[][] utrunc = new double[utemp.length][nStates];
 	    for (int i = 0; i < utrunc.length; i++) {
