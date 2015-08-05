@@ -278,10 +278,10 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 		return r;
 	}
 	
-	public static int[] getRawSequencesRowVector(SymbolCounts sequences){
-		int[] t = new int[sequences.dataCount];
+	public static int[] getRawSequencesRowVector(SequenceOfSymbols[] sequences){
+		int[] t = new int[sequences.length];
 		int i = 0;
-		for (SequenceOfSymbols s: sequences.incrKeySet()){
+		for (SequenceOfSymbols s: sequences){
 			String rawSeq = s.getRawSequence();
 			if ( rawSeq.equals("") ){
 				t[i] = 0;
