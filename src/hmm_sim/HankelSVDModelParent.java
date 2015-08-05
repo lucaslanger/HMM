@@ -49,21 +49,19 @@ public abstract class HankelSVDModelParent implements Serializable{
 		
 		HashMap<String, Matrix> s = new HashMap<String, Matrix>();
 		if (H.getArrayCopy().length <= H.getArrayCopy()[0].length){
-			System.out.println("Doing tranpose trick! \n");
+			//System.out.println("Doing tranpose trick! \n");
 			SingularValueDecomposition svd = new SingularValueDecomposition(H.transpose());
 			
-			//System.out.println("Careful with assignments below, make sure they are correct!");
-			//System.out.println();
+			System.out.println("Careful with assignments below, make sure they are correct!");
+			System.out.println();
 			s.put("S", svd.getS().transpose());
 			s.put("U", svd.getV());
 			s.put("VT", svd.getU().transpose());
 			
-			//printMatrixDimensions(s.get("U"), "U");
-			//printMatrixDimensions(s.get("S"), "S");
-			//printMatrixDimensions(s.get("VT"), "VT");
-
-			Matrix t = s.get("U").times(s.get("S"));
-			t.times(s.get("VT") );
+			/*printMatrixDimensions(s.get("U"), "U");
+			printMatrixDimensions(s.get("S"), "S");
+			printMatrixDimensions(s.get("VT"), "VT");
+			*/
 		}
 		else{
 			SingularValueDecomposition svd = new SingularValueDecomposition(H);
@@ -86,8 +84,15 @@ public abstract class HankelSVDModelParent implements Serializable{
 		
 		HashMap<String, Matrix> svdLocal = takeSVD(H);
 	    Matrix U = svdLocal.get("U");
-	    Matrix V = svdLocal.get("VT").transpose();
 	    Matrix S = svdLocal.get("S");
+	    Matrix V = svdLocal.get("VT").transpose();
+	    
+	    /*System.out.println("TESTING TRUNCATION");
+	    printMatrixDimensions(H, "H");
+	    printMatrixDimensions(U, "U");
+	    printMatrixDimensions(S, "S");
+	    printMatrixDimensions(V.transpose(), "VT");
+	  	*/
 	  
 	    double[][] utemp = U.getArrayCopy();
 	    double[][] utrunc = new double[utemp.length][nStates];
@@ -109,7 +114,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	    Matrix Strunc = new Matrix(strunc);
 	    
 	    double[][] vtemp = V.getArrayCopy();			//Double check to make sure this isnt going wrong
-	    double[][] vtrunc = new double[utemp.length][nStates];
+	    double[][] vtrunc = new double[vtemp.length][nStates];
 	    for (int i = 0; i < vtrunc.length; i++) {
 	    	for (int j = 0; j < nStates; j++) {
 	    		vtrunc[i][j] = vtemp[i][j];
@@ -129,8 +134,13 @@ public abstract class HankelSVDModelParent implements Serializable{
 	    */
 	    HashMap<String, Matrix> r = new HashMap<String, Matrix>();
 	    r.put("U", Utrunc);
-	    r.put("VT", VTtrunc);
 	    r.put("S", Strunc);
+	    r.put("VT", VTtrunc);
+	    
+	    /*printMatrixDimensions(Utrunc, "Utrunc");
+	    printMatrixDimensions(Strunc, "Strunc");
+	    printMatrixDimensions(VTtrunc, "VTtrunc");
+	    */
 	    
 	    boolean debug = false;
 	    if (debug) {

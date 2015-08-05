@@ -48,7 +48,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int numDimensions = 2;
 		int basisSize = 25;
 		int base = 2; 
-		int modelSize = 31;
+		int modelSize = 10;
 		QueryEngineMultipleObservations q = makeEngineFromSamples(seqs, numDimensions, basisSize, base, modelSize);
 		
 		String[] tests = new String[]{"1:1", "2:1", "1:1,2:1", "1:5"};
@@ -345,10 +345,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
-		pinv = extendMatrixWithZeroes(pinv.transpose(), H.getArrayCopy().length ).transpose();
-		sinv = extendMatrixWithZeroes(sinv, H.getArrayCopy()[0].length );
-		
-		/*System.out.println("Double check this computation!");
+		/*
+		System.out.println("Double check this computation!");
 
 		printMatrixDimensions(H, "hankel");
 		printMatrixDimensions(pinv, "pinv");
