@@ -3,6 +3,7 @@ package hmm_sim;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.PriorityQueue;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -189,18 +190,32 @@ public class QueryEngineMultipleObservations {
 		return r;
 	}
 
-	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery ){
+	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors ){
 		double e = 0;
 				
+		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
+		
 		for (SequenceOfSymbols sequenceOfSymbols : stringsToQuery) {
 			double probQ = this.probabilityQuery(sequenceOfSymbols, false);
 			double realProb =  L.determineRealProbabilityOfSequenceDoubleLoop(sequenceOfSymbols);
 			
-			//double error = Math.pow( probQ - realProb, 2);
-			double error = Math.abs( probQ - realProb);
+			double error = Math.pow( probQ - realProb, 2);
+			//double error = Math.abs( probQ - realProb);
+			pq.add( new SequenceErrorPair(sequenceOfSymbols, -1*error));
 			e += error;
 		}
-		//e = Math.sqrt(e);
+		
+		if (topErrors){
+			for (int i = 0; i < 10; i++) {
+				SequenceErrorPair a = pq.remove();
+				System.out.println( a );
+				System.out.println("Real: " + L.determineRealProbabilityOfSequenceDoubleLoop(a.getSeq()));
+				System.out.println("Computed: " + this.probabilityQuery(a.getSeq(), false));;
+				System.out.println();
+				
+			}
+		}
+		e = Math.sqrt(e);
 		return e;
 	}
 	

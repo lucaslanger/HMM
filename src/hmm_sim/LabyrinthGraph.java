@@ -233,10 +233,14 @@ public class LabyrinthGraph extends Environment{
 		
 		LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, 1, 1, false);
 		HashMap<Integer, Integer> loopLengths = new HashMap<Integer, Integer>();
-		int firstWallLength = wallColors[0][0] + wallColors[1][0];
-		int secondWallLength = wallColors[0][1] + wallColors[2][0];
+		int firstWallLength = edges[0][0] + edges[1][0];
+		int secondWallLength = edges[0][1] + edges[2][0];
 		loopLengths.put(1, firstWallLength);
 		loopLengths.put(2, secondWallLength);
+		
+		System.out.println("Loop Length Values");
+		System.out.println(loopLengths.values());
+		System.out.println();
 		
 		l.loopLengths = loopLengths;
 		
