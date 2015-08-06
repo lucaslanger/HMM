@@ -41,7 +41,7 @@ public class QueryEngineMultipleObservations {
 		
 		this.maxExponent = maxExponent;
 		this.maxPower = (int) Math.pow(base, maxExponent);
-
+		
 		this.debug = false;
 	}
 	
@@ -149,7 +149,7 @@ public class QueryEngineMultipleObservations {
 		}
 	}
 
-	public double probabilityQuery(SequenceOfSymbols sequence){
+	public double probabilityQuery(SequenceOfSymbols sequence, boolean debug){
 		Matrix r = this.a0;
 		while(sequence.getSequence() != ""){
 			
@@ -157,7 +157,7 @@ public class QueryEngineMultipleObservations {
 			int power = nextstreak.getStreakFromString();
 			String symbol = nextstreak.getSymbolFromString();
 		
-			r = processQueryFixedSymbol(r, symbol, power);
+			r = processQueryFixedSymbol(r, symbol, power, debug);
 			
 			if (sequence.rawStringLength() > nextstreak.rawStringLength()){
 				sequence = sequence.substring(nextstreak.rawStringLength()+1, sequence.rawStringLength());
@@ -172,7 +172,7 @@ public class QueryEngineMultipleObservations {
 		
 	}
 	
-	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int power) {
+	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int power, boolean debug) {
 		int currentLimitingPower = this.maxPower;
 		SequenceOfSymbols currentSequence = new SequenceOfSymbols( symbol + ":" + Integer.toString(currentLimitingPower)  );
 
@@ -193,20 +193,26 @@ public class QueryEngineMultipleObservations {
 		double e = 0;
 				
 		for (SequenceOfSymbols sequenceOfSymbols : stringsToQuery) {
-			double probQ = this.probabilityQuery(sequenceOfSymbols);
+			double probQ = this.probabilityQuery(sequenceOfSymbols, false);
 			double realProb =  L.determineRealProbabilityOfSequenceDoubleLoop(sequenceOfSymbols);
 			
 			//double error = Math.pow( probQ - realProb, 2);
 			double error = Math.abs( probQ - realProb);
 			e += error;
 		}
-		System.out.println(e);
 		//e = Math.sqrt(e);
 		return e;
 	}
 	
 	public void verifyProbabilityQueryCorrectness(){
 		System.out.println("Making sure that probability query's are behaving as they are supposed to.");
+		String[] tests = new String[]{"1:15", "2:13", "2:12,1:13"};
+		for (String string : tests) {
+			SequenceOfSymbols seq = new SequenceOfSymbols(string);
+			System.out.println(seq);
+			this.probabilityQuery(seq, true);
+			System.out.println();
+		}
 	}
 	
 		

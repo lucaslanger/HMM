@@ -4,12 +4,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.PriorityQueue;
-import java.util.Set;
 
-import javax.swing.text.StyleContext.SmallAttributeSet;
+import java.util.PriorityQueue;
+
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -40,7 +37,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String workingFolder = "DoubleLoopMO";
 		int desiredHankelSize = 50;
 		int numberOfTrajectories = 10000;
-		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories);
+		int loop1 = 7;
+		int loop2 = 11;
+		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		SequenceOfSymbols[] seqs = L.getData();
 		//System.out.println("Trajectories: ");
 		//SequenceOfSymbols.printArray(seqs);
@@ -62,13 +61,25 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
 		
 		HashSet<SequenceOfSymbols> stq = makeStringsToQuery(h.prefixes, h.suffixes);
-		QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqs, numDimensions, basisSize, base, maxExponent, modelSizes);
+		System.out.println("Number of strings used when computing fhat v.s f: " + stq.size() + "\n");
 		
-		System.out.println("Evaluating Models");
-		for (int i = 0; i < qs.length; i++) {
-			System.out.print("Max power: " + Math.pow(base, i) +", ");
-			System.out.println(qs[i].evaluateModel(L, stq));
-		}	
+		double[][] errors = new double[maxExponent+1][modelSizes.length];
+		for (int i = 0; i <= maxExponent; i++) {
+				
+			QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqs, numDimensions, basisSize, base, i, modelSizes);
+			
+			for (int j = 0; j < qs.length; j++) {
+				double e = qs[j].evaluateModel(L, stq);
+				
+				errors[i][j] = e;
+				
+				//qs[i].verifyProbabilityQueryCorrectness();
+			}
+		}
+		
+		System.out.println("Rows: exponents, Columns: modelSizes");
+		Matrix E = new Matrix(errors);
+		E.print(5, 5);
 	
 	}
 	
@@ -90,7 +101,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			SequenceOfSymbols seq = new SequenceOfSymbols(string);
 			System.out.println("Query");
 			System.out.println(seq);
-			System.out.println(q.probabilityQuery(seq));
+			System.out.println(q.probabilityQuery(seq, false));
 			System.out.println();
 		}
 		
@@ -116,7 +127,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int modelSize = 6; 
 		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, maxExp, modelSize);
 		for (String sa : samples) {
-			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa) ));
+			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa), false ));
 		}
 	}
 	
@@ -320,6 +331,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			System.out.println("Verifying that F computes probabilities in the right way. \n");
 			System.out.println("Occurances: (How many strings of length >= K)");
 			System.out.println( Arrays.toString(freqCounter) );
+			System.out.println();
 			System.out.println("Coverage: (How many strings of length >= K included -Ratio)");
 			String[] t = new String[sumOfSymbolLengthK.length];
 			for (int i = 0; i < sumOfSymbolLengthK.length; i++) {

@@ -204,7 +204,7 @@ public class LabyrinthGraph extends Environment{
 		 return l;
 	}
 	
-	public static LabyrinthGraph multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize, int numberOfTrajectories){
+	public static LabyrinthGraph multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize, int numberOfTrajectories, int loop1, int loop2){
 		int[][] graph = new int[][]{
 				{1,2},
 				{0},
@@ -212,9 +212,9 @@ public class LabyrinthGraph extends Environment{
 		};
 		
 		int[][] edges = new int[][]{
-				{1,2},
-				{1},
-				{2}
+				{(int) Math.floor(loop1/2), (int) Math.floor(loop2/2)},
+				{(int) Math.ceil(loop1/2)},
+				{(int) Math.ceil(loop2/2)}
 		};
 		
 		double[][] transitions = new double[][]{
