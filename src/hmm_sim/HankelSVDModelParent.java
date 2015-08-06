@@ -52,8 +52,8 @@ public abstract class HankelSVDModelParent implements Serializable{
 			//System.out.println("Doing tranpose trick! \n");
 			SingularValueDecomposition svd = new SingularValueDecomposition(H.transpose());
 			
-			System.out.println("Careful with assignments below, make sure they are correct!");
-			System.out.println();
+			//System.out.println("Careful with assignments below, make sure they are correct!");
+			//System.out.println();
 			s.put("S", svd.getS().transpose());
 			s.put("U", svd.getV());
 			s.put("VT", svd.getU().transpose());

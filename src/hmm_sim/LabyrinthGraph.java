@@ -23,6 +23,16 @@ public class LabyrinthGraph extends Environment{
 	private int key;
 	public boolean verbose;
 	private HashMap<Integer, ArrayList<Integer>> incomingEdges;
+	private HashMap<Integer, Integer> loopLengths;
+	public HashMap<Integer, Integer> getLoopLengths() {
+		return loopLengths;
+	}
+
+	public SequenceOfSymbols[] getData() {
+		return data;
+	}
+
+	private SequenceOfSymbols[] data;
 	
 	
 	public LabyrinthGraph(String workingFolder, int desiredHankelSize, int[][] graph, int[][] edges, double[][] transitions, double[] prior, int stretchFactor, int key, boolean verbose){
@@ -194,7 +204,7 @@ public class LabyrinthGraph extends Environment{
 		 return l;
 	}
 	
-	public static SequenceOfSymbols[] multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize){
+	public static LabyrinthGraph multipleObservationDoubleLoop(String workingFolder, int desiredHankelSize, int numberOfTrajectories){
 		int[][] graph = new int[][]{
 				{1,2},
 				{0},
@@ -222,10 +232,53 @@ public class LabyrinthGraph extends Environment{
 		double[] prior = new double[]{1,0,0};
 		
 		LabyrinthGraph l = new LabyrinthGraph(workingFolder, desiredHankelSize, graph, edges, transitions, prior, 1, 1, false);
+		HashMap<Integer, Integer> loopLengths = new HashMap<Integer, Integer>();
+		int firstWallLength = wallColors[0][0] + wallColors[1][0];
+		int secondWallLength = wallColors[0][1] + wallColors[2][0];
+		loopLengths.put(1, firstWallLength);
+		loopLengths.put(2, secondWallLength);
 		
-		int numberOfTrajectories = 100;
-		SequenceOfSymbols[] seqs = l.generateSequencesMO(wallColors, numberOfTrajectories, desiredHankelSize, 0);
-		return seqs;
+		l.loopLengths = loopLengths;
+		
+		l.data = l.generateSequencesMO(wallColors, numberOfTrajectories, desiredHankelSize, 0);
+		return l;
+	}
+	
+	// NOT GENERAL AT ALL, QUICK HACK TO OBTAIN TRUE PROBABILITY FOR SIMPLE ENVIRONMENT
+	public double determineRealProbabilityOfSequenceDoubleLoop(SequenceOfSymbols seq){
+		SequenceOfSymbols s = seq;
+		double probability = 1;
+		while(s.getSequence().equals("") == false){
+			 SequenceOfSymbols fs = s.getFirstStreak();
+			 String sym = fs.getSymbolFromString();
+			 int duration = fs.getStreakFromString();
+			 
+			 int lS = this.loopLengths.get( Integer.parseInt(sym) );
+			 int dmodL = duration % lS;
+			 int multiples = (int) Math.floor(duration/lS);
+			 
+			 probability = probability * Math.pow(0.5, multiples);
+			 
+			 if( dmodL == 0){
+				 if (fs.rawStringLength() == s.rawStringLength() ){
+					 return probability;
+				 }
+				 else{
+					 s = s.substring(fs.rawStringLength()+1, s.rawStringLength());
+				 }
+			} 
+			 
+			 else if(dmodL != 0 && fs.rawStringLength() == s.rawStringLength() ){
+				 return 0.5*probability;
+			 }
+
+			 else{
+				 return 0;
+			 }
+			 
+		}
+		return probability;
+		
 	}
 	
 	public SequenceOfSymbols[] generateSequencesMO(int[][] wallColors, int numberOfTrajectories, int maxLength, int startingLocation){

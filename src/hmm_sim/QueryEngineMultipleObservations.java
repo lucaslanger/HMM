@@ -2,7 +2,7 @@ package hmm_sim;
 
 
 import java.util.HashMap;
-
+import java.util.HashSet;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -23,18 +23,50 @@ public class QueryEngineMultipleObservations {
 	private HashMap<String, Matrix> truncatedSVD;
 	private SingularValueDecomposition originalSVD;
 	
-	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base){
+	private SymbolCounts prefixes;
+	private SymbolCounts suffixes;
+	private int base;
+	
+	public int getBase(){
+		return this.base;
+	}
+	
+	public QueryEngineMultipleObservations(int maxExponent, Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base, SymbolCounts prefixes, SymbolCounts suffixes){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
+		this.prefixes = prefixes;
+		this.suffixes = suffixes;
+		this.base = base;
+		
+		this.maxExponent = maxExponent;
+		this.maxPower = (int) Math.pow(base, maxExponent);
 
 		this.debug = false;
 	}
 	
-	public QueryEngineMultipleObservations(Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
+	public HashMap<String, Matrix> getTruncatedSVD() {
+		return truncatedSVD;
+	}
+
+	public SymbolCounts getPrefixes() {
+		return prefixes;
+	}
+
+	public SymbolCounts getSuffixes() {
+		return suffixes;
+	}
+
+	public QueryEngineMultipleObservations(int maxExponent, Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base, SymbolCounts prefixes, SymbolCounts suffixes, Matrix pinv, Matrix sinv, HashMap<String, Matrix> truncatedSVD, SingularValueDecomposition originalSVD){
 		this.a0 = a0;
 		this.ainf = ainf;
 		this.Asigmas = Asigmas;
+		this.prefixes = prefixes;
+		this.suffixes = suffixes;
+		this.base = base;
+		
+		this.maxExponent = maxExponent;
+		this.maxPower = (int) Math.pow(base, maxExponent);
 		
 		this.debug = true;
 		this.pinv = pinv;
@@ -125,10 +157,8 @@ public class QueryEngineMultipleObservations {
 			int power = nextstreak.getStreakFromString();
 			String symbol = nextstreak.getSymbolFromString();
 		
-			SequenceOfSymbols s = new SequenceOfSymbols( symbol + ":1"  );
-			for (int i = 0; i < power; i++) {
-				r = r.times( Asigmas.get(s) );
-			}
+			r = processQueryFixedSymbol(r, symbol, power);
+			
 			if (sequence.rawStringLength() > nextstreak.rawStringLength()){
 				sequence = sequence.substring(nextstreak.rawStringLength()+1, sequence.rawStringLength());
 			}
@@ -140,6 +170,43 @@ public class QueryEngineMultipleObservations {
 		assert(Math.abs(r.times(ainf).get(0, 0)) == r.norm1() );
 		return r.times(ainf).get(0, 0);
 		
+	}
+	
+	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int power) {
+		int currentLimitingPower = this.maxPower;
+		SequenceOfSymbols currentSequence = new SequenceOfSymbols( symbol + ":" + Integer.toString(currentLimitingPower)  );
+
+		//System.out.println(Asigmas.keySet());
+		while (power > 0){	
+			while(currentLimitingPower <= power){
+				r = r.times( this.Asigmas.get(currentSequence) );
+				power = power - currentLimitingPower;
+			}
+			currentLimitingPower /= base;
+			currentSequence = new SequenceOfSymbols( symbol + ":" + Integer.toString(currentLimitingPower) );
+		}
+		
+		return r;
+	}
+
+	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery ){
+		double e = 0;
+				
+		for (SequenceOfSymbols sequenceOfSymbols : stringsToQuery) {
+			double probQ = this.probabilityQuery(sequenceOfSymbols);
+			double realProb =  L.determineRealProbabilityOfSequenceDoubleLoop(sequenceOfSymbols);
+			
+			//double error = Math.pow( probQ - realProb, 2);
+			double error = Math.abs( probQ - realProb);
+			e += error;
+		}
+		System.out.println(e);
+		//e = Math.sqrt(e);
+		return e;
+	}
+	
+	public void verifyProbabilityQueryCorrectness(){
+		System.out.println("Making sure that probability query's are behaving as they are supposed to.");
 	}
 	
 		
