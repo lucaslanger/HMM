@@ -212,9 +212,9 @@ public class LabyrinthGraph extends Environment{
 		};
 		
 		int[][] edges = new int[][]{
-				{(int) Math.floor(loop1/2), (int) Math.floor(loop2/2)},
-				{(int) Math.ceil(loop1/2)},
-				{(int) Math.ceil(loop2/2)}
+				{(int) Math.floor((loop1*1.0)/2), (int) Math.floor((loop2*1.0)/2)},
+				{(int) Math.ceil((loop1*1.0)/2)},
+				{(int) Math.ceil((loop2*1.0)/2)}
 		};
 		
 		double[][] transitions = new double[][]{

@@ -190,7 +190,7 @@ public class QueryEngineMultipleObservations {
 		return r;
 	}
 
-	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors ){
+	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors){
 		double e = 0;
 				
 		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
