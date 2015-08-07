@@ -39,27 +39,28 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	public static void doubleLoopTest(){
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
-		String dataSetFolder = workingFolder + "DataSets/";
 		
-		int desiredHankelSize = 50;
-		int repetitions = 4;
-		int numberOfTrajectories = 100000;
-		int amountOfData = 100000;
-		int loop1 = 9;
-		int loop2 = 15;
+		
+		int repetitions = 5;
+		int numberOfTrajectories = 10000;
+		int amountOfData = 10000;
 		
 		int numDimensions = 2;
-		int basisSize = 35;
 		int base = 2; 
-		//int modelSize = 6;
 		
-		int[] modelSizes = new int[]{5,10,15,17,19,21,23, 35};
-		int maxPower = 16;
+		int loop1 = 11;
+		int loop2 = 32;
+		int desiredHankelSize = (loop1+loop2)*3;
+		int basisSize = 35;
+		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
+			
+		int[] modelSizes = new int[]{15,17,19,21,25,27,30,32,35};
+		int maxPower = 64;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
-		FlowControl.createFolder(dataSetFolder);
-		generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		//FlowControl.createFolder(dataSetFolder);
+		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		//
 		
 		Matrix Eavg = null;
@@ -100,7 +101,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			Matrix E = new Matrix(errors);
 			if (Eavg == null){
-				h.plotSingularValues(workingFolder);	//Plot the first set of singular Values -- HACKY
+				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
 				Eavg = E;
 			}
 			else{
@@ -112,7 +113,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		System.out.println("Rows: exponents, Columns: modelSizes");
 		Eavg.print(5, 5);
 		
-		OutputData.outputData(workingFolder + loop1 + ":" + loop2 + "errorModelSizesBase" + amountOfData, "X: modelSize Y: Error norm2() light curves low base", "", xaxis, Eavg.getArrayCopy());
+		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "X: modelSize Y: Error norm2() light curves low base", "", xaxis, Eavg.getArrayCopy());
 	
 	}
 	
@@ -146,6 +147,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			for (int i = 0; i < amountOfData; i++) {
 				seqs[i] = (SequenceOfSymbols) ois.readObject();
 			}
+			ois.close();
 			return seqs;
 			
 		} catch (Exception e) {
@@ -154,7 +156,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 	}
 	
-	public void plotSingularValues(String workingFolder){
+	public void plotSingularValues(String workingFolder, int loop1, int loop2, int amountOfData){
 		double[][] yaxis = new double[1][rank];
 		double[][] xaxis = new double[1][rank];
 
@@ -163,7 +165,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			xaxis[0][i] = i;
 		}
 		
-		OutputData.outputData(workingFolder + "SingularValues", "X: modelSize Y: Singular Values", "", xaxis, yaxis);
+		OutputData.outputData(workingFolder + "SingularValues,"+ amountOfData + "," + loop1 + ":" + loop2, "X: modelSize Y: Singular Values", "", xaxis, yaxis);
 
 		
 	}
@@ -224,6 +226,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			int c=0;
 			for (int mS: modelSizes) {
+			
 				if (h.getRank() < mS){
 					mS = h.getRank();
 					//System.out.println("Truncation downgraded to trueModel size, too big a model!");
@@ -257,12 +260,24 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), true );
 		this.rank = Hlambda.rank();
 
-		Hlambda.print(5, 5);
+		//Hlambda.print(5, 5);
 		System.out.println("Rank");
 		System.out.println(this.getRank());
-		System.out.println();
+		System.out.println("Singular values");
 		this.svdOfH = super.takeSVD(Hlambda);
+		System.out.println( Arrays.toString( turnStoArray(svdOfH.get("S")) ) );
+		System.out.println();
+		
+		//this.svdOfH.get("S").times( pseudoInvDiagonalKillLow(this.svdOfH.get("S") )).print(5, 5);
 	
+	}
+	
+	public static double[] turnStoArray(Matrix singularValues){
+		double[] s = new double[singularValues.rank()];
+		for (int i = 0; i < singularValues.rank(); i++) {
+			s[i] = singularValues.get(i, i);
+		}
+		return s;
 	}
 	
 	private SymbolCounts getPrefixes(SymbolCounts fullData, Iterable<SymbolCountPair> spp){
@@ -486,7 +501,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				
 		HashMap<String, Matrix> truncatedSVD = super.truncateSVD(H , modelSize);
 		
-		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		Matrix di = pseudoInvDiagonalKillLow(truncatedSVD.get("S"));
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		
