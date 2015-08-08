@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 256000;
+		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 10000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
@@ -21,12 +21,13 @@ public class FlowControl {
 		String f = "ErrorStorage";
 
 		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
-		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
+		//ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now 
 		
 		int repetitions = 2;
 		int stretchFactor = 10;
@@ -35,7 +36,7 @@ public class FlowControl {
 		int fixedModelSize = 50;
 		int keyLocation = 10;
 		
-		int[] modelSizes = new int[]{27,28,29,30,31,32,33,34,35, 40, 60, 80, 100};
+		int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
 		
 		// INTERESTING JUMPS: int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
 
@@ -56,19 +57,24 @@ public class FlowControl {
 		System.out.println("");
 		
 		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
-		a.modelSizeEffectOverBaseImprovement(dataSizeForFixedPlots);
+		
+		String identifier = "Datasize:" + dataSizeForFixedPlots + "PacMan";
+
+		a.modelSizeEffectOverBaseImprovement(identifier, dataSizeForFixedPlots);
 		//a.plotSingularValues(100);
 		//a.makePlots();
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 50;
+		ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now int repetitions = 50;
+		
 
 		int loop1 = 64;
 		int loop2 = 16;
-		int hSize = 450;
+		int hSize = 500;
 		int basisSize = 150;
-		int[] modelSizes = new int[]{};
+		//int[] modelSizes = new int[]{18,20,22,24,26,28,30};
+		int[] modelSizes = new int[]{40,45,50,55,60,65};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
@@ -76,7 +82,8 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, 0.10, hSize, .5, .5);
+		double selfTransitionProbability = 0.00;
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions, false);
 		
 		System.out.println("");
@@ -86,7 +93,11 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 30, 2 , true);
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 2 , 10, true);
+		
+		String identifier = "Datasize:" + dataSizeForFixedPlots + "," + loop1 + ":" + loop2 + ",ST:"+ selfTransitionProbability;
+		a.modelSizeEffectOverBaseImprovement(identifier, dataSizeForFixedPlots);
+
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, String computeType){
@@ -97,7 +108,7 @@ public class FlowControl {
 		int key = 10;
 		int samples = 1000;
 		
-		/*if (computeType == "Over-MaxK"){
+		if (computeType == "Over-MaxK"){
 			double[] maxKs = new double[]{ 300 };	// get all 0s when maxK is <= 20
 			double[] mS = new double[]{ 30, 50, 70 };
 			double maxPowers[] = { 1, 16, 32, 64, 128};
@@ -120,7 +131,7 @@ public class FlowControl {
 	
 			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
 			FlowControl.printErrors(maxKs, f);
-		}*/
+		}
 		if (computeType == "Over-Base"){
 			double[] maxKs = new double[]{ 400 };	// get all 0s when maxK is <= 20
 			double[] mS = new double[]{ 40, 60, 80, 100, 120, 150};
@@ -143,6 +154,8 @@ public class FlowControl {
 					xAxes[i][j] = mS;
 				}
 			}
+			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
+			FlowControl.printErrors(maxKs, f);
 		}
 		System.out.println("Done generated error data");
 		System.out.println();	

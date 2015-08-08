@@ -48,19 +48,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 = 11;
-		int loop2 = 32;
+		int loop1 = 13;
+		int loop2 = 28;
 		int desiredHankelSize = (loop1+loop2)*3;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
 		int[] modelSizes = new int[]{15,17,19,21,25,27,30,32,35};
-		int maxPower = 64;
+		int maxPower = 128;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
-		//FlowControl.createFolder(dataSetFolder);
-		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		FlowControl.createFolder(dataSetFolder);
+		generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		//
 		
 		Matrix Eavg = null;

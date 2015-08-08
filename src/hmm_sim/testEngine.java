@@ -88,9 +88,10 @@ public class testEngine{
 		this.maxStates = this.trueModel.getRank();
 		this.modelSizeToIndex = this.initializeModelSizeToIndex();
 		this.trueQueryEngine = this.trueModel.buildHankelBasedModel(base, this.maxStates);		
-		this.maxQuery = this.trueQueryEngine.getMaxPower()*base*base; 
+		this.maxQuery = this.trueQueryEngine.getMaxPower()*base; 
 	
 		double capturedProbability = 0;
+	
 		for (int i = 0; i <= this.maxQuery; i++) {
 			 capturedProbability += this.trueModel.getProbabilities()[i];
 		}
@@ -213,7 +214,7 @@ public class testEngine{
 	}
 	
 	
-	public void modelSizeEffectOverBaseImprovement(int fixedDataSize){
+	public void modelSizeEffectOverBaseImprovement(String identifier, int fixedDataSize){
 		QueryEngine[][] fixedDataSizeModelEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
 		for (int i = 0; i < fixedDataSizeModelEngines.length; i++) {
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
@@ -238,7 +239,7 @@ public class testEngine{
 		ERR.print(5, 5);
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		
-		OutputData.outputData(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize), "X: ModelSize Y: Area UnderCurve light curve --> lower Base", "", xAxis, errors);
+		OutputData.outputData(pltFolder + identifier, "X: model size Y: ||f - f*|| Lighter curves --> Lower Base", "", xAxis, errors);
 	}
 	
 	
