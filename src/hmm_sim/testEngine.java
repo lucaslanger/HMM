@@ -131,7 +131,8 @@ public class testEngine{
 		this.trueRankQueryEngines = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
 	
 		if(verbose){
-			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", 10);
+			int topCount = 10;
+			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", topCount);
 		}
 		
 //		int fixedData = dataSizeForFixedPlots;
@@ -225,17 +226,19 @@ public class testEngine{
 		
 		double[] trueP = this.trueModel.getProbabilities();
 		
-		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
-			for (int i = 0; i < this.modelSizes.length; i++) {
-				xAxis[j][i] = modelSizes[i];
-				for (int q = 0; q < this.maxQuery; q++) {
-					double p = fixedDataSizeModelEngines[i][0].probabilityQuery(q, (int) Math.pow(2,j), base, true);
-					errors[j][i] += Math.abs(p - trueP[q]);  
+		for (int r = 0; r < this.REPEATS; r++) {
+			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+				for (int i = 0; i < this.modelSizes.length; i++) {
+					xAxis[j][i] = modelSizes[i];
+					for (int q = 0; q < this.maxQuery; q++) {
+						double p = fixedDataSizeModelEngines[i][r].probabilityQuery(q, (int) Math.pow(2,j), base, true);
+						errors[j][i] += Math.abs(p - trueP[q]);  
+					}
 				}
 			}
 		}
 		
-		Matrix ERR = new Matrix(errors);
+		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
 		ERR.print(5, 5);
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		

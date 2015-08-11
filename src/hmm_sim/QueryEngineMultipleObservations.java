@@ -32,6 +32,10 @@ public class QueryEngineMultipleObservations {
 		return this.base;
 	}
 	
+	public int getModelSize(){
+		return this.a0.getArrayCopy()[0].length;
+	}
+	
 	public QueryEngineMultipleObservations(int maxExponent, Matrix a0, Matrix ainf, HashMap<SequenceOfSymbols, Matrix> Asigmas, int base, SymbolCounts prefixes, SymbolCounts suffixes){
 		this.a0 = a0;
 		this.ainf = ainf;

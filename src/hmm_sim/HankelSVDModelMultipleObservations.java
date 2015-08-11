@@ -42,19 +42,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		
 		int repetitions = 5;
-		int numberOfTrajectories = 10000;
-		int amountOfData = 10000;
+		int numberOfTrajectories = 1000;
+		int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 = 13;
-		int loop2 = 28;
+		int loop1 = 16;
+		int loop2 = 32;
 		int desiredHankelSize = (loop1+loop2)*3;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{15,17,19,21,25,27,30,32,35};
+		int[] modelSizes = new int[]{15,17,19,21,25,27,30,32,33,34,35};
 		int maxPower = 128;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
@@ -268,7 +268,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		System.out.println( Arrays.toString( turnStoArray(svdOfH.get("S")) ) );
 		System.out.println();
 		
-		//this.svdOfH.get("S").times( pseudoInvDiagonalKillLow(this.svdOfH.get("S") )).print(5, 5);
 	
 	}
 	
@@ -501,7 +500,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				
 		HashMap<String, Matrix> truncatedSVD = super.truncateSVD(H , modelSize);
 		
-		Matrix di = pseudoInvDiagonalKillLow(truncatedSVD.get("S"));
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();
 		

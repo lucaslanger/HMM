@@ -76,8 +76,11 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 					xdata = takeLogOfArray(xdata)
 				if name[2] == 'log':
 					ydata = takeLogOfArray(ydata)
-				if alpha_scaling:
+
+				l = len("SingularValues")
+				if alpha_scaling and n[:l] != "SingularValues":
 					a=(1.0*(j+1))/len(colors)
+
 				else:
 					a = 1.0				
 				plt.plot(xdata,ydata, colors[j%len(colors)], alpha=a)
@@ -98,36 +101,46 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 
 datafile = sys.argv[1]
 t = sys.argv[2]
-
+#-v
 temp = ['Query_Errors_Base', 'Query_Errors_Naive', 'Comm_Qerror', "QError_Base_vs_Naive",'True_H_vs_Emp', 'True_Ax_vs_Emp',  '(Ax)^2_v.s A(x^2)', 'ConditionalError','ConditionalEmp','ConditionalTrue', 'Base_Errors']
 validityTests = [(i,'normal','normal') for i in temp]
+#
 
+#-a
 modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','normal'),  ("Difference Plot_FIXEDMS",'log','normal'), ("ArgMin_Dif_Bases",'log','normal') , ("Multiple_Trials_ModelError",'normal','normal') , ("Difference Plot",'log','normal')]
+#
 
+#-k
+baseComparisonKeyPredictions = [('KeyFindingErrorTraining_MaxK:100','normal','normal'), ('KeyFindingErrorTesting_MaxK:100','normal','normal')]
+				#[("Datasize:10000PacMan",'normal','normal')]
+				#,("Datasize:10000,64:16,ST:0.0",'normal','normal')]
+				#,("Datasize:10000,64:16,ST:0.1",'normal','normal')]
 
-#modelSizes = [1,4,16,32,64,128]
-#keyPredictions = []
-#for m in modelSizes:
-#	keyPredictions.append(('KeyFindingErrorTesting_Base:' + str(m),'normal','normal'))
-# 	keyPredictions.append(('KeyFindingErrorTraining_Base:' + str(m),'normal','normal'))
+#fixedSizeModelBaseComparison = [10000]
+#baseComparisonKeyPredictions = []
+#for s in fixedSizeModelBaseComparison:
+#	baseComparisonKeyPredictions.append(('BaseImprovementOverModelSizesDatasize:' + str(s),'normal','normal'))
+#baseComparisonKeyPredictions.append(('SingularValues','normal','normal'))
+#
 
+#-mo
+multipleObservations = []
+dataSizes = [10000]
+loopPairs = ['8:16','11:32','16:32','13:28']
+for d in dataSizes:
+	for l in loopPairs:
+		multipleObservations.append( ('errorModelSizesBase,' + str(d) + "," + l,'normal','normal' ) )
+		multipleObservations.append(('SingularValues,' + str(d) + "," + l,'normal','normal'))
+#
 
-maxK = []#[500, 400, 250]
-baseComparisonKeyPredictions = []
-for m in maxK:
-	baseComparisonKeyPredictions.append(('KeyFindingErrorTraining_MaxK:' + str(m),'normal','normal'))
-	baseComparisonKeyPredictions.append(('KeyFindingErrorTesting_MaxK:' + str(m),'normal','normal'))
-
-fixedSizeModelBaseComparison = [1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000]
-for s in fixedSizeModelBaseComparison:
-	baseComparisonKeyPredictions.append(('BaseImprovementOverModelSizesDatasize:' + str(s),'normal','normal'))
-baseComparisonKeyPredictions.append(('SingularValues','normal','normal'))
 
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
 elif t=='-k':
-	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True, 2, 5)
+	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True)	#2,5 to split
+elif t=='-mo':
+	drawPlots(datafile, multipleObservations, colorsAnalysis, True, 2, 5)
 else:
 	print "invalid format"

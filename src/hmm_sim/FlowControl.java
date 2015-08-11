@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 10000;
+		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 256000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
@@ -20,10 +20,10 @@ public class FlowControl {
 		}*/
 		String f = "ErrorStorage";
 
-		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -66,15 +66,16 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now int repetitions = 50;
+		int repetitions = 1;
 		
 
 		int loop1 = 64;
 		int loop2 = 16;
-		int hSize = 500;
+		int hSize = 700;
 		int basisSize = 150;
+		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
 		//int[] modelSizes = new int[]{18,20,22,24,26,28,30};
-		int[] modelSizes = new int[]{40,45,50,55,60,65};
+		int[] modelSizes = new int[]{40,50,60,100};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
@@ -82,18 +83,18 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		double selfTransitionProbability = 0.00;
+		double selfTransitionProbability = 0.10;
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions, false);
-		
-		System.out.println("");
 		
 		System.out.println("Reading data into models");
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, 2 , 10, true);
+		int debugMS = modelSizes[0];
+		int repsToTake = 2;
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, debugMS , 1 , true);
 		
 		String identifier = "Datasize:" + dataSizeForFixedPlots + "," + loop1 + ":" + loop2 + ",ST:"+ selfTransitionProbability;
 		a.modelSizeEffectOverBaseImprovement(identifier, dataSizeForFixedPlots);
@@ -133,8 +134,8 @@ public class FlowControl {
 			FlowControl.printErrors(maxKs, f);
 		}
 		if (computeType == "Over-Base"){
-			double[] maxKs = new double[]{ 400 };	// get all 0s when maxK is <= 20
-			double[] mS = new double[]{ 40, 60, 80, 100, 120, 150};
+			double[] maxKs = new double[]{ 100 };	// get all 0s when maxK is <= 20
+			double[] mS = new double[]{ 40, 50, 60, 70, 80};
 			double maxPowers[] = { 1, 2, 4 , 8 , 16, 32, 64, 128};
 
 			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];

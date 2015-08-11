@@ -15,6 +15,7 @@ public abstract class HankelSVDModelParent implements Serializable{
 	
 	public abstract QueryEngine buildHankelBasedModel(int base, int modelSize);
 		
+	/*
 	public static Matrix pseudoInvDiagonalKillLow(Matrix m){
 		double[][] a = m.getArrayCopy();
 		for (int i = 0; i < a.length; i++) {
@@ -25,8 +26,34 @@ public abstract class HankelSVDModelParent implements Serializable{
 				a[i][i] = 0;
 			}
 		}
-		return new Matrix(a);
+		
+		Matrix r = new Matrix(a);
+		/*System.out.println("Old Rank");
+		System.out.println(m.rank());
+		System.out.println("New Rank");
+		System.out.println(r.rank());
+		System.out.println();
+		
+		return r;
 	}
+	*/
+	
+	public static Matrix pseudoInvDiagonal(Matrix m){
+		double[][] a = m.getArrayCopy();
+		for (int i = 0; i < a.length; i++) {
+			if (a[i][i] != 0){
+				a[i][i] = 1/a[i][i];
+			}
+			else{
+				a[i][i] = 0;
+			}
+		}
+		
+		Matrix r = new Matrix(a);
+
+		return r;
+	}
+
 
 	public static double[] getDiagonalArray(Matrix m){
 		double[] r = new double[m.getArrayCopy()[0].length];
