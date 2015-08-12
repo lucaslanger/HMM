@@ -40,7 +40,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		
-		
 		int repetitions = 5;
 		int numberOfTrajectories = 1000;
 		int amountOfData = 1000;
@@ -54,7 +53,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{15,17,19,21,25,27,30,32,33,34,35};
+		int[] modelSizes = new int[]{15,18,20,25,30,35};
 		int maxPower = 128;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
@@ -72,10 +71,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			SequenceOfSymbols[] seqsRead = HankelSVDModelMultipleObservations.readDataSetFromFile(f, amountOfData);
 		
 			LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
+			
+			boolean printSequences = false;
 			for (SequenceOfSymbols s : seqsRead) {
+				if (printSequences){
+					System.out.print("Length:" + s.sequenceLength() + ", " + s + "	");
+				}
 				SymbolCountPair sc = new SymbolCountPair(1, s);
 				l.add(sc);
 			}
+			if (printSequences){
+				System.out.println();
+			}
+			
 			HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
 			
 			HashSet<SequenceOfSymbols> stq = makeStringsToQuery(h.prefixes, h.suffixes);

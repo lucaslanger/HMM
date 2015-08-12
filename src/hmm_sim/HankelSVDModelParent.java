@@ -50,8 +50,30 @@ public abstract class HankelSVDModelParent implements Serializable{
 		}
 		
 		Matrix r = new Matrix(a);
+		
+		if ( sumOfDiagonal(m.times(r)) > m.rank()*1.01 ){
+			System.out.println("Weird numerical behavior in computing the pseudo diagonal inverse!");
+			System.out.println(sumOfDiagonal(m.times(r)));
+			System.out.println(r);
+			System.out.println();
+		}
+		/*
+		else{
+			System.out.println("Working just fine");
+			System.out.println(sumOfDiagonal(m.times(r)));
+			System.out.println(m.rank());
+			System.out.println();
+		}*/
 
 		return r;
+	}
+	
+	public static double sumOfDiagonal(Matrix m){
+		double sum = 0;
+		for (int i = 0; i < m.getArrayCopy().length; i++) {
+			sum += m.get(i, i);
+		}
+		return sum;
 	}
 
 

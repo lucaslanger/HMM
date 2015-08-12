@@ -285,21 +285,25 @@ public class LabyrinthGraph extends Environment{
 		
 	}
 	
-	public SequenceOfSymbols[] generateSequencesMO(int[][] wallColors, int numberOfTrajectories, int maxLength, int startingLocation){
+	public SequenceOfSymbols[] generateSequencesMO(int[][] wallColors, int numberOfTrajectories, int trajLength, int startingLocation){
 		SequenceOfSymbols[] seqs = new SequenceOfSymbols[numberOfTrajectories];
 		for (int i = 0; i < numberOfTrajectories; i++) {
-			seqs[i] = generateMultipleObservationSequence( wallColors, startingLocation, maxLength);
+			seqs[i] = generateMultipleObservationSequence( wallColors, startingLocation, trajLength);
 		}
 		return seqs;
 	}
 	
-	private SequenceOfSymbols generateMultipleObservationSequence(int[][] wallColors, int startingLocation , int maxLength) {
+	private SequenceOfSymbols generateMultipleObservationSequence(int[][] wallColors, int startingLocation , int trajLength) {
 		SequenceOfSymbols s = new SequenceOfSymbols("");
-		Random r = new Random();
-		int trajLength = r.nextInt(maxLength);
 		int lengthTravelled = 0;
 		
 		int currentState = startingLocation;
+		Random r = new Random();
+		
+		//OLD BUG which caused numerical errors
+		//trajLength = r.nextInt(trajLength);
+		//
+		
 		while(lengthTravelled < trajLength){
 			double[] nextStates = this.transitions[currentState];
 			int nextStateIndex = sampleState( nextStates, r.nextDouble());
