@@ -125,8 +125,8 @@ baseComparisonKeyPredictions = [('KeyFindingErrorTraining_MaxK:100','normal','no
 
 #-mo
 multipleObservations = []
-dataSizes = [10000]
-loopPairs = ['8:16','11:32','16:32','13:28']
+dataSizes = [100,1000]
+loopPairs = ['16:32','17:27']
 for d in dataSizes:
 	for l in loopPairs:
 		multipleObservations.append( ('errorModelSizesBase,' + str(d) + "," + l,'normal','normal' ) )
