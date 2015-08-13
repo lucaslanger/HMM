@@ -20,10 +20,10 @@ public class FlowControl {
 		}*/
 		String f = "ErrorStorage";
 
-		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
-		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){

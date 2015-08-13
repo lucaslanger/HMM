@@ -3,6 +3,7 @@ package hmm_sim;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import Jama.Matrix;
@@ -306,6 +307,30 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 		}
 	}
 	
+	public static SequenceOfSymbols fullStringToCompressed(String s){
+		int counter = 1;
+		String construct = "";
+		char prevchar = s.charAt(0);
+		for (int i = 1; i < s.length(); i++) {
+			if( s.charAt(i) == prevchar ){
+				counter++;
+			}
+			else{
+				construct.concat( multiplyChar(counter, prevchar) + "," );
+				prevchar = s.charAt(i);
+				counter = 1;
+			}
+			
+		}
+		construct = construct.concat(multiplyChar(counter, prevchar));
+		SequenceOfSymbols rSeq = new SequenceOfSymbols(construct);
+		return rSeq;
+	}
+	
+	private static String multiplyChar(int i, char c){
+		return c + ":" + i;
+	}
+	
 	private synchronized void writeObject(java.io.ObjectOutputStream stream) throws java.io.IOException{
 		stream.writeObject(this.sequence);
 
@@ -321,6 +346,19 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 			System.out.print(sequenceOfSymbols.toString() + ", ");
 		}
 		System.out.println();
+	}
+
+	public SymbolCounts getSubstringCounts() {
+		SymbolCounts sc = new SymbolCounts();
+		String rawSequence = this.getRawSequence();
+		for (int i = 0; i < rawSequence.length(); i++) {
+			for (int j = i; j < rawSequence.length(); j++) {
+				String s = rawSequence.substring(i, j);
+				SequenceOfSymbols sCompressed = fullStringToCompressed(s);
+				sc.updateFrequency(sCompressed, 1);
+			}
+		}
+		return sc;
 	}
 	
 

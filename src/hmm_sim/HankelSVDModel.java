@@ -71,7 +71,7 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 		//System.out.println(Arrays.toString(getDiagonalArray(truncatedSVD.getS())));
 		//System.out.println(Arrays.toString(getDiagonalArray(svd.getS())));
 		
-		Matrix di = pseudoInvDiagonalKillLow(truncatedSVD.get("S"));
+		Matrix di = pseudoInvDiagonalKL(truncatedSVD.get("S"));
 		
 		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
 		Matrix sinv = (truncatedSVD.get("VT")).transpose();

@@ -27,6 +27,10 @@ public class SymbolCounts {
 		this.dataCount = 0;
 		this.numDimensions = numDimensions;
 	}
+	public SymbolCounts(){
+		this.symbolToFrequency = new TreeMap<SequenceOfSymbols, Integer>();
+		this.dataCount = 0;
+	}
 	
 	public void updateFrequency(SequenceOfSymbols s, int update){
 		this.dataCount += update;
