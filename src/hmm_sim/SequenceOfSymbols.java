@@ -308,6 +308,10 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 	}
 	
 	public static SequenceOfSymbols fullStringToCompressed(String s){
+		if (s.equals("") ){
+			return new SequenceOfSymbols("");
+		}
+		
 		int counter = 1;
 		String construct = "";
 		char prevchar = s.charAt(0);
