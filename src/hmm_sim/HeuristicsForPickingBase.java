@@ -9,13 +9,14 @@ import javax.naming.BinaryRefAddr;
 public class HeuristicsForPickingBase {
 	
 	public static void main(String[] args){
-		String[] t = new String[]{"","","","",
-				"1:7", "1:7", "1:7", "1:7",
+		//System.out.println("dsfsf".substring(1, 3));
+		
+		String[] t = new String[]{"1:7", "1:7", "1:7", "1:7",
 				"1:14", "1:14", "1:14", "1:14",
 				"1:21","1:21",
 				"1:28",
-				"1:35"
-		};
+				"1:35"};
+		
 		SequenceOfSymbols[] seqs = new SequenceOfSymbols[t.length];
 		int i = 0;
 		for(String s: t){
@@ -27,44 +28,75 @@ public class HeuristicsForPickingBase {
 		
 		HashSet<String> base = new HashSet<String>();
 		base.add("1");
+		base.add("11");
+		base.add("1111");
+		
+		//SUFFIX TRIE TO STORE SUBSEQUENCES AND TH
 		
 		for (SequenceOfSymbols s: seqs) {
-			computeOptimalCompositionsNeccesary(base, s.getRawSequence() );
+			try {
+				
+				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence() );
+				System.out.println(s);
+				System.out.println(opt.getS());
+				System.out.println(opt.getI());
+				System.out.println();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				break;
+			}
+			
 		}
 	}
 	
 
 	//Dynamic Programming algorithm
-	public static int computeOptimalCompositionsNeccesary(HashSet<String> base, String s){
+	public static StringIntPair computeOptimalCompositionsNeccesary(HashSet<String> base, String s) throws Exception{
+		if (s.equals("")){
+			return new StringIntPair("", 0);
+		}
 		HashMap<Integer, ArrayList<String>> possiblePlugins = new HashMap<Integer, ArrayList<String>>();
 		for (int i = 0; i < s.length(); i++) {
 			for (String string : base) {
-				if (i + string.length() <  s.length() && string.equals(s.substring(i, i + string.length()) )){
-					ArrayList<String> t = possiblePlugins.get(i);
-					t.add(string);
-					possiblePlugins.put(i, t);
+				if (string.equals("") == false){
+					int stretchIndex = i + string.length() - 1 ;
+					if ( stretchIndex < s.length() && string.equals(s.substring(i, stretchIndex + 1) )){
+						/*System.out.println(s);
+						System.out.println(i);
+						System.out.println(string);
+						System.out.println(s.substring(i, stretchIndex + 1) );
+						System.out.println();*/
+						if (possiblePlugins.containsKey(i)){
+							ArrayList<String> t = possiblePlugins.get(i);
+							t.add(string);
+							possiblePlugins.put(i, t);
+						}
+						else{
+							ArrayList<String> t = new ArrayList<String>();
+							t.add(string);
+							possiblePlugins.put(i, t);
+						}
+					}
 				}
 			}
 		}
-		
 		int[][] compositionsNeccesary = new int[s.length()][s.length()];
 		HashMap<String, String > bestCompositions = new HashMap<String, String>();
-		try {
-			return recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, 0, s.length()-1);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Problem with computation of how to chop into substrings");
-			return 0;
-		}
+		
+		return recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, 0, s.length()-1);
+		
 		
 	}
 	
-	private static int recursiveComputationsNeccessary(HashMap<Integer, ArrayList<String>> possiblePlugins, int[][] compositionsNeccesary, HashMap<String, String> bestCompositions, HashSet<String> base, String s, int i, int j) throws Exception{
+	private static StringIntPair recursiveComputationsNeccessary(HashMap<Integer, ArrayList<String>> possiblePlugins, int[][] compositionsNeccesary, HashMap<String, String> bestCompositions, HashSet<String> base, String s, int i, int j) throws Exception{
+		
 		if(i==j){
-			if(base.contains(  Character.toString(s.charAt(i)) ) ){
+			String c = Character.toString(s.charAt(i));
+			if(base.contains(  c ) ){
 				String s1 = Integer.toString(i) + ":" +  j;
-				bestCompositions.put(s1, Character.toString(s1.charAt(i)) );
-				return 1;
+				bestCompositions.put(s1, c);
+				return new StringIntPair(c,1);
 			}
 			else{
 				System.out.println("Basic Symbol not included!" );
@@ -73,42 +105,106 @@ public class HeuristicsForPickingBase {
 				throw new Exception();
 			}
 		}
+		
 		else if(compositionsNeccesary[i][j] != 0 ){
-
-			return compositionsNeccesary[i][j];
+			String s1 = Integer.toString(i) + ":" +  j;
+			return new StringIntPair(bestCompositions.get(s1), compositionsNeccesary[i][j]);
 		}
 		else{
 			int min = 0;
-			int minIndex = 0;
 			String minBaseString = "";
+			String bestComp = "";
+			int minH = -1;
 			boolean b = false;
-			for (int h = i+1; h < j; h++) {
+			for (int h = i; h <= j; h++) {
 				for (String string : possiblePlugins.get(h)) {
-					int cL = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, i, h);
-					int cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h+1+string.length(), j);
-					int sum = cL + 1 +  cR;
-					if (b == false || sum < min){
-						min = sum;
-						minIndex = h;
-						minBaseString = string;
-						b = true;
+					if (string.equals("")){throw new Exception();}
+					
+					if (string.length() - 1 + h > j){
+						//donothing
+					}else{
+						StringIntPair cL;
+						if(h != i){
+							cL = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, i, h-1);
+						}else{
+							cL = new StringIntPair("", 0);
+						}
+						StringIntPair cR;
+						if(h + string.length() <= j){
+							cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h + string.length(), j);
+						}
+						else{
+							cR = new StringIntPair("", 0);
+						}
+						
+						int sum = cL.getI() + 1 + cR.getI();
+						
+						if (b == false || sum < min){
+							minH = h;
+							min = sum;
+							minBaseString = string;
+							bestComp = "";
+							if (cL.getS().equals("") == false){
+								bestComp = bestComp + cL.getS();
+							} 
+							bestComp = bestComp + minBaseString +  "," ;
+							if (cR.getS().equals("") == false){
+								bestComp = bestComp + cR.getS() ;
+							} 
+							b = true;
+							
+						}
 					}
+				
 				}
 			}
+			if(b== false){
+				throw new Exception();
+			}
+			
+			String s1 = Integer.toString(i) +  ":" + j;
 			compositionsNeccesary[i][j] = min;
-			
-			String leftId = Integer.toString(i) +  ":" + minIndex;
-			String rightId = Integer.toString(minIndex + minBaseString.length() ) + ":" + j;
-			String lBest = bestCompositions.get(leftId);
-			String rBest = bestCompositions.get(rightId);
-			
-			String combinedBest = lBest + minBaseString + rBest;
-			
-			String s1 = Integer.toString(i) + j;
-			bestCompositions.put(s1, combinedBest);
-			return min;
+			bestCompositions.put(s1, bestComp);
+			/*
+			System.out.println(minH);
+			System.out.println(minBaseString);
+			System.out.println();
+			*/
+			return new StringIntPair(bestComp, min);
 		}
 	}
+	
+	
+	/*old
+	
+			String combinedBest = "";
+					
+			String lBest = "";
+			if (minIndex != j){
+				String leftId = Integer.toString(i) +  ":" + Integer.toString(minIndex-1);
+				lBest = bestCompositions.get(leftId);
+				combinedBest.concat(lBest + ",");
+			}else{
+				lBest = null;
+			}
+			
+			combinedBest.concat(minBaseString + ",");
+
+			String rBest = "";
+			if (minIndex + minBaseString.length() <= j){
+				String rightId = Integer.toString(minIndex + minBaseString.length() ) + ":" + j;
+				rBest = bestCompositions.get(rightId);
+				combinedBest.concat(rBest + ",");
+			}else{
+				rBest = null;
+			}
+			
+		*/
+	
+	
+	//WORKING ON SUBSTRING STUFF
+	//
+	//
 	
 	public  static int formulaForStringScore(int compositionsNeccesary, int appearences){
 		//MISSING THE LENGTH OF THE STRING
@@ -116,7 +212,6 @@ public class HeuristicsForPickingBase {
 	}
 	
 	
-	/*
 	public static SymbolCounts countSubstringOccurances(int numDimensions, SequenceOfSymbols[] strings){
 		SymbolCounts substringOccurances = new SymbolCounts(numDimensions);
 		for (SequenceOfSymbols sequenceOfSymbols : strings) {
@@ -176,6 +271,6 @@ public class HeuristicsForPickingBase {
 		}
 		return minKey;
 	}
-	*/
+	
 
 }
