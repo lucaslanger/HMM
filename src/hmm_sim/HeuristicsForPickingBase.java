@@ -11,12 +11,9 @@ public class HeuristicsForPickingBase {
 	public static void main(String[] args){
 		//System.out.println("dsfsf".substring(1, 3));
 		
-		String[] t = new String[]{"1:7", "1:7", "1:7", "1:7",
-				"1:14", "1:14", "1:14", "1:14",
-				"1:21","1:21",
-				"1:28",
-				"1:35"};
-		
+		String[] t = new String[]{"1:1,2:2,1:1,2:1,1:1"};
+			
+			
 		SequenceOfSymbols[] seqs = new SequenceOfSymbols[t.length];
 		int i = 0;
 		for(String s: t){
@@ -28,15 +25,17 @@ public class HeuristicsForPickingBase {
 		
 		HashSet<String> base = new HashSet<String>();
 		base.add("1");
-		base.add("11");
-		base.add("1111");
+		base.add("2");
+		base.add("2212");
+		//base.add("221");
+		base.add("21");
 		
 		//SUFFIX TRIE TO STORE SUBSEQUENCES AND TH
 		
 		for (SequenceOfSymbols s: seqs) {
 			try {
 				
-				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence() );
+				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence(), "Max" );
 				System.out.println(s);
 				System.out.println(opt.getS());
 				System.out.println(opt.getI());
@@ -52,7 +51,7 @@ public class HeuristicsForPickingBase {
 	
 
 	//Dynamic Programming algorithm
-	public static StringIntPair computeOptimalCompositionsNeccesary(HashSet<String> base, String s) throws Exception{
+	public static StringIntPair computeOptimalCompositionsNeccesary(HashSet<String> base, String s, String type) throws Exception{
 		if (s.equals("")){
 			return new StringIntPair("", 0);
 		}
@@ -84,12 +83,12 @@ public class HeuristicsForPickingBase {
 		int[][] compositionsNeccesary = new int[s.length()][s.length()];
 		HashMap<String, String > bestCompositions = new HashMap<String, String>();
 		
-		return recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, 0, s.length()-1);
+		return recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, 0, s.length()-1, type);
 		
 		
 	}
 	
-	private static StringIntPair recursiveComputationsNeccessary(HashMap<Integer, ArrayList<String>> possiblePlugins, int[][] compositionsNeccesary, HashMap<String, String> bestCompositions, HashSet<String> base, String s, int i, int j) throws Exception{
+	private static StringIntPair recursiveComputationsNeccessary(HashMap<Integer, ArrayList<String>> possiblePlugins, int[][] compositionsNeccesary, HashMap<String, String> bestCompositions, HashSet<String> base, String s, int i, int j, String type) throws Exception{
 		
 		if(i==j){
 			String c = Character.toString(s.charAt(i));
@@ -111,10 +110,10 @@ public class HeuristicsForPickingBase {
 			return new StringIntPair(bestCompositions.get(s1), compositionsNeccesary[i][j]);
 		}
 		else{
-			int min = 0;
+			int best = 0;
 			String minBaseString = "";
 			String bestComp = "";
-			int minH = -1;
+			int bestH = -1;
 			boolean b = false;
 			for (int h = i; h <= j; h++) {
 				for (String string : possiblePlugins.get(h)) {
@@ -125,13 +124,13 @@ public class HeuristicsForPickingBase {
 					}else{
 						StringIntPair cL;
 						if(h != i){
-							cL = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, i, h-1);
+							cL = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, i, h-1, type);
 						}else{
 							cL = new StringIntPair("", 0);
 						}
 						StringIntPair cR;
 						if(h + string.length() <= j){
-							cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h + string.length(), j);
+							cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h + string.length(), j, type);
 						}
 						else{
 							cR = new StringIntPair("", 0);
@@ -139,9 +138,9 @@ public class HeuristicsForPickingBase {
 						
 						int sum = cL.getI() + 1 + cR.getI();
 						
-						if (b == false || sum < min){
-							minH = h;
-							min = sum;
+						if (b == false || (sum < best && type=="Min") || (sum > best && type=="Max")){
+							bestH = h;
+							best = sum;
 							minBaseString = string;
 							bestComp = "";
 							if (cL.getS().equals("") == false){
@@ -163,43 +162,12 @@ public class HeuristicsForPickingBase {
 			}
 			
 			String s1 = Integer.toString(i) +  ":" + j;
-			compositionsNeccesary[i][j] = min;
+			compositionsNeccesary[i][j] = best;
 			bestCompositions.put(s1, bestComp);
-			/*
-			System.out.println(minH);
-			System.out.println(minBaseString);
-			System.out.println();
-			*/
-			return new StringIntPair(bestComp, min);
+	
+			return new StringIntPair(bestComp, best);
 		}
 	}
-	
-	
-	/*old
-	
-			String combinedBest = "";
-					
-			String lBest = "";
-			if (minIndex != j){
-				String leftId = Integer.toString(i) +  ":" + Integer.toString(minIndex-1);
-				lBest = bestCompositions.get(leftId);
-				combinedBest.concat(lBest + ",");
-			}else{
-				lBest = null;
-			}
-			
-			combinedBest.concat(minBaseString + ",");
-
-			String rBest = "";
-			if (minIndex + minBaseString.length() <= j){
-				String rightId = Integer.toString(minIndex + minBaseString.length() ) + ":" + j;
-				rBest = bestCompositions.get(rightId);
-				combinedBest.concat(rBest + ",");
-			}else{
-				rBest = null;
-			}
-			
-		*/
 	
 	
 	//WORKING ON SUBSTRING STUFF
@@ -215,8 +183,11 @@ public class HeuristicsForPickingBase {
 	public static SymbolCounts countSubstringOccurances(int numDimensions, SequenceOfSymbols[] strings){
 		SymbolCounts substringOccurances = new SymbolCounts(numDimensions);
 		for (SequenceOfSymbols sequenceOfSymbols : strings) {
-			SymbolCounts t = sequenceOfSymbols.getSubstringCounts();
+			SymbolCounts t = sequenceOfSymbols.getSubstrings();
 			for (SequenceOfSymbols substring : t.descKeySet() ) {
+				HashSet<String> h= new HashSet<String>();
+				h.add(substring.getRawSequence());
+				StringIntPair opt = computeOptimalCompositionsNeccesary( h, sequenceOfSymbols.getRawSequence(), "Max" );
 				substringOccurances.updateFrequency(substring, t.getSymbolToFrequency().get(substring) );
 			}
 		}

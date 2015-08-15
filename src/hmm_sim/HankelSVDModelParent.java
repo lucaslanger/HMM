@@ -56,14 +56,14 @@ public abstract class HankelSVDModelParent implements Serializable{
 			System.out.println(r);
 			System.out.println();
 		}
-		
+		/*
 		else{
 			System.out.println("Working just fine");
 			System.out.println(sumOfDiagonal(m.times(r)));
 			System.out.println(m.rank());
 			System.out.println();
 		}
-
+		*/
 		return r;
 	}
 	

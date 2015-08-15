@@ -35,31 +35,35 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		//HankelSVDModelMultipleObservations.initialtest();
 		HankelSVDModelMultipleObservations.doubleLoopTest();
 	}
+	
+	public HashSet<SequenceOfSymbols> generatePowerBase(int base, int maxPower, int numDimensions){
+		return null;
+	}
 		
 	public static void doubleLoopTest(){
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		
-		int repetitions = 5;
+		int repetitions = 2;
 		int numberOfTrajectories = 1000;
 		int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 = 16;
-		int loop2 = 32;
+		int loop1 = 27;
+		int loop2 = 27;
 		int desiredHankelSize = (loop1+loop2)*3;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{15,18,20,25,30,35};
-		int maxPower = 128;
+		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45,50};
+		int maxPower = 243;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
-		FlowControl.createFolder(dataSetFolder);
-		generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		//FlowControl.createFolder(dataSetFolder);
+		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		//
 		
 		Matrix Eavg = null;
@@ -121,7 +125,10 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		System.out.println("Rows: exponents, Columns: modelSizes");
 		Eavg.print(5, 5);
 		
-		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "X: modelSize Y: Error norm2() light curves low base", "", xaxis, Eavg.getArrayCopy());
+		
+		String title = "Wall Color Predictions";
+		String internalComment = "Lighter Curves --> Less Base System";
+		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
 	
 	}
 	
@@ -172,8 +179,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			yaxis[0][i] = this.svdOfH.get("S").get(i, i);
 			xaxis[0][i] = i;
 		}
-		
-		OutputData.outputData(workingFolder + "SingularValues,"+ amountOfData + "," + loop1 + ":" + loop2, "X: modelSize Y: Singular Values", "", xaxis, yaxis);
+		String title = "Singular Values of H";
+		String internalComment = "";
+		OutputData.outputData(workingFolder + "SingularValues,"+ amountOfData + "," + loop1 + ":" + loop2, "i'th Singular Value", "", xaxis, yaxis, title, internalComment);
 
 		
 	}
@@ -555,6 +563,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix alpha_0 = H_W.times(sinv);
 		Matrix alpha_inf = pinv.times(H_H);
 	
+		
+		//System.out.println(XSigmas.keySet());
 		QueryEngineMultipleObservations q = new QueryEngineMultipleObservations(maxExponent, alpha_0, alpha_inf, XSigmas, base, prefixes, suffixes);
 		
 		//If Debugging Wanted
