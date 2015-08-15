@@ -124,8 +124,10 @@ public class KeySearching {
 		errTraining.print(5, 5);
 		errTesting.print(5, 5);
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_MaxK:" + maxK , "ModelSize | NOTE: Lighter curves --> Lower Base", "Error Norm2()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_MaxK:" + maxK, "ModelSize | NOTE: Lighter curves --> Lower Base", "Error Norm2()", xaxis, errorTestingVSModelSize);
+		String title = "Distance Predictions";
+		String internalComment = "Darker Curves --> Richer Base System";
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_MaxK:" + maxK , "Number Of States", "Error Norm_2", xaxis, errorTrainingVSModelSize, title, internalComment);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_MaxK:" + maxK, "Number Of States", "Error Norm_2", xaxis, errorTestingVSModelSize, title, internalComment);
 
 		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}
@@ -250,8 +252,10 @@ public class KeySearching {
 		Matrix errTraining = new Matrix(errorTrainingVSModelSize);
 		Matrix errTesting = new Matrix(errorTestingVSModelSize);
 		
-		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_Base:" + base , "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTrainingVSModelSize);
-		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_Base:" + base, "ModelSize | NOTE: Lighter curves --> Lower Trajectory Lengths", "Error Norm2()", xaxis, errorTestingVSModelSize);
+		String title = "Distance Predictions";
+		String internalComment = "Darker Curves --> Richer Base System";
+		OutputData.outputData(pltFolder + "KeyFindingErrorTraining_Base:" + base , "Number Of Statesze", "Error Norm2()", xaxis, errorTrainingVSModelSize, title, internalComment);
+		OutputData.outputData(pltFolder + "KeyFindingErrorTesting_Base:" + base, "Number Of States", "Error Norm2()", xaxis, errorTestingVSModelSize, title, internalComment);
 
 		return new ErrorPair(errorTrainingVSModelSize, errorTestingVSModelSize);
 	}

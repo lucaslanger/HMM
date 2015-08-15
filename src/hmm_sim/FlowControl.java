@@ -102,7 +102,7 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, String computeType){
-		int repetitions = 5;
+		int repetitions = 1;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
@@ -129,9 +129,10 @@ public class FlowControl {
 					xAxes[j][i] = mS;
 				}
 			}
-	
-			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
-			FlowControl.printErrors(maxKs, f);
+			String title = "Distance Predictions";
+			String internalComment = "Darker Curves --> Richer Base System";
+			//FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
+			//FlowControl.printErrors(maxKs, f, title, internalComment);
 		}
 		if (computeType == "Over-Base"){
 			double[] maxKs = new double[]{ 100 };	// get all 0s when maxK is <= 20
@@ -155,14 +156,16 @@ public class FlowControl {
 					xAxes[i][j] = mS;
 				}
 			}
-			FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
-			FlowControl.printErrors(maxKs, f);
+			String title = "Distance Predictions";
+			String internalComment = "Darker Curves --> Richer Base System";
+			//FlowControl.writeKeyErrorsToFile(errorInfoTraining, errorInfoTesting, xAxes, f);
+			//FlowControl.printErrors(maxKs, f, title, internalComment);
 		}
 		System.out.println("Done generated error data");
 		System.out.println();	
 	}
 	
-	public static void printErrors(double[] maxKs, String f){
+	public static void printErrors(double[] maxKs, String f, String title, String internalComment){
 		ModelKeySearchComparison r = FlowControl.readKeyErrorsToFile( f );
 		r.printOut();
 		double[][][] testing = r.getTestingData();
@@ -183,9 +186,9 @@ public class FlowControl {
 
 			String s = Integer.toString( (int) maxKs[i] );
 			System.out.println("Writing out " + filename + "Testing_" + s );
-			OutputData.outputData(filename + "Testing_" + s, xaxisLabel, "", x, t1);
+			OutputData.outputData(filename + "Testing_" + s, xaxisLabel, "", x, t1, title, internalComment);
 			System.out.println("Writing out " + filename + "Training_" + s);
-			OutputData.outputData(filename + "Training_" + s, xaxisLabel, "", x, t2);
+			OutputData.outputData(filename + "Training_" + s, xaxisLabel, "", x, t2, title, internalComment);
 		}
 	}
 	

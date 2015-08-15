@@ -1,8 +1,10 @@
 package hmm_sim;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
+
+import javax.naming.BinaryRefAddr;
 
 public class HeuristicsForPickingBase {
 	
@@ -22,11 +24,99 @@ public class HeuristicsForPickingBase {
 		}
 		
 		int numDimensions = 1;
-		HashSet<SequenceOfSymbols> a = computeBaseSystem(seqs, 1, 4);
-		System.out.println(a);
+		
+		HashSet<String> base = new HashSet<String>();
+		base.add("1");
+		
+		for (SequenceOfSymbols s: seqs) {
+			computeOptimalCompositionsNeccesary(base, s.getRawSequence() );
+		}
+	}
+	
+
+	//Dynamic Programming algorithm
+	public static int computeOptimalCompositionsNeccesary(HashSet<String> base, String s){
+		HashMap<Integer, ArrayList<String>> possiblePlugins = new HashMap<Integer, ArrayList<String>>();
+		for (int i = 0; i < s.length(); i++) {
+			for (String string : base) {
+				if (i + string.length() <  s.length() && string.equals(s.substring(i, i + string.length()) )){
+					ArrayList<String> t = possiblePlugins.get(i);
+					t.add(string);
+					possiblePlugins.put(i, t);
+				}
+			}
+		}
+		
+		int[][] compositionsNeccesary = new int[s.length()][s.length()];
+		HashMap<String, String > bestCompositions = new HashMap<String, String>();
+		try {
+			return recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, 0, s.length()-1);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("Problem with computation of how to chop into substrings");
+			return 0;
+		}
+		
+	}
+	
+	private static int recursiveComputationsNeccessary(HashMap<Integer, ArrayList<String>> possiblePlugins, int[][] compositionsNeccesary, HashMap<String, String> bestCompositions, HashSet<String> base, String s, int i, int j) throws Exception{
+		if(i==j){
+			if(base.contains(  Character.toString(s.charAt(i)) ) ){
+				String s1 = Integer.toString(i) + ":" +  j;
+				bestCompositions.put(s1, Character.toString(s1.charAt(i)) );
+				return 1;
+			}
+			else{
+				System.out.println("Basic Symbol not included!" );
+				System.out.println( s.charAt(i) );
+				System.out.println(base);
+				throw new Exception();
+			}
+		}
+		else if(compositionsNeccesary[i][j] != 0 ){
+
+			return compositionsNeccesary[i][j];
+		}
+		else{
+			int min = 0;
+			int minIndex = 0;
+			String minBaseString = "";
+			boolean b = false;
+			for (int h = i+1; h < j; h++) {
+				for (String string : possiblePlugins.get(h)) {
+					int cL = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, i, h);
+					int cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h+1+string.length(), j);
+					int sum = cL + 1 +  cR;
+					if (b == false || sum < min){
+						min = sum;
+						minIndex = h;
+						minBaseString = string;
+						b = true;
+					}
+				}
+			}
+			compositionsNeccesary[i][j] = min;
+			
+			String leftId = Integer.toString(i) +  ":" + minIndex;
+			String rightId = Integer.toString(minIndex + minBaseString.length() ) + ":" + j;
+			String lBest = bestCompositions.get(leftId);
+			String rBest = bestCompositions.get(rightId);
+			
+			String combinedBest = lBest + minBaseString + rBest;
+			
+			String s1 = Integer.toString(i) + j;
+			bestCompositions.put(s1, combinedBest);
+			return min;
+		}
+	}
+	
+	public  static int formulaForStringScore(int compositionsNeccesary, int appearences){
+		//MISSING THE LENGTH OF THE STRING
+		return appearences - compositionsNeccesary;
 	}
 	
 	
+	/*
 	public static SymbolCounts countSubstringOccurances(int numDimensions, SequenceOfSymbols[] strings){
 		SymbolCounts substringOccurances = new SymbolCounts(numDimensions);
 		for (SequenceOfSymbols sequenceOfSymbols : strings) {
@@ -38,7 +128,8 @@ public class HeuristicsForPickingBase {
 		return substringOccurances;
 	}
 	
-	public static HashSet<SequenceOfSymbols> computeBaseSystem(SequenceOfSymbols[] strings, int numDimensions, int numberOfElementsInBase){
+	
+	public static HashSet<SequenceOfSymbols> computeBaseSystemOld(SequenceOfSymbols[] strings, int numDimensions, int numberOfElementsInBase){
 		HashSet<String > base = new HashSet<String>();
 		for (int i = 1; i <= numDimensions; i++) {
 			base.add( Integer.toString(i) );
@@ -85,56 +176,6 @@ public class HeuristicsForPickingBase {
 		}
 		return minKey;
 	}
-
-	//Dynamic Programming algorithm
-	public static int computeNumberCompositionsNeccesary(HashSet<String> base, String s){
-		int[][] compositionsNeccesary = new int[s.length()][s.length()];
-		try {
-			return recursiveComputationsNeccessary(compositionsNeccesary, base, s, 0, s.length()-1);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Problem with computation of how to chop into substrings");
-			return 0;
-		}
-		
-	}
-	
-	private static int recursiveComputationsNeccessary(int[][] compositionsNeccesary, HashSet<String> base, String s, int i, int j) throws Exception{
-		if(i==j){
-			if(base.contains(  Character.toString(s.charAt(i)) ) ){
-				return 1;
-			}
-			else{
-				System.out.println("Basic Symbol not included!" );
-				System.out.println( s.charAt(i) );
-				System.out.println(base);
-				throw new Exception();
-			}
-		}
-		else if(compositionsNeccesary[i][j] != 0 ){
-			//System.out.println("Memoization working");
-			return compositionsNeccesary[i][j];
-		}
-		else{
-			int min = 0;
-			boolean b = false;
-			for (int h = i+1; h < j; h++) {
-				int cL = recursiveComputationsNeccessary(compositionsNeccesary, base, s, i, h);
-				int cR = recursiveComputationsNeccessary(compositionsNeccesary, base, s, h+1, j);
-				int sum = cL + cR;
-				if (b == false || sum < min){
-					min = sum;
-					b = true;
-				}
-			}
-			compositionsNeccesary[i][j] = min;
-			return min;
-		}
-	}
-	
-	public  static int formulaForStringScore(int compositionsNeccesary, int appearences){
-		//MISSING THE LENGTH OF THE STRING
-		return appearences - compositionsNeccesary;
-	}
+	*/
 
 }

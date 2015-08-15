@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import Jama.Matrix;
@@ -364,6 +365,27 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 		}
 		return sc;
 	}
+	/*
+	public SymbolCounts getSubstringCountsNoIntersection() {
+	
+		SymbolCounts sc = new SymbolCounts();
+		for (int i = 0; i < this.getSequence().length()-1; i++) {
+			for (int j = i+1; j < this.getSequence().length(); j++) {
+				String s = this.getSequence().substring(i, j);
+				SequenceOfSymbols seq = new SequenceOfSymbols(s);
+				if (sc.getSymbolToFrequency().containsKey(s) == false){
+					int lsc = findSubStringCopies(this.getSequence().substring(0, i), s);
+					int rsc = findSubStringCopies(this.getSequence().substring(j, this.getSequence().length()), s);		
+					sc.updateFrequency( new SequenceOfSymbols(s), lsc + rsc);
+				}
+			}
+		}
+	}
+	
+	public int findSubStringCopies(String s, String searchFor){
+		
+	}
+	*/
 	
 
 
