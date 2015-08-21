@@ -94,6 +94,11 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 			freq = (int) Math.pow(base,l);
 			try {
 				h = this.buildH(freq, freq+basisSize);
+				
+				//System.out.println("truncating all Hsigmas");
+				//HashMap<String, Matrix> t = HankelSVDModelParent.truncateSVD(h, modelSize);	
+				//H_Matrices[l] = t.get("U").times(t.get("S")).times(t.get("VT"));
+				//No approx
 				H_Matrices[l] = h;
 			} catch (Exception e) {
 				System.out.println("Problem Building Model when creating Hankel");

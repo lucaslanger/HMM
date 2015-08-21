@@ -241,8 +241,10 @@ public class testEngine{
 		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
 		ERR.print(5, 5);
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
-		
-		OutputData.outputData(pltFolder + identifier, "X: model size Y: ||f - f*|| Lighter curves --> Lower Base", "", xAxis, errors);
+		String title = "Double Loop Timing";
+		String internalComment = "Darker Curves --> Richer Base System";
+		System.out.println("Outputting data to: " + identifier);
+		OutputData.outputData(pltFolder + identifier, "Number Of States", "Error Norm_2", xAxis, errors, title, internalComment);
 	}
 	
 	

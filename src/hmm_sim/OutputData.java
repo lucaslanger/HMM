@@ -59,6 +59,7 @@ public class OutputData {
 			writer.close();
 			
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			System.out.println("Something messed up when outputting data");
 			e.printStackTrace();
 		}
 

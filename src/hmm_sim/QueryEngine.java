@@ -167,6 +167,10 @@ public class QueryEngine {
 	}
 
 	public double probabilityQuery(int power, int maxPower, int base, boolean forward){
+		//BACKWARD!
+		System.out.println("Backward Queries!");
+		forward = false;
+		
 		int p = maxPower;
 		Matrix r;
 		if (forward){
@@ -269,11 +273,24 @@ public class QueryEngine {
 		m[0] = this.a0;
 		for (int i = 1; i < m.length; i++) {
 			m[i] = this.alphaKQuery(i, maxPow, base );
-			double normalizer = m[i].norm2();
-			//double normalizer = m[i].times(ainf).get(0, 0);
-			m[i] = m[i].times(1.0/normalizer);
+			int l = m[i].getArrayCopy()[0].length;
+			Matrix t = m[i].times( (Matrix.identity(l,l).minus( this.getAsigmas()[0]) ).inverse() ).times(this.ainf) ;
+			if((t.getArrayCopy()[0].length == 1 && t.getArrayCopy().length == 1) == false){
+				System.out.println("SOMETHING WRONG WITH NORMALIZATION");
+			}
+			//double normalizer = 1.0/t.get(0,0);
+			//System.out.println(m[i].norm2());
+			//double normalizer = 1.0/(m[i].norm2());
+			double normalizer = 1;
+			m[i] = m[i].times(normalizer);
+			//m[i].print(5, 5);
+			//System.out.println(m[i].norm2());
+			//ainf.transpose().print(5, 5);
+			//System.out.println(m[i].times(((Matrix.identity(l,l).minus( this.getAsigmas()[0]) ).inverse()).times(this.ainf)).get(0, 0));
+			//System.out.println();
 			//System.out.println(m[i].norm2());
 		}	
+		System.out.println();
 		return m;
 	}
 	

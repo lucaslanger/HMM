@@ -68,7 +68,7 @@ public class KeySearching {
 		QueryEngine[] learnedModels = new QueryEngine[modelSizes[0].length];
 		for (int i = 0; i < learnedModels.length; i++) {
 			learnedModels[i] = mr.getSpecificModelSizeQueryEngines(1, (int) modelSizes[0][i]).get(dataSizeForFixedPlots)[0];
-			checkQEForDifferences(trueQE, learnedModels[i], bases, 500);
+			//checkQEForDifferences(trueQE, learnedModels[i], bases, 500);
 		}
 		
 		Matrix[][][] alphaKStatesOver_MS_bases = new Matrix[modelSizes[0].length][basesToTest[0].length][maxK];

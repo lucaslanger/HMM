@@ -20,10 +20,10 @@ public class FlowControl {
 		}*/
 		String f = "ErrorStorage";
 
-		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
 		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
-		FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
+		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
 	
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
@@ -31,7 +31,7 @@ public class FlowControl {
 		
 		int repetitions = 2;
 		int stretchFactor = 10;
-		int hSize = 500;
+		int hSize = 700;
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
@@ -66,16 +66,16 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 1;
+		int repetitions = 2;
 		
 
-		int loop1 = 64;
-		int loop2 = 16;
+		int loop1 = 45;
+		int loop2 = 17;
 		int hSize = 700;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		//int[] modelSizes = new int[]{18,20,22,24,26,28,30};
-		int[] modelSizes = new int[]{40,50,60,100};
+		//int[] modelSizes = new int[]{15,16,18,20,22,24,26,28,30};
+		int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
@@ -83,7 +83,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		double selfTransitionProbability = 0.10;
+		double selfTransitionProbability = 0.00;
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions, false);
 		
@@ -102,7 +102,7 @@ public class FlowControl {
 	}
 	
 	public static void computeKeySearchStuff(int[] trajectorySizes, int dataSizeForFixedPlots, int base, String f, String computeType){
-		int repetitions = 1;
+		int repetitions = 10;
 		int stretchFactor = 10;
 		int hSize = 500;
 		int basisSize = 300;
@@ -136,8 +136,8 @@ public class FlowControl {
 		}
 		if (computeType == "Over-Base"){
 			double[] maxKs = new double[]{ 100 };	// get all 0s when maxK is <= 20
-			double[] mS = new double[]{ 40, 50, 60, 70, 80};
-			double maxPowers[] = { 1, 2, 4 , 8 , 16, 32, 64, 128};
+			double[] mS = new double[]{30,40,50,60,70,100};
+			double maxPowers[] = { 1, 8, 16, 64, 128};
 
 			double[][][] errorInfoTraining = new double[maxKs.length][maxPowers.length][mS.length];
 			double[][][] errorInfoTesting = new double[maxKs.length][maxPowers.length][mS.length];
