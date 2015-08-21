@@ -3,6 +3,7 @@ package hmm_sim;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.PriorityQueue;
 
 import javax.naming.BinaryRefAddr;
@@ -54,8 +55,18 @@ public class HeuristicsForPickingBase {
 			i++;
 		}
 		
-		HashSet<SequenceOfSymbols> a = HeuristicsForPickingBase.chooseBaseFromData(seqs, 5, 2);
+		Map<SequenceOfSymbols, Integer> m = sequenceDataToCounts(seqs); 
+		
+		HashSet<SequenceOfSymbols> a = HeuristicsForPickingBase.chooseBaseFromData(m, 5, 2);
 
+	}
+	
+	public static Map<SequenceOfSymbols, Integer> sequenceDataToCounts(SequenceOfSymbols[] seqs){
+		SymbolCounts sc = new SymbolCounts();
+		for (SequenceOfSymbols sequenceOfSymbols : seqs) {
+			sc.updateFrequency(sequenceOfSymbols, 1);
+		}
+		return sc.symbolToFrequency;
 	}
 	
 
@@ -183,7 +194,7 @@ public class HeuristicsForPickingBase {
 	
 	//WORKING ON SUBSTRING STUFF
 	
-	public static HashSet<SequenceOfSymbols> chooseBaseFromData(SequenceOfSymbols[] seqs, int maxBaseSize, int numDimensions){
+	public static HashSet<SequenceOfSymbols> chooseBaseFromData(Map<SequenceOfSymbols, Integer> m, int maxBaseSize, int numDimensions){
 		HashSet<String> currentBase = new HashSet<String>();
 		HashMap<SequenceOfSymbols, Integer> currentBestDecomposition = new HashMap<SequenceOfSymbols, Integer>();
 		
@@ -192,10 +203,15 @@ public class HeuristicsForPickingBase {
 		}
 		
 		HashSet<SequenceOfSymbols> substrings = new HashSet<SequenceOfSymbols>();
-		for (SequenceOfSymbols seq : seqs) {
+		for (SequenceOfSymbols seq : m.keySet()) {
 			substrings.addAll(seq.getSubstrings());
 			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
+		System.out.println("Number of observations");
+		System.out.println(m.size());
+		System.out.println();
+		System.out.println("Number of substrings: ");
+		System.out.println(substrings.size());
 		
 		while(currentBase.size() < maxBaseSize && substrings.size() > 0){
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
@@ -203,7 +219,7 @@ public class HeuristicsForPickingBase {
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
-				for (SequenceOfSymbols seq : seqs) {
+				for (SequenceOfSymbols seq : m.keySet()) {
 					StringIntPair p;
 					try {
 						p = computeOptimalCompositionsNeccesary(tempBase, seq.getRawSequence(), "Min");
@@ -220,7 +236,7 @@ public class HeuristicsForPickingBase {
 						 System.out.println("Improvement less than 0 --> buggy");
 						return null;
 					 } 
-					 improvement += extra;
+					 improvement += extra*m.get(seq);
 				} 
 
 				SymbolCountPair sc = new SymbolCountPair(-1*improvement, s);
