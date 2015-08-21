@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.PriorityQueue;
 
 import Jama.Matrix;
@@ -238,6 +239,13 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int maxExponent, int[] modelSizes){
 		
 		QueryEngineMultipleObservations[] qEs = new QueryEngineMultipleObservations[modelSizes.length];
+		int maxBaseSize = 4;
+		Map<SequenceOfSymbols, Integer> t = HeuristicsForPickingBase.sequenceDataToCounts(seqs);
+		HashSet<SequenceOfSymbols> baseKeys = HeuristicsForPickingBase.chooseBaseFromData(t, maxBaseSize, numDimensions);
+		System.out.println("Chosen keyset:");
+		System.out.println(baseKeys);
+		System.out.println();
+		
 		for (int i = 0; i <= maxExponent; i++) {
 			
 			int c=0;
@@ -249,7 +257,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 					//System.out.println();
 				}
 				
-				qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, i ,mS);
+				//qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, i ,mS);
+				qEs[c] = h.buildHankelBasedModelMultipleObservationsCustomBase(h.fullData, h.prefixes, h.suffixes, baseKeys , mS);
 				c++;
 			}
 			
@@ -257,6 +266,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		return qEs;
 	}
+	
+	
 	
 	public HankelSVDModelMultipleObservations(LinkedList<SymbolCountPair> scp, int basisSize, int numDimensions){
 		this.numDimensions = numDimensions;
@@ -566,6 +577,58 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		//System.out.println(XSigmas.keySet());
 		QueryEngineMultipleObservations q = new QueryEngineMultipleObservations(maxExponent, alpha_0, alpha_inf, XSigmas, base, prefixes, suffixes);
+		
+		//If Debugging Wanted
+		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
+		
+		return q;
+	}
+	
+	
+	public QueryEngineMultipleObservations buildHankelBasedModelMultipleObservationsCustomBase(SymbolCounts dataCounts, SymbolCounts prefixes, SymbolCounts suffixes, HashSet<SequenceOfSymbols> desiredBase,  int modelSize){
+
+
+		Matrix H = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, new SequenceOfSymbols(""), false);
+				
+		HashMap<String, Matrix> truncatedSVD = super.truncateSVD(H , modelSize);
+		
+		Matrix di = pseudoInvDiagonal(truncatedSVD.get("S"));
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+
+		HashMap<SequenceOfSymbols, Matrix> XSigmas = new HashMap<SequenceOfSymbols, Matrix>();
+	
+		for (SequenceOfSymbols seq: desiredBase) {
+			
+			Matrix Hx = buildHankelMultipleObservations(dataCounts, prefixes, suffixes, seq, false );
+			Matrix Ax = pinv.times(Hx).times(sinv);
+			XSigmas.put(seq, Ax);
+			
+		}
+		
+		int widthOfH = H.getArrayCopy()[0].length;
+		int heightOfH = H.transpose().getArrayCopy()[0].length;
+		
+		double[][] h_W = new double[1][widthOfH];
+		for (int j = 0; j < widthOfH; j++) {
+			h_W[0][j] = H.get(0, j);
+		}
+		
+		int j = 0; 
+		double[][] h_H = new double[heightOfH][1];
+		for (int i = 0; i < heightOfH; i++) {
+			h_H[i][0] = H.get(i, 0);
+		}
+		
+		Matrix H_W = new Matrix( h_W );
+		Matrix H_H = new Matrix( h_H );
+				
+		Matrix alpha_0 = H_W.times(sinv);
+		Matrix alpha_inf = pinv.times(H_H);
+	
+		
+		//System.out.println(XSigmas.keySet());
+		QueryEngineMultipleObservations q = new QueryEngineMultipleObservations(alpha_0, alpha_inf, XSigmas, prefixes, suffixes);
 		
 		//If Debugging Wanted
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);

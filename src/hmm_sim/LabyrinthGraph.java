@@ -238,9 +238,9 @@ public class LabyrinthGraph extends Environment{
 		loopLengths.put(1, firstWallLength);
 		loopLengths.put(2, secondWallLength);
 		
-		System.out.println("Loop Length Values");
-		System.out.println(loopLengths.values());
-		System.out.println();
+		//System.out.println("Loop Length Values");
+		//System.out.println(loopLengths.values());
+		//System.out.println();
 		
 		l.loopLengths = loopLengths;
 		

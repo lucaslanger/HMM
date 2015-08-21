@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import javax.naming.BinaryRefAddr;
 
@@ -207,19 +208,29 @@ public class HeuristicsForPickingBase {
 			substrings.addAll(seq.getSubstrings());
 			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
+		
+		System.out.println("Base size");
+		System.out.println(maxBaseSize);
+		System.out.println();
 		System.out.println("Number of observations");
 		System.out.println(m.size());
 		System.out.println();
 		System.out.println("Number of substrings: ");
 		System.out.println(substrings.size());
+		System.out.println();
 		
 		while(currentBase.size() < maxBaseSize && substrings.size() > 0){
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
+			int i = 0;
 			for (SequenceOfSymbols s : substrings) {
+				System.out.println(s);
+				System.out.println(i);
+				i++;
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
 				for (SequenceOfSymbols seq : m.keySet()) {
+					//System.out.println(seq);
 					StringIntPair p;
 					try {
 						p = computeOptimalCompositionsNeccesary(tempBase, seq.getRawSequence(), "Min");
@@ -245,6 +256,9 @@ public class HeuristicsForPickingBase {
 			SymbolCountPair bestAddition = pq.peek();
 			substrings.remove(bestAddition.getSequence());
 			currentBase.add(bestAddition.getSequence().getRawSequence());
+			System.out.println("Added to base:");
+			System.out.println(bestAddition.getSequence());
+			currentBestDecomposition = updateCurrentBestDecomposition(m.keySet(), currentBase);
 		}
 		
 		HashSet<SequenceOfSymbols> returnBase = stringHashSetToSeqOfSymbols(currentBase);
@@ -253,10 +267,34 @@ public class HeuristicsForPickingBase {
 		
 	}
 	
+	private static HashMap<SequenceOfSymbols, Integer> updateCurrentBestDecomposition(Set<SequenceOfSymbols> set, HashSet<String> updatedBase){
+		HashMap<SequenceOfSymbols, Integer> currentBestDecomp = new HashMap<SequenceOfSymbols, Integer>();
+		for (SequenceOfSymbols sub : set) {
+			StringIntPair opt;
+			try {
+				opt = computeOptimalCompositionsNeccesary(updatedBase, sub.getRawSequence(), "Min");
+				currentBestDecomp.put(sub, opt.getI());
+			} catch (Exception e) {
+				System.out.println("Problem computing optimal when updating currentBestDecomposition");
+				e.printStackTrace();
+				return null;
+			}
+		}
+		return currentBestDecomp;
+	}
+	
 	private static HashSet<SequenceOfSymbols> stringHashSetToSeqOfSymbols(HashSet<String> h){
 		HashSet<SequenceOfSymbols> hr = new HashSet<SequenceOfSymbols>();
 		for (String s : h) {
 			hr.add(SequenceOfSymbols.fullStringToCompressed(s));
+		}
+		return hr;
+	}
+	
+	public static HashSet<String> seqHashSetToStringOfSymbols(Set<SequenceOfSymbols> h){
+		HashSet<String> hr = new HashSet<String>();
+		for (SequenceOfSymbols s : h) {
+			hr.add( s.getRawSequence() );
 		}
 		return hr;
 	}

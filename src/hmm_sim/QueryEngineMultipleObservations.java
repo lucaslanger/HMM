@@ -28,6 +28,8 @@ public class QueryEngineMultipleObservations {
 	private SymbolCounts suffixes;
 	private int base;
 	
+	private boolean customBase = false;
+	
 	public int getBase(){
 		return this.base;
 	}
@@ -80,6 +82,19 @@ public class QueryEngineMultipleObservations {
 		this.originalSVD = originalSVD;
 	}
 
+	public QueryEngineMultipleObservations(Matrix alpha_0, Matrix alpha_inf,
+			HashMap<SequenceOfSymbols, Matrix> xSigmas, SymbolCounts prefixes2,
+			SymbolCounts suffixes2) {
+		
+		this.a0 = alpha_0;
+		this.ainf = alpha_inf;
+		this.Asigmas = xSigmas;
+		this.prefixes = prefixes2;
+		this.suffixes = suffixes2;
+		this.customBase = true;
+		
+	}
+
 	public Matrix getA0() {
 		return a0;
 	}
@@ -110,34 +125,6 @@ public class QueryEngineMultipleObservations {
 		}
 	}
 	
-	/*public void debugHComparisons(){
-		
-		System.out.println("H differences");
-		System.out.println(truncatedSVD.get(""));
-		
-		System.out.println("P's");
-		machine.get("pinv").print(5, 5);
-		tru.get("pinv").print(5, 5);
-		machine.get("pinv").minus(tru.get("pinv")).print(5, 5);
-		
-		System.out.println("SVDs");
-		machine.get("s_values").print(5, 5);
-		tru.get("s_values").print(5, 5);	
-		
-		System.out.println("U's");
-		machine.get("U").print(5, 5);
-		tru.get("U").print(5, 5);
-		
-		System.out.println("VT's");
-
-		machine.get("VT").print(5, 5);
-		tru.get("VT").print(5, 5);
-		
-		System.out.println("Asigma=1 error");
-		machine.get("1").minus(tru.get("1")).print(5,5);
-	}*/
-
-	
 	public static Matrix matrixPower(Matrix m, int exp){
 		
 		Matrix I = Matrix.identity(m.getArray().length, m.getArray().length);
@@ -155,6 +142,9 @@ public class QueryEngineMultipleObservations {
 	}
 
 	public double probabilityQuery(SequenceOfSymbols sequence, boolean debug){
+		if (this.customBase){
+			return this.customProbabilityQuery(sequence);
+		}
 		Matrix r = this.a0;
 		while(sequence.getSequence() != ""){
 			
@@ -177,6 +167,30 @@ public class QueryEngineMultipleObservations {
 		
 	}
 	
+	private double customProbabilityQuery(SequenceOfSymbols sequence) {
+		Matrix r = this.a0;
+		HashSet<String> k = HeuristicsForPickingBase.seqHashSetToStringOfSymbols(Asigmas.keySet());
+		try {
+			StringIntPair opt = HeuristicsForPickingBase.computeOptimalCompositionsNeccesary(k, sequence.getRawSequence(), "Min");
+			String[] breakdown = opt.getS().split(",");
+			for (String string : breakdown) {
+				SequenceOfSymbols s = SequenceOfSymbols.fullStringToCompressed(string);
+				r = r.times(this.Asigmas.get(s));
+			}
+			r = r.times(this.ainf);
+			
+			if (r.get(0, 0) != r.norm1()){
+				System.out.println("Problem with matrix multiplication when querying!");
+			}
+			return r.get(0, 0);
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("issue computing optimal ordering! must fix!");
+			return -100000;
+		}
+	}
+
 	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int power, boolean debug) {
 		int currentLimitingPower = this.maxPower;
 		SequenceOfSymbols currentSequence = new SequenceOfSymbols( symbol + ":" + Integer.toString(currentLimitingPower)  );
