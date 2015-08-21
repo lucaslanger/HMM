@@ -3,37 +3,51 @@ import sys
 import os
 import math
 
-numColors = 10
 
+numColors = 10
 colorsAnalysis = {}
 for i in range(numColors):
 	r = 0
-	g = 200
-	b = 50
+	g = 100
+	b = 0
 	colorsAnalysis[i] = '#%02x%02x%02x' % (r,g,b)
 
 colorsTests = {0:'g', 1:'r', 2:'b', 3:'y'}
 
+
+def generateFont(size):
+	font = {'family' : 'serif',
+		'color'  : 'black',
+		'weight' : 'normal',
+		'size'   : size,
+		}
+	return font
+
 def getDataFromFile(datafile):
 	print "Plotting " + datafile
 	with open(datafile) as f:
-		first = True
+		lineNum = 0
+		internalComment = ""
+		title = ""
 		xaxisLabel = "" 
 		yaxisLabel = ""
 		xvals = []
 		yvals = []
 		for line in f.readlines():
-			if first:
+			if lineNum == 0:
 				try:
 					s =  line.split(",")
 					xaxisLabel = s[0]
 					yaxisLabel = s[1]
-					first = False
 				except:
 					print "Please include your axis information in the following way: xaxisname,yaxisname"
 					print "Failed on the following line:"
 					print line
 					break
+			elif lineNum == 1:
+				internalComment = line
+			elif lineNum == 2:
+				title = line
 			else:
 				try:
 					data = (line.split("/n")[0])[:-1].split(" ")[:-1]
@@ -51,13 +65,15 @@ def getDataFromFile(datafile):
 					print str(e)
 					print s, datafile
 					break
+			lineNum = lineNum + 1
 
-		return (xaxisLabel,yaxisLabel,xvals,yvals)
+		return (xaxisLabel,yaxisLabel,xvals,yvals, title, internalComment)
 
 def takeLogOfArray(a):
 	return [math.log(i) for i in a]
 
 def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizontalPlotSize=-1):
+
 	l = len(names)	
 	if horizontalPlotSize == -1:
 		horizontalPlotSize = math.ceil(l**0.5)	
@@ -69,9 +85,13 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 		try:
 			d = getDataFromFile(folder+"/" + n)
 			plt.subplot(horizontalPlotSize,verticalPlotSize,i)
+			title = d[4]
+			internalComment = d[5]
+
 			for j in range(len(d[2])):
 				xdata = d[2][j]
-				ydata = d[3][j]		
+				ydata = d[3][j]
+						
 				if name[1] == 'log':
 					xdata = takeLogOfArray(xdata)
 				if name[2] == 'log':
@@ -79,7 +99,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 
 				l = len("SingularValues")
 				if alpha_scaling and n[:l] != "SingularValues":
-					a=(1.0*(j+1))/len(colors)
+					a=(1.0*(j+1))/len(d[2])
 
 				else:
 					a = 1.0				
@@ -87,9 +107,18 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 
 			#plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
-			plt.xlabel(d[0])
-			plt.ylabel(d[1])
-			plt.title(n)
+			plt.xlabel(d[0], fontdict= generateFont(22) )
+			plt.ylabel(d[1], fontdict= generateFont(22) )
+			plt.title(title, fontdict= generateFont(28) )	
+
+			xcoord = xdata[int(len(xdata)*5/8 )]
+			ycoord = ydata[0]*1.5
+			print xcoord
+			print ycoord
+			print internalComment			
+
+			plt.text(xcoord, ycoord, internalComment, fontdict=generateFont(16))
+
 			i += 1
 		except Exception,e:
 			print str(e)
@@ -111,11 +140,15 @@ modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','n
 #
 
 #-k
-baseComparisonKeyPredictions = [('KeyFindingErrorTraining_MaxK:100','normal','normal'), ('KeyFindingErrorTesting_MaxK:100','normal','normal')]
-				#[("Datasize:10000PacMan",'normal','normal')]
-				#,("Datasize:10000,64:16,ST:0.0",'normal','normal')]
-				#,("Datasize:10000,64:16,ST:0.1",'normal','normal')]
+baseComparisonKeyPredictions = [("Datasize:256000,64:16,ST:0.0",'normal','normal')]
+#[ ('KeyFindingErrorTesting_MaxK:250','normal','normal')]
+#[("Datasize:10000PacMan",'normal','normal')]
 
+				#
+				#('KeyFindingErrorTraining_MaxK:100','normal','normal')]
+				#[("Datasize:10000PacMan",'normal','normal')]
+
+				
 #fixedSizeModelBaseComparison = [10000]
 #baseComparisonKeyPredictions = []
 #for s in fixedSizeModelBaseComparison:
@@ -133,6 +166,7 @@ for d in dataSizes:
 		multipleObservations.append(('SingularValues,' + str(d) + "," + l,'normal','normal'))
 #
 
+multipleObservations = [('errorModelSizesBase,1000,32:16', 'normal','normal')]
 
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
@@ -141,6 +175,6 @@ elif t=='-a':
 elif t=='-k':
 	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True)	#2,5 to split
 elif t=='-mo':
-	drawPlots(datafile, multipleObservations, colorsAnalysis, True, 2, 5)
+	drawPlots(datafile, multipleObservations, colorsAnalysis, True, 1, 1)
 else:
 	print "invalid format"

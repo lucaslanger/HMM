@@ -389,8 +389,18 @@ public class SequenceOfSymbols implements Comparable<SequenceOfSymbols>, Seriali
 	*/
 
 	public Collection<SequenceOfSymbols> getSubstrings() {
-		// TODO Auto-generated method stub
-		return null;
+		HashSet<SequenceOfSymbols> seqs = new HashSet<SequenceOfSymbols>();
+		
+		String s = this.getRawSequence();
+		//System.out.println(this.getSequence());
+		for (int i = 0; i < s.length(); i++) {
+			for (int j = i+1; j <= s.length(); j++) {
+				String t = s.substring(i, j);
+				SequenceOfSymbols seq = SequenceOfSymbols.fullStringToCompressed(t);
+				seqs.add(seq);
+			}
+		}
+		return seqs;
 	}
 	
 

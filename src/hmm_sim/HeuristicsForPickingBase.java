@@ -32,23 +32,15 @@ public class HeuristicsForPickingBase {
 		base.add("2212");
 		//base.add("221");
 		base.add("21");
-		
-		//SUFFIX TRIE TO STORE SUBSEQUENCES AND TH
-		
+				
 		for (SequenceOfSymbols s: seqs) {
 			try {
-				
 				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence(), "Max" );
 				System.out.println(s);
 				System.out.println(opt.getS());
 				System.out.println(opt.getI());
 				System.out.println();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				break;
-			}
-			
+			} catch (Exception e) {	e.printStackTrace();break;}
 		}
 		
 	}
@@ -58,7 +50,7 @@ public class HeuristicsForPickingBase {
 		SequenceOfSymbols[] seqs = new SequenceOfSymbols[stemp.length];
 		int i=0;
 		for (String s : stemp) {
-			seqs[i] = SequenceOfSymbols.fullStringToCompressed(s); 
+			seqs[i] = new SequenceOfSymbols(s); 
 			i++;
 		}
 		
@@ -78,11 +70,7 @@ public class HeuristicsForPickingBase {
 				if (string.equals("") == false){
 					int stretchIndex = i + string.length() - 1 ;
 					if ( stretchIndex < s.length() && string.equals(s.substring(i, stretchIndex + 1) )){
-						/*System.out.println(s);
-						System.out.println(i);
-						System.out.println(string);
-						System.out.println(s.substring(i, stretchIndex + 1) );
-						System.out.println();*/
+					
 						if (possiblePlugins.containsKey(i)){
 							ArrayList<String> t = possiblePlugins.get(i);
 							t.add(string);
@@ -95,6 +83,12 @@ public class HeuristicsForPickingBase {
 						}
 					}
 				}
+			}
+			if (possiblePlugins.containsKey(i) == false){
+				System.out.println("Problem at index i");
+				System.out.println(i);
+				System.out.println(base);
+				System.out.println(s);
 			}
 		}
 		int[][] compositionsNeccesary = new int[s.length()][s.length()];
@@ -200,30 +194,36 @@ public class HeuristicsForPickingBase {
 		HashSet<SequenceOfSymbols> substrings = new HashSet<SequenceOfSymbols>();
 		for (SequenceOfSymbols seq : seqs) {
 			substrings.addAll(seq.getSubstrings());
+			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
 		
-		while(currentBase.size() < maxBaseSize){
+		while(currentBase.size() < maxBaseSize && substrings.size() > 0){
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
 			for (SequenceOfSymbols s : substrings) {
-				currentBase.add(s.getRawSequence());
+				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
+				tempBase.add(s.getRawSequence());
 				int improvement = 0;
-				for (SequenceOfSymbols obs : seqs) {
+				for (SequenceOfSymbols seq : seqs) {
 					StringIntPair p;
 					try {
-						p = computeOptimalCompositionsNeccesary(currentBase, obs.getRawSequence(), "Min");
+						p = computeOptimalCompositionsNeccesary(tempBase, seq.getRawSequence(), "Min");
 					} catch (Exception e) {
+						System.out.println(seq.getRawSequence());
+						//System.out.println();
+						e.printStackTrace();
 						System.out.println("Problem computing best composition");
 						return null;
 					}
-					 int extra = p.getI() - currentBestDecomposition.get(obs);
+					 int extra = currentBestDecomposition.get(seq) - p.getI();
 					 if (extra < 0){
+						 System.out.println(extra);
 						 System.out.println("Improvement less than 0 --> buggy");
 						return null;
 					 } 
 					 improvement += extra;
 				} 
-				currentBase.remove(s);
-				SymbolCountPair sc = new SymbolCountPair(improvement, s);
+
+				SymbolCountPair sc = new SymbolCountPair(-1*improvement, s);
 				pq.add(sc);
 			}
 			SymbolCountPair bestAddition = pq.peek();
@@ -232,6 +232,7 @@ public class HeuristicsForPickingBase {
 		}
 		
 		HashSet<SequenceOfSymbols> returnBase = stringHashSetToSeqOfSymbols(currentBase);
+		System.out.println(returnBase);
 		return returnBase;
 		
 	}
