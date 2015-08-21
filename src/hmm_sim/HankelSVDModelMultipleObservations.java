@@ -45,21 +45,21 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		
-		int repetitions = 2;
+		int repetitions = 1;
 		int numberOfTrajectories = 1000;
 		int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 = 32;
-		int loop2 = 16;
+		int loop1 =	16;
+		int loop2 = 32;
 		int desiredHankelSize = (loop1+loop2)*3;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
 		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45,50};
-		int maxPower = 256;
+		int maxPower = 128;
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
@@ -98,7 +98,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			for (int i = 0; i <= maxExponent; i++) {
 					
-				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes);
+				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes, false);
 				
 				for (int j = 0; j < qs.length; j++) {
 					quickQueryTest(qs[j]);
@@ -236,15 +236,18 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	}
 	
 	
-	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int maxExponent, int[] modelSizes){
+	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int maxExponent, int[] modelSizes, boolean custom){
 		
 		QueryEngineMultipleObservations[] qEs = new QueryEngineMultipleObservations[modelSizes.length];
-		int maxBaseSize = 4;
-		Map<SequenceOfSymbols, Integer> t = HeuristicsForPickingBase.sequenceDataToCounts(seqs);
-		HashSet<SequenceOfSymbols> baseKeys = HeuristicsForPickingBase.chooseBaseFromData(t, maxBaseSize, numDimensions);
-		System.out.println("Chosen keyset:");
-		System.out.println(baseKeys);
-		System.out.println();
+		HashSet<SequenceOfSymbols> baseKeys = null;
+		if (custom){
+			int maxBaseSize = 10;
+			Map<SequenceOfSymbols, Integer> t = HeuristicsForPickingBase.sequenceDataToCounts(seqs);
+			baseKeys = HeuristicsForPickingBase.chooseBaseFromData(t, maxBaseSize, numDimensions);
+			System.out.println("Chosen keyset:");
+			System.out.println(baseKeys);
+			System.out.println();
+		}
 		
 		for (int i = 0; i <= maxExponent; i++) {
 			
@@ -257,8 +260,12 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 					//System.out.println();
 				}
 				
-				//qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, i ,mS);
-				qEs[c] = h.buildHankelBasedModelMultipleObservationsCustomBase(h.fullData, h.prefixes, h.suffixes, baseKeys , mS);
+				if (custom){
+					qEs[c] = h.buildHankelBasedModelMultipleObservationsCustomBase(h.fullData, h.prefixes, h.suffixes, baseKeys , mS);
+				}
+				else{
+					qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, i ,mS);
+				}
 				c++;
 			}
 			
@@ -284,7 +291,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		this.prefixes = prefixes;
 		this.suffixes = suffixes;
 		
-		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), true );
+		Matrix Hlambda = this.buildHankelMultipleObservations(fullData, prefixes, suffixes, new SequenceOfSymbols(""), false );
 		this.rank = Hlambda.rank();
 
 		//Hlambda.print(5, 5);

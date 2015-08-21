@@ -168,6 +168,7 @@ public class QueryEngineMultipleObservations {
 	}
 	
 	private double customProbabilityQuery(SequenceOfSymbols sequence) {
+		if (sequence.getSequence().equals("")){return a0.times(ainf).get(0, 0);}
 		Matrix r = this.a0;
 		HashSet<String> k = HeuristicsForPickingBase.seqHashSetToStringOfSymbols(Asigmas.keySet());
 		try {
@@ -178,8 +179,10 @@ public class QueryEngineMultipleObservations {
 				r = r.times(this.Asigmas.get(s));
 			}
 			r = r.times(this.ainf);
+	
 			
-			if (r.get(0, 0) != r.norm1()){
+			if (Math.abs(r.get(0, 0)) != r.norm1()){
+				r.print(5, 5);
 				System.out.println("Problem with matrix multiplication when querying!");
 			}
 			return r.get(0, 0);

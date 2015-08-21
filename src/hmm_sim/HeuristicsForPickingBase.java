@@ -223,9 +223,9 @@ public class HeuristicsForPickingBase {
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
 			int i = 0;
 			for (SequenceOfSymbols s : substrings) {
-				System.out.println(s);
-				System.out.println(i);
-				i++;
+				//System.out.println(s);
+				//System.out.println(i);
+				//i++;
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
@@ -256,8 +256,8 @@ public class HeuristicsForPickingBase {
 			SymbolCountPair bestAddition = pq.peek();
 			substrings.remove(bestAddition.getSequence());
 			currentBase.add(bestAddition.getSequence().getRawSequence());
-			System.out.println("Added to base:");
-			System.out.println(bestAddition.getSequence());
+			//System.out.println("Added to base:");
+			//System.out.println(bestAddition.getSequence());
 			currentBestDecomposition = updateCurrentBestDecomposition(m.keySet(), currentBase);
 		}
 		
@@ -313,5 +313,14 @@ public class HeuristicsForPickingBase {
 		return minKey;
 	}
 	
+	/*
+	private static SequenceOfSymbols[] getBestSubstrings(SequenceOfSymbols[] s, int numSubstrings){
+		SymbolCounts sc = new SymbolCounts();
+		for (SequenceOfSymbols sequenceOfSymbols : s) {
+		
+		}
+		
+	}
+	*/
 
 }
