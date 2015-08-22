@@ -44,7 +44,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	public static void doubleLoopTest(){
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
-		
+		boolean customBase = true;
 		int repetitions = 1;
 		int numberOfTrajectories = 1000;
 		int amountOfData = 1000;
@@ -52,14 +52,20 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 =	16;
-		int loop2 = 32;
-		int desiredHankelSize = (loop1+loop2)*3;
+		int loop1 =	8;
+		int loop2 = 4;
+		int desiredHankelSize = (loop1+loop2)*4;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45,50};
-		int maxPower = 128;
+		int[] modelSizes = new int[]{5,7,9,11,12,13,15,17,19,21};
+		int maxPower;
+		if (!customBase){
+			maxPower = 32;
+		}
+		else{
+			maxPower = 1;
+		}
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
@@ -98,7 +104,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			for (int i = 0; i <= maxExponent; i++) {
 					
-				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes, false);
+				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes, customBase);
 				
 				for (int j = 0; j < qs.length; j++) {
 					quickQueryTest(qs[j]);

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 
 import javax.naming.BinaryRefAddr;
@@ -13,7 +14,7 @@ public class HeuristicsForPickingBase {
 	
 	public static void main(String[] args){
 		//System.out.println("dsfsf".substring(1, 3));
-		HeuristicsForPickingBase.selectBaseTest();
+		HeuristicsForPickingBase.testDPSelection();
 	}
 	public static void testDPSelection(){ 
 		String[] t = new String[]{"1:1,2:2,1:1,2:1,1:1"};
@@ -32,13 +33,14 @@ public class HeuristicsForPickingBase {
 		base.add("1");
 		base.add("2");
 		base.add("2212");
-		//base.add("221");
+		base.add("121");
+		base.add("122");
 		base.add("21");
 				
 		for (SequenceOfSymbols s: seqs) {
 			try {
-				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence(), "Max" );
-				System.out.println(s);
+				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence(), "Min" );
+				System.out.println(s.getRawSequence());
 				System.out.println(opt.getS());
 				System.out.println(opt.getI());
 				System.out.println();
@@ -151,6 +153,11 @@ public class HeuristicsForPickingBase {
 						}else{
 							cL = new StringIntPair("", 0);
 						}
+						//new addition to speed things up
+						if (b != false && (cL.getI() + 1 >= best && type=="Min")){
+							continue;
+						}
+						
 						StringIntPair cR;
 						if(h + string.length() <= j){
 							cR = recursiveComputationsNeccessary(possiblePlugins, compositionsNeccesary, bestCompositions, base, s, h + string.length(), j, type);
@@ -203,9 +210,14 @@ public class HeuristicsForPickingBase {
 			currentBase.add( Integer.toString(i) );
 		}
 		
-		HashSet<SequenceOfSymbols> substrings = new HashSet<SequenceOfSymbols>();
+		int numSubstrings = 100;
+		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
+		System.out.println("Done choosing substrings");
+		System.out.println(substrings);
+		System.out.println();
+		
 		for (SequenceOfSymbols seq : m.keySet()) {
-			substrings.addAll(seq.getSubstrings());
+			//substrings.addAll(seq.getSubstrings());
 			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
 		
@@ -229,8 +241,11 @@ public class HeuristicsForPickingBase {
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
-				for (SequenceOfSymbols seq : m.keySet()) {
-					//System.out.println(seq);
+				
+				int randomSample = 10;
+				HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);
+				
+				for (SequenceOfSymbols seq : sub) {
 					StringIntPair p;
 					try {
 						p = computeOptimalCompositionsNeccesary(tempBase, seq.getRawSequence(), "Min");
@@ -247,8 +262,10 @@ public class HeuristicsForPickingBase {
 						 System.out.println("Improvement less than 0 --> buggy");
 						return null;
 					 } 
-					 improvement += extra*m.get(seq);
+					 improvement += extra;//*m.get(seq);
 				} 
+				//i++;
+				//System.out.println(i);
 
 				SymbolCountPair sc = new SymbolCountPair(-1*improvement, s);
 				pq.add(sc);
@@ -256,8 +273,9 @@ public class HeuristicsForPickingBase {
 			SymbolCountPair bestAddition = pq.peek();
 			substrings.remove(bestAddition.getSequence());
 			currentBase.add(bestAddition.getSequence().getRawSequence());
-			//System.out.println("Added to base:");
-			//System.out.println(bestAddition.getSequence());
+			System.out.println("Added to base:");
+			System.out.println(bestAddition.getSequence());
+			System.out.println();
 			currentBestDecomposition = updateCurrentBestDecomposition(m.keySet(), currentBase);
 		}
 		
@@ -267,6 +285,34 @@ public class HeuristicsForPickingBase {
 		
 	}
 	
+	private static HashSet<SequenceOfSymbols> randomSubset(Map<SequenceOfSymbols, Integer> m, int randomSample) {
+		HashSet<SequenceOfSymbols> sample = new HashSet<SequenceOfSymbols>();
+		Random r = new Random();
+		int count = 0;
+		for (SequenceOfSymbols sequenceOfSymbols : m.keySet()) {
+			count += m.get(sequenceOfSymbols);
+		}
+		
+		for (int i = 0; i < randomSample; i++) {
+		
+			int rI = r.nextInt(count);
+			int t = 0;
+			for (SequenceOfSymbols sequenceOfSymbols : m.keySet()) {
+				if (t>rI){
+					sample.add(sequenceOfSymbols);
+					break;
+				}
+				t+= m.get(sequenceOfSymbols);
+				if (t==rI){
+					sample.add(sequenceOfSymbols);
+					break;
+				}
+			}
+			
+		}
+		
+		return sample;
+	}
 	private static HashMap<SequenceOfSymbols, Integer> updateCurrentBestDecomposition(Set<SequenceOfSymbols> set, HashSet<String> updatedBase){
 		HashMap<SequenceOfSymbols, Integer> currentBestDecomp = new HashMap<SequenceOfSymbols, Integer>();
 		for (SequenceOfSymbols sub : set) {
@@ -299,7 +345,7 @@ public class HeuristicsForPickingBase {
 		return hr;
 	}
 	
-	private static SequenceOfSymbols getMinFromHashSet(HashMap<SequenceOfSymbols, Integer> scores) {
+	private static SequenceOfSymbols getMinFromHashSet(Map<SequenceOfSymbols, Integer> scores) {
 		double min = 0;
 		SequenceOfSymbols minKey = null;
 		boolean b = false;
@@ -313,14 +359,37 @@ public class HeuristicsForPickingBase {
 		return minKey;
 	}
 	
-	/*
-	private static SequenceOfSymbols[] getBestSubstrings(SequenceOfSymbols[] s, int numSubstrings){
+	
+	private static SequenceOfSymbols[] getBestSubstrings(Iterable<SequenceOfSymbols> s, int numSubstrings){
 		SymbolCounts sc = new SymbolCounts();
 		for (SequenceOfSymbols sequenceOfSymbols : s) {
 		
 		}
+		return null;
 		
 	}
-	*/
+	private static HashSet<SequenceOfSymbols> getBestSubstrings2(Map<SequenceOfSymbols, Integer> s, int numSubstrings){
+		SymbolCounts sc = new SymbolCounts();
+		for (SequenceOfSymbols sequenceOfSymbols : s.keySet()) {
+			for (SequenceOfSymbols seqs : sequenceOfSymbols.getSubstrings()) {
+				sc.updateFrequency(seqs, s.get(sequenceOfSymbols));
+			}
+		}
+		
+		PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
+		for (SequenceOfSymbols seq : sc.symbolToFrequency.keySet()) {
+			int c = sc.symbolToFrequency.get(seq);
+			SymbolCountPair scp = new SymbolCountPair(-1*c, seq);
+			pq.add(scp);
+		}
+		
+		HashSet<SequenceOfSymbols> r = new HashSet<SequenceOfSymbols>();
+		for (int i = 0; i < numSubstrings; i++) {
+			r.add( pq.remove().getSequence());
+		}
+		
+		return r;
+		
+	}
 
 }
