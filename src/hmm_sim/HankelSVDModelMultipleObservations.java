@@ -52,13 +52,13 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 =	8;
-		int loop2 = 4;
-		int desiredHankelSize = (loop1+loop2)*4;
+		int loop1 =	32;
+		int loop2 = 16;
+		int desiredHankelSize = (loop1+loop2)*3;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{5,7,9,11,12,13,15,17,19,21};
+		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
 		int maxPower;
 		if (!customBase){
 			maxPower = 32;

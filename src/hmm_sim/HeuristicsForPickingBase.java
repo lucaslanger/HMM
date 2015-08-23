@@ -39,7 +39,7 @@ public class HeuristicsForPickingBase {
 				
 		for (SequenceOfSymbols s: seqs) {
 			try {
-				StringIntPair opt = computeOptimalCompositionsNeccesary(base, s.getRawSequence(), "Min" );
+				StringIntPair opt = computeOptimalCompositionsNeccesaryCoinStyle(base, s.getRawSequence(), "Min" );
 				System.out.println(s.getRawSequence());
 				System.out.println(opt.getS());
 				System.out.println(opt.getI());
@@ -73,8 +73,67 @@ public class HeuristicsForPickingBase {
 	}
 	
 
-	//Dynamic Programming algorithm
-	public static StringIntPair computeOptimalCompositionsNeccesary(HashSet<String> base, String s, String type) throws Exception{
+	public static StringIntPair computeOptimalCompositionsNeccesaryCoinStyle(HashSet<String> base, String s, String type){
+		if (s.equals("")){
+			return new StringIntPair("", 0);
+		}
+		
+		HashMap<Integer, ArrayList<String>> possibleterminations = new HashMap<Integer, ArrayList<String>>();
+		for (int i = 0; i < s.length(); i++) {
+			for (String string : base) {
+				if (string.equals("") == false){
+					int stretchIndex = i + string.length() - 1 ;
+					if ( stretchIndex < s.length() && string.equals(s.substring(i, stretchIndex + 1) )){
+						if (possibleterminations.containsKey(stretchIndex)){
+							ArrayList<String> t = possibleterminations.get(i);
+							t.add(string);
+							possibleterminations.put(stretchIndex, t);
+						}
+						else{
+							ArrayList<String> t = new ArrayList<String>();
+							t.add(string);
+							possibleterminations.put(stretchIndex, t);
+						}
+					}
+				}
+			}
+			if (possibleterminations.containsKey(i) == false){
+				System.out.println("Problem at index i");
+				System.out.println(i);
+				System.out.println(base);
+				System.out.println(s);
+			}
+		}
+		
+		if (type == "Min"){
+			StringIntPair[] bestSolutions = new StringIntPair[s.length()];
+			
+			bestSolutions[0] = new StringIntPair( Character.toString(s.charAt(0)), 1);
+			for (int i = 1; i < bestSolutions.length; i++) {
+				StringIntPair best = null;
+				boolean init = false;
+				for (String seq : possibleterminations.get(i)) {
+					System.out.println(i-seq.length()+1);
+					int score = bestSolutions[i-seq.length()].getI() + 1;
+					if (init == false || score < best.getI()){
+						String sol = bestSolutions[i-seq.length()].getS() + "," + seq;
+						best = new StringIntPair(sol, score);
+					}
+				}
+				bestSolutions[i] = best;
+			}
+			return bestSolutions[bestSolutions.length-1];
+		}
+		else{
+			System.out.println("Type needs to be min right now!");
+			return null;
+		}
+		
+		
+	}
+	
+	//Dynamic Programming algorithm first go, too slow
+	public static StringIntPair computeOptimalCompositionsNeccesaryOldStyle(HashSet<String> base, String s, String type) throws Exception{
 		if (s.equals("")){
 			return new StringIntPair("", 0);
 		}
@@ -210,7 +269,7 @@ public class HeuristicsForPickingBase {
 			currentBase.add( Integer.toString(i) );
 		}
 		
-		int numSubstrings = 100;
+		int numSubstrings = 20;
 		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
 		System.out.println("Done choosing substrings");
 		System.out.println(substrings);
@@ -231,6 +290,9 @@ public class HeuristicsForPickingBase {
 		System.out.println(substrings.size());
 		System.out.println();
 		
+		int randomSample = 10;
+		HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);
+		
 		while(currentBase.size() < maxBaseSize && substrings.size() > 0){
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
 			int i = 0;
@@ -241,14 +303,11 @@ public class HeuristicsForPickingBase {
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
-				
-				int randomSample = 10;
-				HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);
-				
+								
 				for (SequenceOfSymbols seq : sub) {
 					StringIntPair p;
 					try {
-						p = computeOptimalCompositionsNeccesary(tempBase, seq.getRawSequence(), "Min");
+						p = computeOptimalCompositionsNeccesaryCoinStyle(tempBase, seq.getRawSequence(), "Min");
 					} catch (Exception e) {
 						System.out.println(seq.getRawSequence());
 						//System.out.println();
@@ -318,7 +377,7 @@ public class HeuristicsForPickingBase {
 		for (SequenceOfSymbols sub : set) {
 			StringIntPair opt;
 			try {
-				opt = computeOptimalCompositionsNeccesary(updatedBase, sub.getRawSequence(), "Min");
+				opt = computeOptimalCompositionsNeccesaryCoinStyle(updatedBase, sub.getRawSequence(), "Min");
 				currentBestDecomp.put(sub, opt.getI());
 			} catch (Exception e) {
 				System.out.println("Problem computing optimal when updating currentBestDecomposition");
