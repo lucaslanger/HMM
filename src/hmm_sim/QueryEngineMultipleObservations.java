@@ -172,7 +172,7 @@ public class QueryEngineMultipleObservations {
 		Matrix r = this.a0;
 		HashSet<String> k = HeuristicsForPickingBase.seqHashSetToStringOfSymbols(Asigmas.keySet());
 		try {
-			StringIntPair opt = HeuristicsForPickingBase.computeOptimalCompositionsNeccesary(k, sequence.getRawSequence(), "Min");
+			StringIntPair opt = HeuristicsForPickingBase.computeOptimalCompositionsNeccesaryCoinStyle(k, sequence.getRawSequence(), "Min");
 			String[] breakdown = opt.getS().split(",");
 			for (String string : breakdown) {
 				SequenceOfSymbols s = SequenceOfSymbols.fullStringToCompressed(string);

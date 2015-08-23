@@ -34,18 +34,21 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	public static void main(String[] args){
 		//HankelSVDModelMultipleObservations.initialtest();
+		HankelSVDModelMultipleObservations.doubleLoopTestTree();
 		HankelSVDModelMultipleObservations.doubleLoopTest();
+		HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated();
+
 	}
 	
 	public HashSet<SequenceOfSymbols> generatePowerBase(int base, int maxPower, int numDimensions){
 		return null;
 	}
-		
-	public static void doubleLoopTest(){
+	
+	public static void doubleLoopTestTree(){
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		boolean customBase = true;
-		int repetitions = 1;
+		int repetitions = 2;
 		int numberOfTrajectories = 1000;
 		int amountOfData = 1000;
 		
@@ -69,8 +72,206 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
-		FlowControl.createFolder(dataSetFolder);
-		generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		//FlowControl.createFolder(dataSetFolder);
+		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		//
+		
+		Matrix Eavg = null;
+		double[][] xaxis = new double[maxExponent+1][modelSizes.length];
+		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		
+		for (int r = 0; r < repetitions; r++) {
+			File f = new File(dataSetFolder + "DataSet" + ",Rep:" + (r+1));
+			SequenceOfSymbols[] seqsRead = HankelSVDModelMultipleObservations.readDataSetFromFile(f, amountOfData);
+		
+			LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
+			
+			boolean printSequences = false;
+			for (SequenceOfSymbols s : seqsRead) {
+				if (printSequences){
+					System.out.print("Length:" + s.sequenceLength() + ", " + s + "	");
+				}
+				SymbolCountPair sc = new SymbolCountPair(1, s);
+				l.add(sc);
+			}
+			if (printSequences){
+				System.out.println();
+			}
+			
+			HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
+			
+			HashSet<SequenceOfSymbols> stq = makeStringsToQuery(h.prefixes, h.suffixes);
+			System.out.println("Number of strings used when computing fhat v.s f: " + stq.size() + "\n");
+			
+			double[][] errors = new double[1][modelSizes.length];	
+					
+			int lengthOfTree = 5;
+			HashSet<SequenceOfSymbols> t = HeuristicsForPickingBase.chooseTreeBase(numDimensions, lengthOfTree);
+			QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, modelSizes, t); 
+			
+			for (int j = 0; j < qs.length; j++) {
+				quickQueryTest(qs[j]);
+				boolean debugErrors = false;
+				double e = qs[j].evaluateModel(L, stq, debugErrors);
+				
+				errors[0][j] = e;
+				xaxis[0][j] = modelSizes[j];
+				//qs[0].verifyProbabilityQueryCorrectness();
+			
+			}
+			
+			Matrix E = new Matrix(errors);
+			if (Eavg == null){
+				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
+				Eavg = E;
+			}
+			else{
+				Eavg = Eavg.plus(E);
+			}
+		}
+		Eavg = Eavg.times(1.0/repetitions);
+		
+		System.out.println("Rows: exponents, Columns: modelSizes");
+		Eavg.print(5, 5);
+		
+		
+		String title = "Wall Color Predictions";
+		String internalComment = "Lighter Curves --> Less Base System";
+		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
+	
+	}
+	
+	public static void doubleLoopTestCustomGenerated(){
+		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+		//FlowControl.createFolder(workingFolder);
+		boolean customBase = true;
+		int repetitions = 2;
+		int numberOfTrajectories = 1000;
+		int amountOfData = 1000;
+		
+		int numDimensions = 2;
+		int base = 2; 
+		
+		int loop1 =	32;
+		int loop2 = 16;
+		int desiredHankelSize = (loop1+loop2)*3;
+		int basisSize = 35;
+		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
+			
+		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
+		int maxPower;
+		if (!customBase){
+			maxPower = 32;
+		}
+		else{
+			maxPower = 1;
+		}
+		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
+		
+		//Leave commented if datasets are already there!
+		//FlowControl.createFolder(dataSetFolder);
+		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		//
+		
+		Matrix Eavg = null;
+		double[][] xaxis = new double[maxExponent+1][modelSizes.length];
+		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		
+		for (int r = 0; r < repetitions; r++) {
+			File f = new File(dataSetFolder + "DataSet" + ",Rep:" + (r+1));
+			SequenceOfSymbols[] seqsRead = HankelSVDModelMultipleObservations.readDataSetFromFile(f, amountOfData);
+		
+			LinkedList<SymbolCountPair> l = new LinkedList<SymbolCountPair>();
+			
+			boolean printSequences = false;
+			for (SequenceOfSymbols s : seqsRead) {
+				if (printSequences){
+					System.out.print("Length:" + s.sequenceLength() + ", " + s + "	");
+				}
+				SymbolCountPair sc = new SymbolCountPair(1, s);
+				l.add(sc);
+			}
+			if (printSequences){
+				System.out.println();
+			}
+			
+			HankelSVDModelMultipleObservations h = new HankelSVDModelMultipleObservations(l, basisSize, numDimensions);
+			
+			HashSet<SequenceOfSymbols> stq = makeStringsToQuery(h.prefixes, h.suffixes);
+			System.out.println("Number of strings used when computing fhat v.s f: " + stq.size() + "\n");
+			
+			double[][] errors = new double[1][modelSizes.length];	
+					
+			int maxBaseSize = 10;
+			SymbolCounts counts = new SymbolCounts();
+			for (SequenceOfSymbols seq : seqsRead) {
+				counts.updateFrequency(seq, 1);
+			}
+			HashSet<SequenceOfSymbols> baseS = HeuristicsForPickingBase.chooseBaseFromData(counts.getSymbolToFrequency(), maxBaseSize, numDimensions);
+			QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, modelSizes, baseS); //Number in there shouldn't matter
+			
+			for (int j = 0; j < qs.length; j++) {
+				quickQueryTest(qs[j]);
+				boolean debugErrors = false;
+				double e = qs[j].evaluateModel(L, stq, debugErrors);
+				
+				errors[0][j] = e;
+				xaxis[0][j] = modelSizes[j];
+				//qs[0].verifyProbabilityQueryCorrectness();
+			
+			}
+			
+			Matrix E = new Matrix(errors);
+			if (Eavg == null){
+				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
+				Eavg = E;
+			}
+			else{
+				Eavg = Eavg.plus(E);
+			}
+		}
+		Eavg = Eavg.times(1.0/repetitions);
+		
+		System.out.println("Rows: exponents, Columns: modelSizes");
+		Eavg.print(5, 5);
+		
+		
+		String title = "Wall Color Predictions";
+		String internalComment = "Lighter Curves --> Less Base System";
+		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
+	
+	}
+	
+	public static void doubleLoopTest(){
+		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+		//FlowControl.createFolder(workingFolder);
+		boolean customBase = false;
+		int repetitions = 2;
+		int numberOfTrajectories = 1000;
+		int amountOfData = 1000;
+		
+		int numDimensions = 2;
+		int base = 2; 
+		
+		int loop1 =	32;
+		int loop2 = 16;
+		int desiredHankelSize = (loop1+loop2)*3;
+		int basisSize = 35;
+		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
+			
+		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
+		int maxPower;
+		if (!customBase){
+			maxPower = 32;
+		}
+		else{
+			maxPower = 1;
+		}
+		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
+		
+		//Leave commented if datasets are already there!
+		//FlowControl.createFolder(dataSetFolder);
+		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		//
 		
 		Matrix Eavg = null;
@@ -104,7 +305,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			for (int i = 0; i <= maxExponent; i++) {
 					
-				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes, customBase);
+				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes);
 				
 				for (int j = 0; j < qs.length; j++) {
 					quickQueryTest(qs[j]);
@@ -113,8 +314,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 					
 					errors[i][j] = e;
 					xaxis[i][j] = modelSizes[j];
-					
-					//qs[i].verifyProbabilityQueryCorrectness();
+					/*if (customBase){
+						qs[i].verifyProbabilityQueryCorrectness();
+					}*/
 				}
 			}
 			
@@ -242,40 +444,52 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	}
 	
 	
-	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int maxExponent, int[] modelSizes, boolean custom){
+	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int maxExponent, int[] modelSizes){
 		
 		QueryEngineMultipleObservations[] qEs = new QueryEngineMultipleObservations[modelSizes.length];
-		HashSet<SequenceOfSymbols> baseKeys = null;
-		if (custom){
-			int maxBaseSize = 10;
-			Map<SequenceOfSymbols, Integer> t = HeuristicsForPickingBase.sequenceDataToCounts(seqs);
-			baseKeys = HeuristicsForPickingBase.chooseBaseFromData(t, maxBaseSize, numDimensions);
-			System.out.println("Chosen keyset:");
-			System.out.println(baseKeys);
-			System.out.println();
-		}
 		
-		for (int i = 0; i <= maxExponent; i++) {
 			
-			int c=0;
-			for (int mS: modelSizes) {
-			
-				if (h.getRank() < mS){
-					mS = h.getRank();
-					//System.out.println("Truncation downgraded to trueModel size, too big a model!");
-					//System.out.println();
-				}
-				
-				if (custom){
-					qEs[c] = h.buildHankelBasedModelMultipleObservationsCustomBase(h.fullData, h.prefixes, h.suffixes, baseKeys , mS);
-				}
-				else{
-					qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, i ,mS);
-				}
-				c++;
+		int c=0;
+		for (int mS: modelSizes) {
+		
+			if (h.getRank() < mS){
+				mS = h.getRank();
+				//System.out.println("Truncation downgraded to trueModel size, too big a model!");
+				//System.out.println();
 			}
 			
+
+			qEs[c] = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, maxExponent ,mS);
+			c++;
 		}
+	
+
+		
+		return qEs;
+	}
+	
+	public static QueryEngineMultipleObservations[] makeEnginesFromSamples(HankelSVDModelMultipleObservations h, SequenceOfSymbols[] seqs, int numDimensions, int basisSize, int base, int[] modelSizes, HashSet<SequenceOfSymbols> baseS){
+		
+		QueryEngineMultipleObservations[] qEs = new QueryEngineMultipleObservations[modelSizes.length];
+
+		int maxBaseSize = 10;		
+			
+		int c=0;
+		for (int mS: modelSizes) {
+		
+			if (h.getRank() < mS){
+				mS = h.getRank();
+				//System.out.println("Truncation downgraded to trueModel size, too big a model!");
+				//System.out.println();
+			}
+			
+			qEs[c] = h.buildHankelBasedModelMultipleObservationsCustomBase(h.fullData, h.prefixes, h.suffixes, baseS , mS);
+			
+		
+			c++;
+		}
+		
+		
 		
 		return qEs;
 	}

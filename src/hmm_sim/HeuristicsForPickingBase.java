@@ -32,9 +32,7 @@ public class HeuristicsForPickingBase {
 		HashSet<String> base = new HashSet<String>();
 		base.add("1");
 		base.add("2");
-		base.add("2212");
 		base.add("121");
-		base.add("122");
 		base.add("21");
 				
 		for (SequenceOfSymbols s: seqs) {
@@ -85,7 +83,7 @@ public class HeuristicsForPickingBase {
 					int stretchIndex = i + string.length() - 1 ;
 					if ( stretchIndex < s.length() && string.equals(s.substring(i, stretchIndex + 1) )){
 						if (possibleterminations.containsKey(stretchIndex)){
-							ArrayList<String> t = possibleterminations.get(i);
+							ArrayList<String> t = possibleterminations.get(stretchIndex);
 							t.add(string);
 							possibleterminations.put(stretchIndex, t);
 						}
@@ -104,6 +102,18 @@ public class HeuristicsForPickingBase {
 				System.out.println(s);
 			}
 		}
+		/*
+		System.out.println("String: " + s);
+		System.out.println();
+		for (int i = 0; i < s.length(); i++) {
+			System.out.println(i);
+			for (String string : possibleterminations.get(i)) {
+				System.out.println(string);
+			}
+			System.out.println();
+		}
+		*/
+		
 		
 		if (type == "Min"){
 			StringIntPair[] bestSolutions = new StringIntPair[s.length()];
@@ -113,11 +123,17 @@ public class HeuristicsForPickingBase {
 				StringIntPair best = null;
 				boolean init = false;
 				for (String seq : possibleterminations.get(i)) {
-					System.out.println(i-seq.length()+1);
-					int score = bestSolutions[i-seq.length()].getI() + 1;
-					if (init == false || score < best.getI()){
-						String sol = bestSolutions[i-seq.length()].getS() + "," + seq;
-						best = new StringIntPair(sol, score);
+					if (i-seq.length() == -1){
+						best = new StringIntPair(seq, 1);
+						init = true;
+					}
+					else{
+						int score = bestSolutions[i-seq.length()].getI() + 1;
+						if (init == false || score < best.getI()){
+							String sol = bestSolutions[i-seq.length()].getS() + "," + seq;
+							best = new StringIntPair(sol, score);
+							init = true;
+						}
 					}
 				}
 				bestSolutions[i] = best;
@@ -269,14 +285,20 @@ public class HeuristicsForPickingBase {
 			currentBase.add( Integer.toString(i) );
 		}
 		
-		int numSubstrings = 20;
+		
+		
+		int numSubstrings = 2000;
 		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
 		System.out.println("Done choosing substrings");
 		System.out.println(substrings);
 		System.out.println();
 		
+		/*HashSet<SequenceOfSymbols> substrings = new HashSet<SequenceOfSymbols>();
 		for (SequenceOfSymbols seq : m.keySet()) {
-			//substrings.addAll(seq.getSubstrings());
+			substrings.addAll(seq.getSubstrings());
+		}
+		*/
+		for (SequenceOfSymbols seq : m.keySet()) {
 			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
 		
@@ -290,21 +312,19 @@ public class HeuristicsForPickingBase {
 		System.out.println(substrings.size());
 		System.out.println();
 		
-		int randomSample = 10;
-		HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);
+		//int randomSample = 10;
+		///HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);
 		
 		while(currentBase.size() < maxBaseSize && substrings.size() > 0){
 			PriorityQueue<SymbolCountPair> pq = new PriorityQueue<SymbolCountPair>();
 			int i = 0;
 			for (SequenceOfSymbols s : substrings) {
-				//System.out.println(s);
-				//System.out.println(i);
-				//i++;
+			
 				HashSet<String> tempBase = (HashSet<String>) currentBase.clone();
 				tempBase.add(s.getRawSequence());
 				int improvement = 0;
 								
-				for (SequenceOfSymbols seq : sub) {
+				for (SequenceOfSymbols seq : m.keySet() ) {
 					StringIntPair p;
 					try {
 						p = computeOptimalCompositionsNeccesaryCoinStyle(tempBase, seq.getRawSequence(), "Min");
@@ -321,7 +341,7 @@ public class HeuristicsForPickingBase {
 						 System.out.println("Improvement less than 0 --> buggy");
 						return null;
 					 } 
-					 improvement += extra;//*m.get(seq);
+					 improvement += extra*m.get(seq);
 				} 
 				//i++;
 				//System.out.println(i);
@@ -332,9 +352,9 @@ public class HeuristicsForPickingBase {
 			SymbolCountPair bestAddition = pq.peek();
 			substrings.remove(bestAddition.getSequence());
 			currentBase.add(bestAddition.getSequence().getRawSequence());
-			System.out.println("Added to base:");
-			System.out.println(bestAddition.getSequence());
-			System.out.println();
+			//System.out.println("Added to base:");
+			//System.out.println(bestAddition.getSequence());
+			//System.out.println();
 			currentBestDecomposition = updateCurrentBestDecomposition(m.keySet(), currentBase);
 		}
 		
@@ -418,15 +438,7 @@ public class HeuristicsForPickingBase {
 		return minKey;
 	}
 	
-	
-	private static SequenceOfSymbols[] getBestSubstrings(Iterable<SequenceOfSymbols> s, int numSubstrings){
-		SymbolCounts sc = new SymbolCounts();
-		for (SequenceOfSymbols sequenceOfSymbols : s) {
-		
-		}
-		return null;
-		
-	}
+
 	private static HashSet<SequenceOfSymbols> getBestSubstrings2(Map<SequenceOfSymbols, Integer> s, int numSubstrings){
 		SymbolCounts sc = new SymbolCounts();
 		for (SequenceOfSymbols sequenceOfSymbols : s.keySet()) {
@@ -450,5 +462,58 @@ public class HeuristicsForPickingBase {
 		return r;
 		
 	}
+	
+	public static HashSet<SequenceOfSymbols> chooseTreeBase(int numDimensions, int length){
+		HashSet<SequenceOfSymbols> h = new HashSet<SequenceOfSymbols>();
+
+		if(length == 1){
+
+			for (int i = 1; i <= numDimensions; i++) {
+				h.add( SequenceOfSymbols.fullStringToCompressed(Integer.toString(i)) );
+			}
+		}
+		else{
+
+			for (int i = 1; i <= numDimensions; i++) {
+				SequenceOfSymbols t = SequenceOfSymbols.fullStringToCompressed(Integer.toString(i) );
+				HashSet<SequenceOfSymbols> rh = chooseTreeBase(numDimensions, length - 1);
+				h.addAll(rh);
+				for (SequenceOfSymbols sequenceOfSymbols : rh) {
+					SequenceOfSymbols s = SequenceOfSymbols.concatenateSymbols(sequenceOfSymbols, t);
+					h.add(s);
+				}
+				
+			
+			}
+		}
+		if (h.size() != ((int) (Math.pow(numDimensions, length+1) - 1 )/ (numDimensions - 1)) -1 ){
+			System.out.println("Problem with tree method");
+			System.out.println("Size of output doesn't seem right");
+			System.out.println(((Math.pow(numDimensions, length+1) - 1 )/ (numDimensions - 1)) - 1 );
+			System.out.println(h.size());
+			System.out.println();
+
+		}
+		
+		return h;
+
+	}
+	
+	public static HashSet<SequenceOfSymbols> choosePowerBase(int numDimensions , int base, int maxExponent){
+		HashSet<SequenceOfSymbols> h = new HashSet<SequenceOfSymbols>();
+
+		for (int i = 1; i <= numDimensions; i++) {
+			
+			for (int j = 0; j <= maxExponent; j++) {
+				SequenceOfSymbols s = new SequenceOfSymbols( i + ":" + Math.pow(base, j) );
+				h.add(s);
+			}
+		}
+		return h;
+
+	}
+	
+	
+	
 
 }
