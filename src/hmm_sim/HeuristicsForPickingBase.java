@@ -285,13 +285,14 @@ public class HeuristicsForPickingBase {
 			currentBase.add( Integer.toString(i) );
 		}
 		
-		
-		
-		int numSubstrings = 2000;
-		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
-		System.out.println("Done choosing substrings");
-		System.out.println(substrings);
+		int numSubstrings = 500;
+		System.out.println("Num Candidates:");
+		System.out.println(numSubstrings);
 		System.out.println();
+		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
+		//System.out.println("Done choosing substrings");
+		//System.out.println(substrings);
+		//System.out.println();
 		
 		/*HashSet<SequenceOfSymbols> substrings = new HashSet<SequenceOfSymbols>();
 		for (SequenceOfSymbols seq : m.keySet()) {
@@ -301,7 +302,7 @@ public class HeuristicsForPickingBase {
 		for (SequenceOfSymbols seq : m.keySet()) {
 			currentBestDecomposition.put(seq, seq.getRawSequence().length());
 		}
-		
+		/*
 		System.out.println("Base size");
 		System.out.println(maxBaseSize);
 		System.out.println();
@@ -311,6 +312,7 @@ public class HeuristicsForPickingBase {
 		System.out.println("Number of substrings: ");
 		System.out.println(substrings.size());
 		System.out.println();
+		*/
 		
 		//int randomSample = 10;
 		///HashSet<SequenceOfSymbols> sub = randomSubset(m, randomSample);

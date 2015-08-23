@@ -34,34 +34,69 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	
 	public static void main(String[] args){
 		//HankelSVDModelMultipleObservations.initialtest();
-		HankelSVDModelMultipleObservations.doubleLoopTestTree();
-		HankelSVDModelMultipleObservations.doubleLoopTest();
-		HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated();
+		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+		int numberOfTrajectories = 1000;
+		int amountOfData = numberOfTrajectories;
+		
+		int loop1 = 28;
+		int loop2 = 14;
+		int trajectoryLength = (loop1+loop2)*3;
+		int repetitions = 5;
+		int[] modelSizes= new int[]{15,18,21,24,27,30};
+		OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		OutputDataPair t2 = HankelSVDModelMultipleObservations.doubleLoopTest(workingFolder, trajectoryLength,numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		OutputDataPair t3 = HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated(workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		
+		Matrix naive = new Matrix( new double[][]{t2.getData().getArrayCopy()[0]});
+		Matrix fullPowers = new Matrix( new double[][]{t2.getData().getArrayCopy()[t2.getData().getArrayCopy().length-1]});
+		Matrix tree = t1.getData();
+		Matrix custom = t3.getData();
+		Matrix xAxis = t1.getxAxis();
+		
+		Matrix together = cR(cR(cR(naive, fullPowers),tree),custom);
+		Matrix X = cR(cR(cR(xAxis, xAxis),xAxis),xAxis);
+		System.out.println("Together;");
+		together.print(5, 5);
+		X.print(5, 5);
+		
+		String title = "Comparison of Base Learning";
+		String internalComment = "27-17 1k data";
+		OutputData.outputData(workingFolder + "BaseLearningTests" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", X.getArrayCopy(), together.getArrayCopy(), title, internalComment);
 
 	}
+	
+	public static Matrix cR(Matrix m1, Matrix m2){
+		double[][] data = new double[m1.getArrayCopy().length + m2.getArrayCopy().length][m1.getArrayCopy()[0].length];
+		double[][] m1Arr = m1.getArrayCopy();
+		for (int i = 0; i < m1Arr.length;  i++) {
+			data[i] = m1Arr[i];
+		}
+		double[][] m2Arr = m2.getArrayCopy();
+		for (int j = 0; j < m2Arr.length; j++) {
+			data[j+m1Arr.length] = m2Arr[j];
+		}
+		return new Matrix(data);
+	} 
 	
 	public HashSet<SequenceOfSymbols> generatePowerBase(int base, int maxPower, int numDimensions){
 		return null;
 	}
 	
-	public static void doubleLoopTestTree(){
-		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+	public static OutputDataPair doubleLoopTestTree(String workingFolder, int trajectoryLength, int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2,  int[] modelSizes){
+		//String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		boolean customBase = true;
-		int repetitions = 2;
-		int numberOfTrajectories = 1000;
-		int amountOfData = 1000;
+		//int repetitions = 2;
+		//int numberOfTrajectories = 10000;
+		//int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
-		
-		int loop1 =	32;
-		int loop2 = 16;
-		int desiredHankelSize = (loop1+loop2)*3;
+
+		int desiredHankelSize = trajectoryLength;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
 		int maxPower;
 		if (!customBase){
 			maxPower = 32;
@@ -72,8 +107,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int maxExponent = (int) (Math.log(maxPower)/Math.log(base));
 		
 		//Leave commented if datasets are already there!
-		//FlowControl.createFolder(dataSetFolder);
-		//generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		FlowControl.createFolder(dataSetFolder);
+		generateDataSet(repetitions, dataSetFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		//
 		
 		Matrix Eavg = null;
@@ -112,6 +147,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			for (int j = 0; j < qs.length; j++) {
 				quickQueryTest(qs[j]);
 				boolean debugErrors = false;
+				if (j == qs.length-1){
+					debugErrors = true;
+				}
 				double e = qs[j].evaluateModel(L, stq, debugErrors);
 				
 				errors[0][j] = e;
@@ -138,27 +176,24 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
 		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-	
+		return new OutputDataPair(Eavg, new Matrix(xaxis) );
 	}
 	
-	public static void doubleLoopTestCustomGenerated(){
-		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+	public static OutputDataPair doubleLoopTestCustomGenerated(String workingFolder, int trajectoryLength, int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
+		//String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		boolean customBase = true;
-		int repetitions = 2;
-		int numberOfTrajectories = 1000;
-		int amountOfData = 1000;
+		//int repetitions = 2;
+		//int numberOfTrajectories = 1000;
+		//int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 =	32;
-		int loop2 = 16;
-		int desiredHankelSize = (loop1+loop2)*3;
+		int desiredHankelSize = trajectoryLength;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
 		int maxPower;
 		if (!customBase){
 			maxPower = 32;
@@ -239,27 +274,24 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
 		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-	
+		return new OutputDataPair(Eavg, new Matrix(xaxis));
 	}
 	
-	public static void doubleLoopTest(){
-		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
+	public static OutputDataPair doubleLoopTest(String workingFolder, int trajectoryLength,  int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
+		//String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		boolean customBase = false;
-		int repetitions = 2;
-		int numberOfTrajectories = 1000;
-		int amountOfData = 1000;
+		//int repetitions = 2;
+		//int numberOfTrajectories = 1000;
+		//int amountOfData = 1000;
 		
 		int numDimensions = 2;
 		int base = 2; 
 		
-		int loop1 =	32;
-		int loop2 = 16;
-		int desiredHankelSize = (loop1+loop2)*3;
+		int desiredHankelSize = trajectoryLength;
 		int basisSize = 35;
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
-		int[] modelSizes = new int[]{5,10,15,20,25,30,35,40,45};
 		int maxPower;
 		if (!customBase){
 			maxPower = 32;
@@ -338,7 +370,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
 		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-	
+		return new OutputDataPair(Eavg, new Matrix(xaxis) );
 	}
 	
 	private static void generateDataSet(int repetitions, String workingFolder, int desiredHankelSize, int numberOfTrajectories, int loop1, int loop2) {

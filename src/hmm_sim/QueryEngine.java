@@ -294,4 +294,22 @@ public class QueryEngine {
 		return m;
 	}
 	
+	
+	public void doubleCheckCommutative(){
+		Matrix i = null;
+		Matrix j = null;
+		for (Matrix m : this.Asigmas) {
+			if (i == null){
+				i = m;
+				j = m;
+			}
+			else{
+				i = i.times(m);
+				j = m.times(j);
+			}
+		}
+		i.print(5, 5);
+		j.print(5, 5);
+	}
+	
 }

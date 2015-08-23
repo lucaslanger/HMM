@@ -227,9 +227,10 @@ public class QueryEngineMultipleObservations {
 		}
 		
 		if (topErrors){
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 5; i++) {
 				SequenceErrorPair a = pq.remove();
-				System.out.println( a );
+				System.out.println(a.getSeq());
+				System.out.println( Math.sqrt(-1*a.getError()) );
 				System.out.println("Real: " + L.determineRealProbabilityOfSequenceDoubleLoop(a.getSeq()));
 				System.out.println("Computed: " + this.probabilityQuery(a.getSeq(), false));;
 				System.out.println();
