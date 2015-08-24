@@ -58,7 +58,7 @@ public class HeuristicsForPickingBase {
 		
 		Map<SequenceOfSymbols, Integer> m = sequenceDataToCounts(seqs); 
 		
-		HashSet<SequenceOfSymbols> a = HeuristicsForPickingBase.chooseBaseFromData(m, 5, 2);
+		HashSet<SequenceOfSymbols> a = HeuristicsForPickingBase.chooseBaseFromData(m, 5, 100, 2);
 
 	}
 	
@@ -277,7 +277,7 @@ public class HeuristicsForPickingBase {
 	
 	//WORKING ON SUBSTRING STUFF
 	
-	public static HashSet<SequenceOfSymbols> chooseBaseFromData(Map<SequenceOfSymbols, Integer> m, int maxBaseSize, int numDimensions){
+	public static HashSet<SequenceOfSymbols> chooseBaseFromData(Map<SequenceOfSymbols, Integer> m, int maxBaseSize, int numSubstrings, int numDimensions){
 		HashSet<String> currentBase = new HashSet<String>();
 		HashMap<SequenceOfSymbols, Integer> currentBestDecomposition = new HashMap<SequenceOfSymbols, Integer>();
 		
@@ -285,10 +285,9 @@ public class HeuristicsForPickingBase {
 			currentBase.add( Integer.toString(i) );
 		}
 		
-		int numSubstrings = 500;
-		System.out.println("Num Candidates:");
-		System.out.println(numSubstrings);
-		System.out.println();
+		//System.out.println("Num Candidates:");
+		//System.out.println(numSubstrings);
+		//System.out.println();
 		HashSet<SequenceOfSymbols> substrings = HeuristicsForPickingBase.getBestSubstrings2(m, numSubstrings);
 		//System.out.println("Done choosing substrings");
 		//System.out.println(substrings);

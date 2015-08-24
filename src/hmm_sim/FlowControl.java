@@ -66,16 +66,16 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 2;
+		int repetitions = 1;
 		
 
-		int loop1 = 45;
-		int loop2 = 17;
+		int loop1 = 32;
+		int loop2 = 16;
 		int hSize = 700;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		//int[] modelSizes = new int[]{15,16,18,20,22,24,26,28,30};
-		int[] modelSizes = new int[]{30,32,34,35,40,45,50};
+		int[] modelSizes = new int[]{15,16,18,20,22,24,26,28,30};
+		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
 		String workingFolder = Integer.toString(loop1) + "_" + Integer.toString(loop2) + "_Toy_Labyrinth/";
@@ -84,8 +84,8 @@ public class FlowControl {
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
 		double selfTransitionProbability = 0.00;
-		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
-		r.generateData(trajectorySizes, repetitions, false);
+		//rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
+		//r.generateData(trajectorySizes, repetitions, false);
 		
 		System.out.println("Reading data into models");
 		FlowControl.readDataIntoModels(workingFolder, basisSize);

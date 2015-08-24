@@ -236,6 +236,7 @@ public class testEngine{
 					}
 				}
 			}
+			//fixedDataSizeModelEngines[0][0].doubleCheckCommutative();
 		}
 		
 		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);

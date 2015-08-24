@@ -167,9 +167,13 @@ public class QueryEngine {
 	}
 
 	public double probabilityQuery(int power, int maxPower, int base, boolean forward){
-		//BACKWARD!
-		System.out.println("Backward Queries!");
-		forward = false;
+		double d = 0;
+		
+		int copyOfPower = power;
+		
+		/*if (forward){
+			d = probabilityQuery(power, maxPower, base, false);
+		}*/
 		
 		int p = maxPower;
 		Matrix r;
@@ -204,13 +208,30 @@ public class QueryEngine {
 		}
 		try {
 			QueryEngine.checkQueryResultValidity(r);
-			return r.get(0,0);
+		
 		} catch (Exception e) {
 			System.out.println("Problem with multiplication");
 			e.printStackTrace();
-			return -10000;
 		}
-		
+		double d2 = r.get(0,0);
+		/*if ( d + d2 > 0.01 ){
+			Matrix m1 = matrixQuery(copyOfPower, maxPower, base, true);
+			Matrix m2 = matrixQuery(copyOfPower, maxPower, base, false);
+			System.out.println(m1.minus(m2).norm2()/m1.norm2());
+			if (m1.minus(m2).norm2()/m1.norm2() > 0.05){
+				m1.minus(m2).print(5, 5);
+			}
+			System.out.println();
+			
+			System.out.println(copyOfPower);
+			System.out.println(maxPower);
+			System.out.println(d);
+			System.out.println(d2);
+			System.out.println();
+			
+		}
+		*/
+		return d2;
 		
 	}
 	
@@ -226,6 +247,7 @@ public class QueryEngine {
 	}
 
 	public double debugProbabilityQuery(int power, int maxPower, int base, boolean forward){
+		
 		int p = maxPower;
 		
 		Matrix r;
@@ -298,7 +320,9 @@ public class QueryEngine {
 	public void doubleCheckCommutative(){
 		Matrix i = null;
 		Matrix j = null;
-		for (Matrix m : this.Asigmas) {
+		int fixedCount = 3;
+		for (int j2 = 0; j2 < fixedCount; j2++) {
+			Matrix m = Asigmas[j2];
 			if (i == null){
 				i = m;
 				j = m;
@@ -308,8 +332,10 @@ public class QueryEngine {
 				j = m.times(j);
 			}
 		}
-		i.print(5, 5);
-		j.print(5, 5);
+		System.out.println("Commutative test!");
+		System.out.println(a0.times(i).times(ainf));
+		System.out.println(a0.times(j).times(ainf));
+		System.out.println();
 	}
 	
 }
