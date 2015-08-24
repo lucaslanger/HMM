@@ -360,7 +360,6 @@ public class HeuristicsForPickingBase {
 		}
 		
 		HashSet<SequenceOfSymbols> returnBase = stringHashSetToSeqOfSymbols(currentBase);
-		System.out.println(returnBase);
 		return returnBase;
 		
 	}

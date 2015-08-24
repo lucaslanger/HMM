@@ -37,18 +37,20 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		int numberOfTrajectories = 10000;
 		int amountOfData = numberOfTrajectories;
-		int basisSize = 50;
+		int basisSize = 120;
 		int loop1 = 7;
 		int loop2 = 4;
 		int trajectoryLength = (loop1+loop2)*3;
 		int repetitions = 1;
-		int[] modelSizes= new int[]{5,7,9,11,13};
-		int numSubstrings = 100;
-
-		OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(true, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
-		OutputDataPair t3 = HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated(basisSize, workingFolder, numSubstrings,  trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
-		OutputDataPair t2 = HankelSVDModelMultipleObservations.doubleLoopTest(basisSize, workingFolder, trajectoryLength,numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		int[] modelSizes= new int[]{9,10,11};
 		
+		int baseSize = 20;
+		int numSubstrings = 1000;
+
+		OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(false, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		OutputDataPair t3 = HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated(basisSize, workingFolder, numSubstrings, baseSize,  trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		OutputDataPair t2 = HankelSVDModelMultipleObservations.doubleLoopTest(basisSize, workingFolder, trajectoryLength,numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+				
 		Matrix naive = new Matrix( new double[][]{t2.getData().getArrayCopy()[0]});
 		Matrix fullPowers = new Matrix( new double[][]{t2.getData().getArrayCopy()[t2.getData().getArrayCopy().length-1]});
 		Matrix tree = t1.getData();
@@ -64,8 +66,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		String title = "Comparison of Base Learning";
 		String internalComment = loop1 + "-" + loop2 + ",Data:" + numberOfTrajectories;
 		OutputData.outputData(workingFolder + "BaseLearningTests" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", X.getArrayCopy(), together.getArrayCopy(), title, internalComment);
-
 	}
+		
+
 	
 	public static Matrix cR(Matrix m1, Matrix m2){
 		double[][] data = new double[m1.getArrayCopy().length + m2.getArrayCopy().length][m1.getArrayCopy()[0].length];
@@ -179,7 +182,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		return new OutputDataPair(Eavg, new Matrix(xaxis) );
 	}
 	
-	public static OutputDataPair doubleLoopTestCustomGenerated(int basisSize, String workingFolder, int numSubstrings, int trajectoryLength, int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
+	public static OutputDataPair doubleLoopTestCustomGenerated(int basisSize, String workingFolder, int numSubstrings, int baseSize ,int trajectoryLength, int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
 		//String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
 		//FlowControl.createFolder(workingFolder);
 		boolean customBase = true;
@@ -236,13 +239,17 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			double[][] errors = new double[1][modelSizes.length];	
 					
-			int maxBaseSize = 10;
 			SymbolCounts counts = new SymbolCounts();
 			for (SequenceOfSymbols seq : seqsRead) {
 				counts.updateFrequency(seq, 1);
 			}
-			HashSet<SequenceOfSymbols> baseS = HeuristicsForPickingBase.chooseBaseFromData(counts.getSymbolToFrequency(), maxBaseSize, numSubstrings, numDimensions);
+			HashSet<SequenceOfSymbols> baseS = HeuristicsForPickingBase.chooseBaseFromData(counts.getSymbolToFrequency(), baseSize, numSubstrings, numDimensions);
+			System.out.println(baseS);
+			System.out.println();
+			
 			QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, modelSizes, baseS); //Number in there shouldn't matter
+			
+			System.out.println("Done making qery engines");
 			
 			for (int j = 0; j < qs.length; j++) {
 				quickQueryTest(qs[j]);
@@ -335,14 +342,17 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			double[][] errors = new double[maxExponent+1][modelSizes.length];	
 			
-			for (int i = 0; i <= maxExponent; i++) {
 					
-				QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, i, modelSizes);
-				
+			QueryEngineMultipleObservations[] qs = makeEnginesFromSamples(h, seqsRead, numDimensions, basisSize, base, maxExponent, modelSizes);
+			System.out.println("Done making engines for different powers - hack to speedup in place");
+			
+			for (int i = 0; i <= maxExponent; i++) {
+				int pow = (int) Math.pow(base, i);
 				for (int j = 0; j < qs.length; j++) {
 					//quickQueryTest(qs[j]);
 					boolean debugErrors = false;
-					double e = qs[j].evaluateModel(L, stq, debugErrors);
+					//double e = qs[j].evaluateModel(L, stq, debugErrors);
+					double e = qs[j].evaluateModel(L, pow, stq, debugErrors);
 					
 					errors[i][j] = e;
 					xaxis[i][j] = modelSizes[j];
@@ -350,7 +360,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 						qs[i].verifyProbabilityQueryCorrectness();
 					}*/
 				}
-			}
+			}	
+			
 			
 			Matrix E = new Matrix(errors);
 			if (Eavg == null){
@@ -469,7 +480,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int modelSize = 6; 
 		QueryEngineMultipleObservations a = h.buildHankelBasedModelMultipleObservations(h.fullData, h.prefixes, h.suffixes, base, maxExp, modelSize);
 		for (String sa : samples) {
-			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa), false ));
+			System.out.println(a.probabilityQuery( new SequenceOfSymbols(sa), 1 ,false ));
 		}
 	}
 	
@@ -558,12 +569,14 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 
 		if (verbose) {	
 			
-			Hlambda.print(5, 5);
+			//Hlambda.print(5, 5);
 
 			System.out.println("Rank");
 			System.out.println(this.getRank());
 			System.out.println("Singular values");
-			System.out.println( Arrays.toString( turnStoArray(svdOfH.get("S")) ) );
+			Matrix S = svdOfH.get("S");
+			System.out.println("quickordertest");
+			System.out.println( Arrays.toString( turnStoArray(S)) );
 			System.out.println();
 		}
 		

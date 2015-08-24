@@ -141,7 +141,7 @@ public class QueryEngineMultipleObservations {
 		}
 	}
 
-	public double probabilityQuery(SequenceOfSymbols sequence, boolean debug){
+	public double probabilityQuery(SequenceOfSymbols sequence, int maxP, boolean debug){
 		if (this.customBase){
 			return this.customProbabilityQuery(sequence);
 		}
@@ -152,7 +152,7 @@ public class QueryEngineMultipleObservations {
 			int power = nextstreak.getStreakFromString();
 			String symbol = nextstreak.getSymbolFromString();
 		
-			r = processQueryFixedSymbol(r, symbol, power, debug);
+			r = processQueryFixedSymbol(r, symbol, maxP, power, debug);
 			
 			if (sequence.rawStringLength() > nextstreak.rawStringLength()){
 				sequence = sequence.substring(nextstreak.rawStringLength()+1, sequence.rawStringLength());
@@ -194,8 +194,8 @@ public class QueryEngineMultipleObservations {
 		}
 	}
 
-	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int power, boolean debug) {
-		int currentLimitingPower = this.maxPower;
+	private Matrix processQueryFixedSymbol(Matrix r, String symbol, int maxP ,int power, boolean debug) {
+		int currentLimitingPower = maxP;
 		SequenceOfSymbols currentSequence = new SequenceOfSymbols( symbol + ":" + Integer.toString(currentLimitingPower)  );
 
 		//System.out.println(Asigmas.keySet());
@@ -217,7 +217,7 @@ public class QueryEngineMultipleObservations {
 		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
 		
 		for (SequenceOfSymbols sequenceOfSymbols : stringsToQuery) {
-			double probQ = this.probabilityQuery(sequenceOfSymbols, false);
+			double probQ = this.probabilityQuery(sequenceOfSymbols, this.maxPower,false);
 			double realProb =  L.determineRealProbabilityOfSequenceDoubleLoop(sequenceOfSymbols);
 			
 			double error = Math.pow( probQ - realProb, 2);
@@ -232,7 +232,37 @@ public class QueryEngineMultipleObservations {
 				System.out.println(a.getSeq());
 				System.out.println( Math.sqrt(-1*a.getError()) );
 				System.out.println("Real: " + L.determineRealProbabilityOfSequenceDoubleLoop(a.getSeq()));
-				System.out.println("Computed: " + this.probabilityQuery(a.getSeq(), false));;
+				System.out.println("Computed: " + this.probabilityQuery(a.getSeq(), this.maxPower,false));;
+				System.out.println();
+				
+			}
+		}
+		e = Math.sqrt(e);
+		return e;
+	}
+	
+	public double evaluateModel(LabyrinthGraph L, int maxP, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors){
+		double e = 0;
+				
+		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
+		
+		for (SequenceOfSymbols sequenceOfSymbols : stringsToQuery) {
+			double probQ = this.probabilityQuery(sequenceOfSymbols, maxP, false);
+			double realProb =  L.determineRealProbabilityOfSequenceDoubleLoop(sequenceOfSymbols);
+			
+			double error = Math.pow( probQ - realProb, 2);
+			//double error = Math.abs( probQ - realProb);
+			pq.add( new SequenceErrorPair(sequenceOfSymbols, -1*error));
+			e += error;
+		}
+		
+		if (topErrors){
+			for (int i = 0; i < 5; i++) {
+				SequenceErrorPair a = pq.remove();
+				System.out.println(a.getSeq());
+				System.out.println( Math.sqrt(-1*a.getError()) );
+				System.out.println("Real: " + L.determineRealProbabilityOfSequenceDoubleLoop(a.getSeq()));
+				System.out.println("Computed: " + this.probabilityQuery(a.getSeq(), maxP ,false));;
 				System.out.println();
 				
 			}
@@ -247,10 +277,12 @@ public class QueryEngineMultipleObservations {
 		for (String string : tests) {
 			SequenceOfSymbols seq = new SequenceOfSymbols(string);
 			System.out.println(seq);
-			this.probabilityQuery(seq, true);
+			this.probabilityQuery(seq, this.maxPower,true);
 			System.out.println();
 		}
 	}
+
+	
 	
 		
 }
