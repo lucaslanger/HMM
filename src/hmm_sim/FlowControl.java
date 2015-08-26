@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{256000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 256000;
+		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 10000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
@@ -66,15 +66,15 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 1;
-		
+		int repetitions = 5;
+		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
 		int loop1 = 32;
 		int loop2 = 16;
 		int hSize = 700;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		int[] modelSizes = new int[]{15,16,18,20,22,24,26,28,30};
+		int[] modelSizes = new int[]{15,16,18,20,24,26,28,30};
 		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
@@ -84,8 +84,8 @@ public class FlowControl {
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
 		double selfTransitionProbability = 0.00;
-		//rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
-		//r.generateData(trajectorySizes, repetitions, false);
+		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
+		r.generateData(trajectorySizes, repetitions, false);
 		
 		System.out.println("Reading data into models");
 		FlowControl.readDataIntoModels(workingFolder, basisSize);
@@ -93,8 +93,7 @@ public class FlowControl {
 		System.out.println("");
 		
 		int debugMS = modelSizes[0];
-		int repsToTake = 2;
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, debugMS , 1 , true);
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots , basisSize, base, modelSizes, debugMS , repetitions , true);
 		
 		String identifier = "Datasize:" + dataSizeForFixedPlots + "," + loop1 + ":" + loop2 + ",ST:"+ selfTransitionProbability;
 		a.modelSizeEffectOverBaseImprovement(identifier, dataSizeForFixedPlots);
@@ -256,6 +255,11 @@ public class FlowControl {
 	
 	public static void createModelsFromFile(String inFolder, String outFolder, String fileIn, String fileOut, int basisSize){
 		double[][] data = FlowControl.readData(inFolder + fileIn);
+		/*System.out.println(fileOut);
+		System.out.println("Data length FlowControl");
+		System.out.println(data.length);
+		System.out.println();
+		*/
 		HankelSVDModel[] modelsForFixedTrajectorySize = new HankelSVDModel[data.length];
 
 		for (int i = 0; i < modelsForFixedTrajectorySize.length; i++) {

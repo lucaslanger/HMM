@@ -103,6 +103,8 @@ public abstract class Environment {
 			data[i] = generateEmpericalProbabilities(trajectoryLength);
 		}
 		String f = this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength);
+		System.out.println("Outputting data to: " + f + " called by environment class");
+		System.out.println();
 		FlowControl.outputData(f, data, verbose );
 	}
 

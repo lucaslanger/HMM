@@ -88,6 +88,7 @@ public class ModelRetrieval {
 
 		try{
 			for (String f: this.fileNames) {
+				//System.out.println(f);
 				enginesTrajectorySize = new QueryEngine[numberOfTrajectoriesFromEachSize];	//Weird bug
 				String file = this.fileNameOfEmpericalModels + f;
 				int trajectoryLength = ModelRetrieval.getTrajectoryLengthFromFileName(file);
@@ -95,6 +96,7 @@ public class ModelRetrieval {
 				HankelSVDModel h;
 				
 				for (int i = 0; i < numberOfTrajectoriesFromEachSize; i++) {
+					//System.out.println("Ith repetition:" + i);
 					h = (HankelSVDModel) ois.readObject();
 					q = h.buildHankelBasedModel(this.base, modelSize);
 					enginesTrajectorySize[i] = q;

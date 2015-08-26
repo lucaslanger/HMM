@@ -45,7 +45,7 @@ public class testEngine{
 	
 	public static void main(String[] args){}
 	
-	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int numberPerTrajectorySize, boolean verbose){
+	public testEngine(String workingFolder, String empModels, String fileNameOfTrueModel, int dataSizeForFixedPlots, int basisSize, int base, int[] modelSizes, int fixedModelSize, int repeats, boolean verbose){
 		this.digitsToPrint = 7;
 		this.lowModelSize = testEngine.getMinValue(modelSizes);
 		this.upperModelSize = testEngine.getMaxValue(modelSizes);
@@ -71,7 +71,7 @@ public class testEngine{
 
 		this.basisSize = basisSize;
 		this.base = base;
-		this.REPEATS = numberPerTrajectorySize;
+		this.REPEATS = repeats;
 		this.dataSizeForFixedPlots = dataSizeForFixedPlots;
 		
 		this.ModelRetrieval = new ModelRetrieval(workingFolder, empModels, fileNameOfTrueModel, basisSize, base);
@@ -99,7 +99,7 @@ public class testEngine{
 		if (verbose){
 			System.out.println("Hankel Size " + Integer.toString(this.trueModel.getProbabilities().length/2));
 			System.out.println("Basis Size: " + Integer.toString(basisSize));
-			System.out.println("Repetitions: " + Integer.toString(numberPerTrajectorySize));
+			System.out.println("Repetitions: " + Integer.toString(repeats));
 			System.out.println("Base System: " + Integer.toString(base));
 			System.out.println("DataSize for Fixed Plots: " + Integer.toString(dataSizeForFixedPlots));
 			System.out.println();
@@ -127,13 +127,13 @@ public class testEngine{
 			System.out.println();
 	
 		}
-		this.fixedModelQE = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
-		this.trueRankQueryEngines = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
-	
+		//this.fixedModelQE = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.fixedModelSize);
+		//this.trueRankQueryEngines = ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.trueModel.getRank());
+		/*
 		if(verbose){
 			int topCount = 10;
 			double[] e = ModelRetrieval.checkEngine(fixedModelQE.get(dataSizeForFixedPlots)[0], this.trueModel, "FixedModelSize", topCount);
-		}
+		}*/
 		
 //		int fixedData = dataSizeForFixedPlots;
 		
@@ -222,6 +222,7 @@ public class testEngine{
 		}
 		
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
+		double[][] spreads = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
 		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
 		
 		double[] trueP = this.trueModel.getProbabilities();
@@ -230,10 +231,14 @@ public class testEngine{
 			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
 				for (int i = 0; i < this.modelSizes.length; i++) {
 					xAxis[j][i] = modelSizes[i];
+					double e = 0;
 					for (int q = 0; q < this.maxQuery; q++) {
 						double p = fixedDataSizeModelEngines[i][r].probabilityQuery(q, (int) Math.pow(2,j), base, true);
-						errors[j][i] += Math.abs(p - trueP[q]);  
+						double dif = p - trueP[q];
+						e += Math.abs(dif);  
 					}
+					errors[j][i] += e;
+					spreads[j][i] += Math.pow(e, 2);
 				}
 			}
 			//fixedDataSizeModelEngines[0][0].doubleCheckCommutative();
@@ -241,11 +246,38 @@ public class testEngine{
 		
 		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
 		ERR.print(5, 5);
+		errors = ERR.getArrayCopy();
+		
+		Matrix ERRSQUARE = new Matrix(spreads).times(1.0/this.REPEATS);
+		spreads = ERRSQUARE.getArrayCopy();
+		
+		
+		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+			for (int i = 0; i < this.modelSizes.length; i++) {
+				spreads[j][i] = spreads[j][i] - Math.pow(errors[j][i],2);
+			}
+		}
+		
+		Matrix SPREADS = new Matrix(spreads);
+		SPREADS.print(5, 5);
+		
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		String title = "Double Loop Timing";
 		String internalComment = "Darker Curves --> Richer Base System";
 		System.out.println("Outputting data to: " + identifier);
-		OutputData.outputData(pltFolder + identifier, "Number Of States", "Error Norm_2", xAxis, errors, title, internalComment);
+		
+		int[] rows = new int[]{0,errors.length-1};
+		OutputData.outputData(pltFolder + identifier, "Number Of States", "Error Norm_2", extractRows(new Matrix(xAxis), rows).getArrayCopy(), extractRows(ERR, rows).getArrayCopy(), extractRows(SPREADS, rows).getArrayCopy(), title, internalComment);
+	}
+	
+	public static Matrix extractRows(Matrix m, int[] rows){
+		double[][] r = new double[rows.length][m.getArrayCopy()[0].length];
+		int c = 0;
+		for (int i : rows) {
+			r[c] = m.getArrayCopy()[i];
+			c++;
+		}
+		return new Matrix(r);
 	}
 	
 	
