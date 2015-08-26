@@ -279,6 +279,8 @@ public class HeuristicsForPickingBase {
 	
 	public static HashSet<SequenceOfSymbols> chooseBaseFromData(Map<SequenceOfSymbols, Integer> m, int maxBaseSize, int numSubstrings, int numDimensions){
 		HashSet<String> currentBase = new HashSet<String>();
+		ArrayList<SymbolCountPair> orderpicked = new ArrayList<SymbolCountPair>();
+		
 		HashMap<SequenceOfSymbols, Integer> currentBestDecomposition = new HashMap<SequenceOfSymbols, Integer>();
 		
 		for (int i = 1; i <= numDimensions; i++) {
@@ -353,6 +355,8 @@ public class HeuristicsForPickingBase {
 			SymbolCountPair bestAddition = pq.peek();
 			substrings.remove(bestAddition.getSequence());
 			currentBase.add(bestAddition.getSequence().getRawSequence());
+			
+			orderpicked.add(bestAddition);
 			//System.out.println("Added to base:");
 			//System.out.println(bestAddition.getSequence());
 			//System.out.println();
@@ -360,6 +364,11 @@ public class HeuristicsForPickingBase {
 		}
 		
 		HashSet<SequenceOfSymbols> returnBase = stringHashSetToSeqOfSymbols(currentBase);
+		
+		System.out.println("Chosen Base System");
+		for (SymbolCountPair scp : orderpicked) {
+			System.out.print("Symbol: " + scp.getSequence() + ", Improvement: " + scp.getCount()*-1 + "\n");
+		}
 		return returnBase;
 		
 	}
