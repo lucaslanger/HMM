@@ -4,6 +4,7 @@ import os
 import math
 
 import matplotlib as mpl
+from matplotlib.patches import Rectangle
 
 numColors = 10
 colorsAnalysis = {}
@@ -90,6 +91,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 
 	for name in names:
 		n = name[0]
+		labels = []
 		try:
 			d = getDataFromFile(folder+"/" + n)
 			plt.subplot(horizontalPlotSize,verticalPlotSize,i)
@@ -114,15 +116,21 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 				#else:
 				a = 1.0		
 				col = colors[j%len(colors)]
-				print col	
-				plt.plot(xdata,ydata, col, alpha=a, linestyle='--', marker='o', label=lineNames[j])
+
+				t = plt.plot(xdata,ydata, col, alpha=a, linestyle='--', marker='o')[0]
+				labels.append(t)
+				
 				#plt.errorbar(xdata, ydata, yerr=spreads)
 
 			plt.xlabel(d[0], fontdict= generateFont(22) )
 			plt.ylabel(d[1], fontdict= generateFont(22) )
 			plt.title(title, fontdict= generateFont(28) )
 	
-			legend = plt.legend(loc='upper center', shadow=True)
+			extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+			extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+			labels.append(extra1)
+			labels.append(extra2)
+			legend = plt.legend(labels, ("Old PSR","Base System PSR","Trajectories:1000", "Repetitions:10"),loc='upper center', shadow=True)
 			# Set the fontsize
 			for label in legend.get_texts():
 			    label.set_fontsize('large')
@@ -138,7 +146,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 			xcoord = xdata[int(len(xdata)*5/8 )]
 			ycoord = ydata[0]*1.5		
 
-			plt.text(xcoord, ycoord, internalComment, fontdict=generateFont(16))
+			#plt.text(xcoord, ycoord, internalComment, fontdict=generateFont(16))
 
 			i += 1
 		except Exception,e:
