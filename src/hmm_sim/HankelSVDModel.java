@@ -4,6 +4,7 @@ package hmm_sim;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -38,6 +39,26 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 		this.basisSize = basisSize;
 		takeSVD();
 	}
+	
+	public int[] getCounts(){
+		double min = -1;
+		for (double d : probabilities) {
+			if (d!=0 && (min == -1 || d < min)){
+				min = d;
+			}
+		}
+		
+		int[] counts = new int[probabilities.length];
+		for (int i = 0; i < counts.length; i++) {
+			counts[i] =  (int) Math.round(probabilities[i]/min);
+			/*if (probabilities[i] != 0){
+				System.out.println(probabilities[i]/min);
+				System.out.println(counts[i]);
+			}*/
+		}
+		return counts;
+	}
+	
 	
 	public HankelSVDModel(double[] probabilities, int basisSize, SingularValueDecomposition s){
 		this.probabilities = probabilities;
@@ -132,6 +153,127 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
 
 		return q;
+	}
+	
+	public QueryEngine buildHankelBasedModelCustom(int base, int modelSize, int maxBaseSize, int numSubstrings){
+		//Matrix H = SVD.getU().times(SVD.getU()).times(SVD.getV().transpose());
+		Matrix H = this.getHankel();
+		HashMap<String, Matrix> truncatedSVD = HankelSVDModelParent.truncateSVD(H ,modelSize);
+		SingularValueDecomposition svd = new SingularValueDecomposition(H);
+		
+		//System.out.println("U difference");
+		//truncatedSVD.getU().print(5, 5);
+		//svd.getU().print(5, 5);
+		
+		//System.out.println("S difference HankelSVDModel");
+		//System.out.println(Arrays.toString(getDiagonalArray(truncatedSVD.getS())));
+		//System.out.println(Arrays.toString(getDiagonalArray(svd.getS())));
+		
+		Matrix di = pseudoInvDiagonalKL(truncatedSVD.get("S"));
+		
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		
+		/*System.out.println("Testing inverses");
+		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));
+		Matrix test2 = truncatedSVD.get("VT").times(sinv);
+		System.out.println(Arrays.toString( getDiagonalArray(test1) ));
+		System.out.println(Arrays.toString( getDiagonalArray(test2) ));
+		*/
+		
+		//int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
+
+		int[] counts = this.getCounts();
+		HashMap<SequenceOfSymbols, Integer> m = new HashMap<SequenceOfSymbols, Integer>();
+		
+		for (int i = 1; i < counts.length; i++) {
+			if (counts[i] != 0){
+				SequenceOfSymbols s = new SequenceOfSymbols("1:" + i);
+				m.put(s, counts[i]);
+			}
+		}
+		
+		/*System.out.println("Counts printing out!");
+		System.out.println(Arrays.toString(counts));
+		System.out.println();
+		*/
+		
+		HashSet<SequenceOfSymbols> a = HeuristicsForPickingBase.chooseBaseFromData(m, maxBaseSize, numSubstrings, 1);
+		int[] operators = new int[maxBaseSize+1];
+		operators[0] = 1;
+		
+		int c=1;
+		for (SequenceOfSymbols s: a) {
+			int streak = s.getStreakFromString();
+			operators[c] = streak;
+			c++;
+		}
+		Arrays.sort(operators);
+		
+		operators = reverseOrder(operators);
+		
+		System.out.println("Operators");
+		System.out.println( Arrays.toString(operators) );
+		System.out.println();
+		
+		
+		Matrix[] H_Matrices = new Matrix[maxBaseSize+1];
+				
+		int freq;
+		Matrix h;
+		//System.out.println("Building queryEngine");
+		for (int l = 0; l < operators.length; l++) {
+			freq = operators[l];
+			try {
+				h = this.buildH(freq, freq+basisSize);
+				
+				//System.out.println("truncating all Hsigmas");
+				//HashMap<String, Matrix> t = HankelSVDModelParent.truncateSVD(h, modelSize);	
+				//H_Matrices[l] = t.get("U").times(t.get("S")).times(t.get("VT"));
+				//No approx
+				H_Matrices[l] = h;
+			} catch (Exception e) {
+				System.out.println("Problem Building Model when creating Hankel");
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+		Matrix Asigmas[] = new Matrix[maxBaseSize];
+		Matrix t;
+
+		for (int i = 0; i < maxBaseSize; i++) {
+			t = pinv.times(H_Matrices[i]).times( sinv );
+			Asigmas[i] = pinv.times(H_Matrices[i]).times( sinv );
+		}
+		
+		double[][] h_L = new double[basisSize][1];
+		for (int i = 0; i < basisSize; i++) {
+			h_L[i][0] = this.probabilities[i];
+		}
+		
+		Matrix h_LS = new Matrix( h_L ).transpose();
+		Matrix h_PL = h_LS.transpose();
+				
+		Matrix alpha_0 = h_LS.times(sinv);
+		Matrix alpha_inf = pinv.times(h_PL);
+	
+		QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, operators, base);
+		
+		//If Debugging Wanted
+		//QueryEngine q = new QueryEngine(alpha_0, alpha_inf, Asigmas, maxExponent, base , pinv, sinv, truncatedSVD, this.svd);
+
+		return q;
+	}
+	
+	
+	public static int[] reverseOrder(int[] input){
+		int[] r = new int[input.length];
+		for (int i = 0; i < input.length; i++) {
+			r[i] = input[input.length - 1 - i];
+		}
+		return r;
+		
 	}
 	
 	public static double[] getDiagonalArray(Matrix m){

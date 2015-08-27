@@ -22,6 +22,7 @@ public class QueryEngine {
 	private Matrix sinv;
 	private HashMap<String, Matrix> truncatedSVD;
 	private SingularValueDecomposition originalSVD;
+	private int[] operators;
 	
 	public QueryEngine(Matrix a0, Matrix ainf, Matrix[] Asigmas, int maxExponent, int base){
 		this.a0 = a0;
@@ -44,6 +45,14 @@ public class QueryEngine {
 		this.sinv = sinv;
 		this.truncatedSVD = truncatedSVD;
 		this.originalSVD = originalSVD;
+	}
+
+	public QueryEngine(Matrix alpha_0, Matrix alpha_inf, Matrix[] Asigmas, int[] operators, int base) {
+		this.a0 = alpha_0;
+		this.ainf = alpha_inf;
+		this.Asigmas = Asigmas;
+		this.operators = operators;
+		this.debug = false;
 	}
 
 	public Matrix getA0() {
@@ -164,6 +173,34 @@ public class QueryEngine {
 		
 		return r;
 		
+	}
+	
+	public double probabilityQuery(int power){
+		int i=0;
+		int currentPower = this.operators[i];
+		int copyOfPower = power;
+		Matrix r = this.a0;
+		
+		while(copyOfPower > 0){
+			while(copyOfPower >= currentPower){
+				copyOfPower -= currentPower;
+				r = r.times(this.getAsigmas()[i]);
+			}
+			while(copyOfPower < currentPower){
+				i++;
+				currentPower = this.operators[i];
+			}
+		}
+		
+		double p = r.times(this.ainf).get(0, 0);
+		try {
+			QueryEngine.checkQueryResultValidity(r.times(ainf));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("Problem computing probability .get(0,0)");
+			e.printStackTrace();
+		}
+		return p;
 	}
 
 	public double probabilityQuery(int power, int maxPower, int base, boolean forward){

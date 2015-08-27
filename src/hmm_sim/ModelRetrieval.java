@@ -287,4 +287,37 @@ public class ModelRetrieval {
 		return base;
 	}
 
+	public HashMap<Integer, QueryEngine[]> getSpecificModelSizeQueryEnginesCustomBase(int repeats, int modelSize, int maxBaseSize, int numSubstrings) {
+		HashMap<Integer, QueryEngine[]> dataSizeToModels = new HashMap<Integer, QueryEngine[]>();
+		QueryEngine[] enginesTrajectorySize = new QueryEngine[repeats];
+		QueryEngine q;
+
+		try{
+			for (String f: this.fileNames) {
+				//System.out.println(f);
+				enginesTrajectorySize = new QueryEngine[repeats];	//Weird bug
+				String file = this.fileNameOfEmpericalModels + f;
+				int trajectoryLength = ModelRetrieval.getTrajectoryLengthFromFileName(file);
+				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
+				HankelSVDModel h;
+				
+				for (int i = 0; i < repeats; i++) {
+					//System.out.println("Ith repetition:" + i);
+					h = (HankelSVDModel) ois.readObject();
+					//q = h.buildHankelBasedModel(this.base, modelSize);
+					q = h.buildHankelBasedModelCustom(trajectoryLength, modelSize, maxBaseSize, numSubstrings);
+					enginesTrajectorySize[i] = q;
+				}
+				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);
+				ois.close();
+			}
+			return dataSizeToModels;
+		}
+		catch(Exception e){
+			System.out.println("Trouble making emperical models - fixed modelsize");
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 }

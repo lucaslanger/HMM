@@ -221,9 +221,16 @@ public class testEngine{
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
-		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
-		double[][] spreads = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
-		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+1][this.modelSizes.length];
+		QueryEngine[][] fixedDataCustomBaseEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
+		int numSubstrings = 10000;
+		int maxBaseSize = 10;
+		for (int i = 0; i < fixedDataCustomBaseEngines.length; i++) {
+			fixedDataCustomBaseEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(this.REPEATS, this.modelSizes[i], maxBaseSize, numSubstrings).get(fixedDataSize);
+		}
+		
+		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
+		double[][] spreads = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
+		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
 		
 		double[] trueP = this.trueModel.getProbabilities();
 		
@@ -241,7 +248,19 @@ public class testEngine{
 					spreads[j][i] += Math.pow(e, 2);
 				}
 			}
-			//fixedDataSizeModelEngines[0][0].doubleCheckCommutative();
+			
+			int lastIndex = this.trueQueryEngine.getMaxExponent()+1;
+			for (int i = 0; i < this.modelSizes.length; i++) {
+				xAxis[lastIndex][i] = modelSizes[i];
+				double e = 0;
+				for (int q = 0; q < this.maxQuery; q++) {
+					double p = fixedDataCustomBaseEngines[i][r].probabilityQuery(q);
+					double dif = p - trueP[q];
+					e += Math.abs(dif);  
+				}
+				errors[lastIndex][i] += e;
+				spreads[lastIndex][i] += Math.pow(e, 2);
+			}
 		}
 		
 		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
@@ -267,7 +286,7 @@ public class testEngine{
 		System.out.println("Outputting data to: " + identifier);
 		
 		int[] rows = new int[]{0,errors.length-1};
-		OutputData.outputData(pltFolder + identifier, "Number Of States", "Error Norm_2", extractRows(new Matrix(xAxis), rows).getArrayCopy(), extractRows(ERR, rows).getArrayCopy(), extractRows(SPREADS, rows).getArrayCopy(), title, internalComment);
+		OutputData.outputData(pltFolder + identifier, "Model Size", "Error", extractRows(new Matrix(xAxis), rows).getArrayCopy(), extractRows(ERR, rows).getArrayCopy(), extractRows(SPREADS, rows).getArrayCopy(), title, internalComment);
 	}
 	
 	public static Matrix extractRows(Matrix m, int[] rows){

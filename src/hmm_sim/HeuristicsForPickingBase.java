@@ -465,7 +465,15 @@ public class HeuristicsForPickingBase {
 		
 		HashSet<SequenceOfSymbols> r = new HashSet<SequenceOfSymbols>();
 		for (int i = 0; i < numSubstrings; i++) {
-			r.add( pq.remove().getSequence());
+			try{
+				r.add( pq.remove().getSequence());
+			}
+			catch(Exception e){
+				System.out.println("Exhasted all substrings");
+				System.out.println(i);
+				//e.printStackTrace();
+				break;
+			}
 		}
 		
 		return r;
