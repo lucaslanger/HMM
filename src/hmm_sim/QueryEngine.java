@@ -186,7 +186,7 @@ public class QueryEngine {
 				copyOfPower -= currentPower;
 				r = r.times(this.getAsigmas()[i]);
 			}
-			while(copyOfPower < currentPower){
+			while(copyOfPower < currentPower && copyOfPower!=0 ){
 				i++;
 				currentPower = this.operators[i];
 			}

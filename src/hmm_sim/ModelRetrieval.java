@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
 public class ModelRetrieval {
 	
 	
@@ -287,7 +289,41 @@ public class ModelRetrieval {
 		return base;
 	}
 
-	public HashMap<Integer, QueryEngine[]> getSpecificModelSizeQueryEnginesCustomBase(int repeats, int modelSize, int maxBaseSize, int numSubstrings) {
+	
+	public int[][] getOperators(int repeats, int maxBaseSize, int numSubstrings){
+		try{
+			HashMap<Integer, QueryEngine[]> dataSizeToModels = new HashMap<Integer, QueryEngine[]>();
+			QueryEngine[] enginesTrajectorySize = new QueryEngine[repeats];
+			QueryEngine q;
+			int[][] operators = new int[repeats][maxBaseSize+1];
+			for (String f: this.fileNames) {
+				//System.out.println(f);
+				enginesTrajectorySize = new QueryEngine[repeats];	//Weird bug
+				String file = this.fileNameOfEmpericalModels + f;
+				int trajectoryLength = ModelRetrieval.getTrajectoryLengthFromFileName(file);
+				ObjectInputStream ois = new ObjectInputStream( new FileInputStream(file) );
+				HankelSVDModel h;
+				
+				for (int i = 0; i < repeats; i++) {
+					//System.out.println("Ith repetition:" + i);
+					h = (HankelSVDModel) ois.readObject();
+					//q = h.buildHankelBasedModel(this.base, modelSize);
+					int[] op = h.getOperators(maxBaseSize, numSubstrings);
+					operators[i] = op;
+				}
+				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);
+				ois.close();
+			}
+			return operators;
+		}
+		catch(Exception e){
+			System.out.println("Trouble getting operators");
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public HashMap<Integer, QueryEngine[]> getSpecificModelSizeQueryEnginesCustomBase(int[][] operators, int repeats, int modelSize) {
 		HashMap<Integer, QueryEngine[]> dataSizeToModels = new HashMap<Integer, QueryEngine[]>();
 		QueryEngine[] enginesTrajectorySize = new QueryEngine[repeats];
 		QueryEngine q;
@@ -305,7 +341,7 @@ public class ModelRetrieval {
 					//System.out.println("Ith repetition:" + i);
 					h = (HankelSVDModel) ois.readObject();
 					//q = h.buildHankelBasedModel(this.base, modelSize);
-					q = h.buildHankelBasedModelCustom(trajectoryLength, modelSize, maxBaseSize, numSubstrings);
+					q = h.buildHankelBasedModelCustom(trajectoryLength, modelSize, operators[i]);
 					enginesTrajectorySize[i] = q;
 				}
 				dataSizeToModels.put(trajectoryLength, enginesTrajectorySize);

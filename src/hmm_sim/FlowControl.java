@@ -69,12 +69,12 @@ public class FlowControl {
 		int repetitions = 1;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
-		int loop1 = 32;
-		int loop2 = 16;
+		int loop1 = 28;
+		int loop2 = 14;
 		int hSize = 700;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		int[] modelSizes = new int[]{15,16,18,20,24,26,28,30};
+		int[] modelSizes = new int[]{15,16,18,20,24,26,28};
 		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		

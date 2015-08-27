@@ -224,8 +224,11 @@ public class testEngine{
 		QueryEngine[][] fixedDataCustomBaseEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
 		int numSubstrings = 10000;
 		int maxBaseSize = 10;
+		
+		int[][] operators = this.ModelRetrieval.getOperators(this.REPEATS, maxBaseSize, numSubstrings);
+		
 		for (int i = 0; i < fixedDataCustomBaseEngines.length; i++) {
-			fixedDataCustomBaseEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(this.REPEATS, this.modelSizes[i], maxBaseSize, numSubstrings).get(fixedDataSize);
+			fixedDataCustomBaseEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(operators, this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
 		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
@@ -271,9 +274,9 @@ public class testEngine{
 		spreads = ERRSQUARE.getArrayCopy();
 		
 		
-		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
+		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+2; j++) {
 			for (int i = 0; i < this.modelSizes.length; i++) {
-				spreads[j][i] = spreads[j][i] - Math.pow(errors[j][i],2);
+				spreads[j][i] = Math.sqrt(spreads[j][i] - Math.pow(errors[j][i],2));
 			}
 		}
 		
@@ -285,7 +288,7 @@ public class testEngine{
 		String internalComment = "Darker Curves --> Richer Base System";
 		System.out.println("Outputting data to: " + identifier);
 		
-		int[] rows = new int[]{0,errors.length-1};
+		int[] rows = new int[]{0,errors.length-2,errors.length-1};
 		OutputData.outputData(pltFolder + identifier, "Model Size", "Error", extractRows(new Matrix(xAxis), rows).getArrayCopy(), extractRows(ERR, rows).getArrayCopy(), extractRows(SPREADS, rows).getArrayCopy(), title, internalComment);
 	}
 	

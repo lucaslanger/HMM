@@ -155,34 +155,7 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 		return q;
 	}
 	
-	public QueryEngine buildHankelBasedModelCustom(int base, int modelSize, int maxBaseSize, int numSubstrings){
-		//Matrix H = SVD.getU().times(SVD.getU()).times(SVD.getV().transpose());
-		Matrix H = this.getHankel();
-		HashMap<String, Matrix> truncatedSVD = HankelSVDModelParent.truncateSVD(H ,modelSize);
-		SingularValueDecomposition svd = new SingularValueDecomposition(H);
-		
-		//System.out.println("U difference");
-		//truncatedSVD.getU().print(5, 5);
-		//svd.getU().print(5, 5);
-		
-		//System.out.println("S difference HankelSVDModel");
-		//System.out.println(Arrays.toString(getDiagonalArray(truncatedSVD.getS())));
-		//System.out.println(Arrays.toString(getDiagonalArray(svd.getS())));
-		
-		Matrix di = pseudoInvDiagonalKL(truncatedSVD.get("S"));
-		
-		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
-		Matrix sinv = (truncatedSVD.get("VT")).transpose();
-		
-		/*System.out.println("Testing inverses");
-		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));
-		Matrix test2 = truncatedSVD.get("VT").times(sinv);
-		System.out.println(Arrays.toString( getDiagonalArray(test1) ));
-		System.out.println(Arrays.toString( getDiagonalArray(test2) ));
-		*/
-		
-		//int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
-
+	public int[] getOperators(int maxBaseSize, int numSubstrings){
 		int[] counts = this.getCounts();
 		HashMap<SequenceOfSymbols, Integer> m = new HashMap<SequenceOfSymbols, Integer>();
 		
@@ -215,9 +188,41 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 		System.out.println("Operators");
 		System.out.println( Arrays.toString(operators) );
 		System.out.println();
+		return operators;
+	}
+	
+	public QueryEngine buildHankelBasedModelCustom(int base, int modelSize, int[] operators){
+		//Matrix H = SVD.getU().times(SVD.getU()).times(SVD.getV().transpose());
+		Matrix H = this.getHankel();
+		HashMap<String, Matrix> truncatedSVD = HankelSVDModelParent.truncateSVD(H ,modelSize);
+		SingularValueDecomposition svd = new SingularValueDecomposition(H);
+		
+		//System.out.println("U difference");
+		//truncatedSVD.getU().print(5, 5);
+		//svd.getU().print(5, 5);
+		
+		//System.out.println("S difference HankelSVDModel");
+		//System.out.println(Arrays.toString(getDiagonalArray(truncatedSVD.getS())));
+		//System.out.println(Arrays.toString(getDiagonalArray(svd.getS())));
+		
+		Matrix di = pseudoInvDiagonalKL(truncatedSVD.get("S"));
+		
+		Matrix pinv = di.times(truncatedSVD.get("U").transpose());
+		Matrix sinv = (truncatedSVD.get("VT")).transpose();
+		
+		/*System.out.println("Testing inverses");
+		Matrix test1 = pinv.times(truncatedSVD.get("U").times(truncatedSVD.get("S")));
+		Matrix test2 = truncatedSVD.get("VT").times(sinv);
+		System.out.println(Arrays.toString( getDiagonalArray(test1) ));
+		System.out.println(Arrays.toString( getDiagonalArray(test2) ));
+		*/
+		
+		//int maxExponent = (int) Math.floor((Math.log( (this.probabilities.length/2) - basisSize)/Math.log(base))) ; 
+
 		
 		
-		Matrix[] H_Matrices = new Matrix[maxBaseSize+1];
+		
+		Matrix[] H_Matrices = new Matrix[operators.length];
 				
 		int freq;
 		Matrix h;
@@ -239,10 +244,10 @@ public class HankelSVDModel extends HankelSVDModelParent { //implements Serializ
 			}
 		}
 		
-		Matrix Asigmas[] = new Matrix[maxBaseSize];
+		Matrix Asigmas[] = new Matrix[operators.length];
 		Matrix t;
 
-		for (int i = 0; i < maxBaseSize; i++) {
+		for (int i = 0; i < operators.length; i++) {
 			t = pinv.times(H_Matrices[i]).times( sinv );
 			Asigmas[i] = pinv.times(H_Matrices[i]).times( sinv );
 		}
