@@ -115,13 +115,23 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 				a = 1.0		
 				col = colors[j%len(colors)]
 				print col	
-				plt.plot(xdata,ydata, col, alpha=a, label=lineNames[i-1])
-				plt.errorbar(xdata, ydata, yerr=spreads)
+				plt.plot(xdata,ydata, col, alpha=a, linestyle='--', marker='o', label=lineNames[j])
+				#plt.errorbar(xdata, ydata, yerr=spreads)
 
 			plt.xlabel(d[0], fontdict= generateFont(22) )
 			plt.ylabel(d[1], fontdict= generateFont(22) )
-			plt.title(title, fontdict= generateFont(28) )	
-			plt.legend()
+			plt.title(title, fontdict= generateFont(28) )
+	
+			legend = plt.legend(loc='upper center', shadow=True)
+			# Set the fontsize
+			for label in legend.get_texts():
+			    label.set_fontsize('large')
+
+			for label in legend.get_lines():
+			    label.set_linewidth(1.5)  # the legend line width
+
+			#
+
 			plt.grid(True,color='k')
 			plt.axis((15,30,0, 0.8))
 
@@ -169,7 +179,7 @@ if t=='-v':
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
 elif t=='-k':
-	drawPlots(datafile, baseComparisonKeyPredictions, colorsAnalysis, True)	#2,5 to split
+	drawPlots(datafile, baseComparisonKeyPredictions, colorsTests, True)	#2,5 to split
 elif t=='-mo':
 	drawPlots(datafile, multipleObservations, colorsTests, True, 1, 1)
 else:
