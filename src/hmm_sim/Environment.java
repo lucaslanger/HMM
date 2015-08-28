@@ -1,6 +1,7 @@
 package hmm_sim;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
 
 public abstract class Environment {
@@ -102,6 +103,16 @@ public abstract class Environment {
 		for (int i = 0; i < repetitions; i++) {
 			data[i] = generateEmpericalProbabilities(trajectoryLength);
 		}
+		
+		HashMap<Integer, Double> th = new HashMap<Integer, Double>();
+		double[] t = data[0];
+		for (int i = 0; i < t.length; i++) {
+			if (t[i] != 0){
+				th.put(i, t[i]);
+			}
+		}
+		System.out.println(th.toString());
+		
 		String f = this.empericalFolder + "Trajectory:" + Integer.toString(trajectoryLength);
 		System.out.println("Outputting data to: " + f + " called by environment class");
 		System.out.println();

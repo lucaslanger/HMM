@@ -216,15 +216,18 @@ public class testEngine{
 	
 	
 	public void modelSizeEffectOverBaseImprovement(String identifier, int fixedDataSize){
+		System.out.println("Building Query Engines");
 		QueryEngine[][] fixedDataSizeModelEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
 		for (int i = 0; i < fixedDataSizeModelEngines.length; i++) {
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
 		QueryEngine[][] fixedDataCustomBaseEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
-		int numSubstrings = 10000;
+		int numSubstrings = 300;
 		int maxBaseSize = 10;
 		
+		System.out.println("Getting operators");
+		System.out.println();
 		int[][] operators = this.ModelRetrieval.getOperators(this.REPEATS, maxBaseSize, numSubstrings);
 		
 		for (int i = 0; i < fixedDataCustomBaseEngines.length; i++) {
@@ -237,6 +240,9 @@ public class testEngine{
 		
 		double[] trueP = this.trueModel.getProbabilities();
 		
+		
+		System.out.println("Computing errors!");
+		System.out.println();
 		for (int r = 0; r < this.REPEATS; r++) {
 			for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+1; j++) {
 				for (int i = 0; i < this.modelSizes.length; i++) {
@@ -267,12 +273,11 @@ public class testEngine{
 		}
 		
 		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
-		ERR.print(5, 5);
+		//ERR.print(5, 5);
 		errors = ERR.getArrayCopy();
 		
 		Matrix ERRSQUARE = new Matrix(spreads).times(1.0/this.REPEATS);
 		spreads = ERRSQUARE.getArrayCopy();
-		
 		
 		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+2; j++) {
 			for (int i = 0; i < this.modelSizes.length; i++) {
@@ -281,15 +286,22 @@ public class testEngine{
 		}
 		
 		Matrix SPREADS = new Matrix(spreads);
-		SPREADS.print(5, 5);
+		//SPREADS.print(5, 5);
 		
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
-		String title = "Double Loop Timing";
+		String title = "Double Loop Timing Predictions";
 		String internalComment = "Darker Curves --> Richer Base System";
 		System.out.println("Outputting data to: " + identifier);
 		
 		int[] rows = new int[]{0,errors.length-2,errors.length-1};
-		OutputData.outputData(pltFolder + identifier, "Model Size", "Error", extractRows(new Matrix(xAxis), rows).getArrayCopy(), extractRows(ERR, rows).getArrayCopy(), extractRows(SPREADS, rows).getArrayCopy(), title, internalComment);
+		
+		Matrix xT = extractRows(new Matrix(xAxis), rows);
+		Matrix yT = extractRows(ERR, rows);
+		Matrix sT = extractRows(SPREADS, rows);
+		
+		yT.print(5, 5);
+		System.out.println(pltFolder + identifier);
+		OutputData.outputData(pltFolder + identifier, "Model Size", "Error", xT.getArrayCopy(), yT.getArrayCopy(), sT.getArrayCopy(), title, internalComment);
 	}
 	
 	public static Matrix extractRows(Matrix m, int[] rows){

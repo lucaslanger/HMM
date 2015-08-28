@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 10000;
+		int[] trajectorySizes = new int[]{1000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 1000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
@@ -20,8 +20,8 @@ public class FlowControl {
 		}*/
 		String f = "ErrorStorage";
 
-		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
 		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
@@ -29,16 +29,16 @@ public class FlowControl {
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
 		//ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now 
 		
-		int repetitions = 2;
-		int stretchFactor = 10;
-		int hSize = 700;
+		int repetitions = 1;
+		int stretchFactor = 1;
+		int hSize = 400;
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
 		
-		int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
+		//int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
 		
-		// INTERESTING JUMPS: int[] modelSizes = new int[]{28, 29, 30, 31, 35, 40, 60, 80, 100};
+		int[] modelSizes = new int[]{20}; //JUMPS
 
 		String workingFolder = "keySearchPacMan/";
 	
@@ -66,7 +66,7 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 1;
+		int repetitions = 5;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
 		int loop1 = 28;

@@ -328,6 +328,7 @@ public class HeuristicsForPickingBase {
 				int improvement = 0;
 								
 				for (SequenceOfSymbols seq : m.keySet() ) {
+
 					StringIntPair p;
 					try {
 						p = computeOptimalCompositionsNeccesaryCoinStyle(tempBase, seq.getRawSequence(), "Min");
@@ -348,7 +349,7 @@ public class HeuristicsForPickingBase {
 				} 
 				//i++;
 				//System.out.println(i);
-
+				
 				SymbolCountPair sc = new SymbolCountPair(-1*improvement, s);
 				pq.add(sc);
 			}
