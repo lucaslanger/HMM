@@ -230,6 +230,7 @@ public class testEngine{
 		System.out.println();
 		int[][] operators = this.ModelRetrieval.getOperators(this.REPEATS, maxBaseSize, numSubstrings);
 		
+		int[] chosenOpForSpeed = operators[0];
 		for (int i = 0; i < fixedDataCustomBaseEngines.length; i++) {
 			fixedDataCustomBaseEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(operators, this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
@@ -286,14 +287,15 @@ public class testEngine{
 		}
 		
 		Matrix SPREADS = new Matrix(spreads);
-		//SPREADS.print(5, 5);
+		SPREADS.print(5, 5);
 		
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		String title = "Double Loop Timing Predictions";
 		String internalComment = "Darker Curves --> Richer Base System";
 		System.out.println("Outputting data to: " + identifier);
 		
-		int[] rows = new int[]{0,errors.length-2,errors.length-1};
+		int L = errors.length;
+		int[] rows = new int[]{0,L-2,L-1};
 		
 		Matrix xT = extractRows(new Matrix(xAxis), rows);
 		Matrix yT = extractRows(ERR, rows);

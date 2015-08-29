@@ -212,7 +212,7 @@ public class QueryEngineMultipleObservations {
 	}
 
 	public double evaluateModel(LabyrinthGraph L, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors){
-		System.out.println("evaluating model");
+		//System.out.println("evaluating model");
 		double e = 0;
 				
 		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
@@ -239,13 +239,13 @@ public class QueryEngineMultipleObservations {
 			}
 		}
 		e = Math.sqrt(e);
-		System.out.println("done evaluating");
+		//System.out.println("done evaluating");
 		return e;
 	}
 	
 	public double evaluateModel(LabyrinthGraph L, int maxP, HashSet<SequenceOfSymbols> stringsToQuery, boolean topErrors){
 		double e = 0;
-		System.out.println("evaluating model");
+		//System.out.println("evaluating model");
 	
 		PriorityQueue<SequenceErrorPair> pq = new PriorityQueue<SequenceErrorPair>();
 		
@@ -271,7 +271,7 @@ public class QueryEngineMultipleObservations {
 			}
 		}
 		e = Math.sqrt(e);
-		System.out.println("done evaluating");
+		//System.out.println("done evaluating");
 
 		return e;
 	}

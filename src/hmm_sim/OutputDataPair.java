@@ -10,13 +10,19 @@ public class OutputDataPair {
 	public Matrix getxAxis() {
 		return xAxis;
 	}
-	public OutputDataPair(Matrix data, Matrix xAxis) {
+	public Matrix getSpreads(){
+		return SPREADS;
+	}
+	
+	public OutputDataPair(Matrix data, Matrix xAxis, Matrix SPREADS) {
 		super();
 		this.data = data;
 		this.xAxis = xAxis;
+		this.SPREADS = SPREADS;
 	}
 	public Matrix data;
 	public Matrix xAxis;
+	public Matrix SPREADS;
 	
 	
 }

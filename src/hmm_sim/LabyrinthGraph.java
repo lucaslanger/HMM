@@ -148,7 +148,7 @@ public class LabyrinthGraph extends Environment{
 	}
 	
 	public static LabyrinthGraph pacMan(String workingFolder, int desiredHankelSize, int stretchFactor, int key, boolean verbose){
-			
+		 System.out.println("stretch factor " + stretchFactor);
 		 int[][] graph = new int[][]{   
 				 {},
 				 {0,2},

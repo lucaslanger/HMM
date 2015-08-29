@@ -10,18 +10,18 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{1000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 1000;
+		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = 10000;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
 			int[] temp = new int[]{i};
 			FlowControl.testLabyrinths(temp, i, base);
 		}*/
-		String f = "ErrorStorage";
+		//String f = "ErrorStorage";
 
-		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
 		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
@@ -30,15 +30,15 @@ public class FlowControl {
 		//ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now 
 		
 		int repetitions = 1;
-		int stretchFactor = 1;
-		int hSize = 400;
+		int stretchFactor = 5;
+		int hSize = 700;
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
 		
 		//int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
 		
-		int[] modelSizes = new int[]{20}; //JUMPS
+		int[] modelSizes = new int[]{10,15,17,20,23,25}; //JUMPS
 
 		String workingFolder = "keySearchPacMan/";
 	
@@ -56,7 +56,7 @@ public class FlowControl {
 		System.out.println("Done loading models");
 		System.out.println("");
 		
-		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,1, true );
+		testEngine a = new testEngine(workingFolder,"Models_Emperical_" + workingFolder, "Models_True_" + workingFolder, dataSizeForFixedPlots, basisSize, base, modelSizes, fixedModelSize ,repetitions, true );
 		
 		String identifier = "Datasize:" + dataSizeForFixedPlots + "PacMan";
 
@@ -66,15 +66,15 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 5;
+		int repetitions = 10;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
 		int loop1 = 28;
 		int loop2 = 14;
-		int hSize = 700;
+		int hSize = 500;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		int[] modelSizes = new int[]{15,16,18,20,24,26,28};
+		int[] modelSizes = new int[]{5,7,10,12,15,17,20};
 		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
@@ -83,7 +83,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		double selfTransitionProbability = 0.00;
+		double selfTransitionProbability = 0.10;
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions, false);
 		

@@ -44,18 +44,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int basisSize = 50;
 		int loop1 = 27;
 		int loop2 = 17;
-		boolean firstTimeGenerateData = true;
+		boolean firstTimeGenerateData = false;
 		int trajectoryLength = (loop1+loop2)*3;
-		int repetitions = 1;
-		int[] modelSizes= new int[]{10,15,30,40,43,45,50};
+		int repetitions = 10;
+		int[] modelSizes= new int[]{10,15,20,25,30,35,43};
 		
 		int lengthOfTree = 5;
 		
-		int numSubstrings = 10000;
+		int numSubstrings = 1000;
 
 		double[][] baseSizes = new double[][]{{10}};;
 		OutputDataPair[] oda = new OutputDataPair[baseSizes[0].length];
 		double[][] timeTaken = new double[1][oda.length];
+		
 		
 		double prevTime = System.currentTimeMillis();
 		for (int j = 0; j < oda.length; j++) {
@@ -64,25 +65,26 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			prevTime = System.currentTimeMillis();
 		}
 		
-		OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		//OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
 		OutputDataPair t2 = HankelSVDModelMultipleObservations.doubleLoopTest(basisSize, workingFolder, trajectoryLength,numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
 		
 		Matrix naive = new Matrix( new double[][]{t2.getData().getArrayCopy()[0]});
 		Matrix fullPowers = new Matrix( new double[][]{t2.getData().getArrayCopy()[t2.getData().getArrayCopy().length-1]});
 		
-		Matrix tree = t1.getData();
-		Matrix xAxis = t1.getxAxis();
+		//Matrix tree = t1.getData();
+		Matrix xAxis = oda[0].getxAxis();
 		
 		ArrayList<Matrix> rowsOfResults = new ArrayList<Matrix>();
-		for (OutputDataPair odp : oda) {
-			rowsOfResults.add(odp.getData());
-		}
-		rowsOfResults.add(tree);
+		//rowsOfResults.add(tree);
 		rowsOfResults.add(naive);
 		rowsOfResults.add(fullPowers);
 		
+		for (OutputDataPair odp : oda) {
+			rowsOfResults.add(odp.getData());
+		}
+		
 		Matrix together = concatenateMatrices(rowsOfResults);
-		Matrix X = copyMatrixOnRows(xAxis, rowsOfResults.size());
+		Matrix X = copyMatrixOnRows(xAxis, 3);
 		System.out.println("Together;");
 		together.print(5, 5);
 		X.print(5, 5);
@@ -148,11 +150,12 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int base = 2; 
 
 		int desiredHankelSize = trajectoryLength;
+		FlowControl.createFolder(workingFolder);
 		String dataSetFolder = workingFolder + "DataSets"+ loop1 + ":" + loop2+ "/";
 			
 		int maxPower;
 		if (!customBase){
-			maxPower = 32;
+			maxPower = 128;
 		}
 		else{
 			maxPower = 1;
@@ -169,6 +172,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix Eavg = null;
 		double[][] xaxis = new double[maxExponent+1][modelSizes.length];
 		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
+		
+		double[][] spreads = new double[xaxis.length][xaxis[0].length];
 		
 		for (int r = 0; r < repetitions; r++) {
 			File f = new File(dataSetFolder + "DataSet" + ",Rep:" + (r+1));
@@ -203,10 +208,11 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				boolean debugErrors = false;
 				double e = qs[j].evaluateModel(L, stq, debugErrors);
 				
+				//0 here because we are doing the tree method
 				errors[0][j] = e;
 				xaxis[0][j] = modelSizes[j];
+				spreads[0][j] += Math.pow(e, 2);
 				//qs[0].verifyProbabilityQueryCorrectness();
-			
 			}
 			
 			Matrix E = new Matrix(errors);
@@ -220,14 +226,20 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		Eavg = Eavg.times(1.0/repetitions);
 		
+		for (int i = 0; i < spreads.length; i++) {
+			for (int j = 0; j < spreads[0].length; j++) {
+				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+			}
+		}
+		Matrix SPREADS = new Matrix(spreads);
 		//System.out.println("Rows: exponents, Columns: modelSizes");
 		//Eavg.print(5, 5);
 		
 		
-		String title = "Wall Color Predictions";
-		String internalComment = "Lighter Curves --> Less Base System";
-		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-		return new OutputDataPair(Eavg, new Matrix(xaxis) );
+		//String title = "Wall Color Predictions";
+		//String internalComment = "Lighter Curves --> Less Base System";
+		//OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
+		return new OutputDataPair(Eavg, new Matrix(xaxis), SPREADS );
 	}
 	
 	public static OutputDataPair doubleLoopTestCustomGenerated(int basisSize, String workingFolder, int numSubstrings, int baseSize ,int trajectoryLength, int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
@@ -260,6 +272,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		Matrix Eavg = null;
 		double[][] xaxis = new double[maxExponent+1][modelSizes.length];
+		double[][] spreads = new double[xaxis.length][xaxis[0].length];
+
 		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		
 		for (int r = 0; r < repetitions; r++) {
@@ -290,6 +304,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			*/
 			double[][] errors = new double[1][modelSizes.length];	
 					
+			
 			SymbolCounts counts = new SymbolCounts();
 			for (SequenceOfSymbols seq : seqsRead) {
 				counts.updateFrequency(seq, 1);
@@ -310,6 +325,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 				
 				errors[0][j] = e;
 				xaxis[0][j] = modelSizes[j];
+				spreads[0][j] += Math.pow(e, 2);
+
 				//qs[0].verifyProbabilityQueryCorrectness();
 			
 			}
@@ -325,13 +342,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		}
 		Eavg = Eavg.times(1.0/repetitions);
 		
+		for (int i = 0; i < spreads.length; i++) {
+			for (int j = 0; j < spreads[0].length; j++) {
+				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+			}
+		}
+		Matrix SPREADS = new Matrix(spreads);
 		//Eavg.print(5, 5);
 		
 		
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
 		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-		return new OutputDataPair(Eavg, new Matrix(xaxis));
+		return new OutputDataPair(Eavg, new Matrix(xaxis), SPREADS);
 	}
 	
 	public static OutputDataPair doubleLoopTest(int basisSize ,String workingFolder, int trajectoryLength,  int numberOfTrajectories, int amountOfData, int repetitions, int loop1, int loop2, int[] modelSizes){
@@ -364,6 +387,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		Matrix Eavg = null;
 		double[][] xaxis = new double[maxExponent+1][modelSizes.length];
+		double[][] spreads = new double[xaxis.length][xaxis[0].length];
+
 		LabyrinthGraph L = LabyrinthGraph.multipleObservationDoubleLoop(workingFolder, desiredHankelSize, numberOfTrajectories, loop1, loop2);
 		
 		for (int r = 0; r < repetitions; r++) {
@@ -405,6 +430,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 					
 					errors[i][j] = e;
 					xaxis[i][j] = modelSizes[j];
+					spreads[i][j] += Math.pow(e, 2);
+
 					/*if (customBase){
 						qs[i].verifyProbabilityQueryCorrectness();
 					}*/
@@ -422,13 +449,19 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			}
 		}
 		Eavg = Eavg.times(1.0/repetitions);
+		for (int i = 0; i < spreads.length; i++) {
+			for (int j = 0; j < spreads[0].length; j++) {
+				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+			}
+		}
+		Matrix SPREADS = new Matrix(spreads);
 		
 		//Eavg.print(5, 5);
 		
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
 		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
-		return new OutputDataPair(Eavg, new Matrix(xaxis) );
+		return new OutputDataPair(Eavg, new Matrix(xaxis), SPREADS);
 	}
 	
 	private static void generateDataSet(int repetitions, String workingFolder, int desiredHankelSize, int numberOfTrajectories, int loop1, int loop2) {
