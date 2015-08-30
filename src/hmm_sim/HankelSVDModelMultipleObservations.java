@@ -45,6 +45,9 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		int loop1 = 27;
 		int loop2 = 17;
 		boolean firstTimeGenerateData = false;
+		if (firstTimeGenerateData == false){
+			System.out.println("NOT GENERATING NEW DATA!");
+		}
 		int trajectoryLength = (loop1+loop2)*3;
 		int repetitions = 10;
 		int[] modelSizes= new int[]{10,15,20,25,30,35,43};
@@ -58,6 +61,8 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		double[][] timeTaken = new double[1][oda.length];
 		
 		
+		//OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		
 		double prevTime = System.currentTimeMillis();
 		for (int j = 0; j < oda.length; j++) {
 			oda[j] = HankelSVDModelMultipleObservations.doubleLoopTestCustomGenerated(basisSize, workingFolder, numSubstrings, (int) baseSizes[0][j],  trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
@@ -65,7 +70,6 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			prevTime = System.currentTimeMillis();
 		}
 		
-		//OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
 		OutputDataPair t2 = HankelSVDModelMultipleObservations.doubleLoopTest(basisSize, workingFolder, trajectoryLength,numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
 		
 		Matrix naive = new Matrix( new double[][]{t2.getData().getArrayCopy()[0]});
@@ -83,11 +87,26 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			rowsOfResults.add(odp.getData());
 		}
 		
-		Matrix together = concatenateMatrices(rowsOfResults);
+		Matrix naiveSpreads = new Matrix( new double[][]{t2.getSpreads().getArrayCopy()[0]});
+		Matrix fullPowersSpreads = new Matrix( new double[][]{t2.getSpreads().getArrayCopy()[t2.getSpreads().getArrayCopy().length-1]});
+
+		
+		ArrayList<Matrix> rowsOfSpreads = new ArrayList<Matrix>();
+		//rowsOfSpreads.add(tree);
+		rowsOfSpreads.add(naiveSpreads);
+		rowsOfSpreads.add(fullPowersSpreads);
+		
+		for (OutputDataPair odp : oda) {
+			rowsOfSpreads.add(odp.getSpreads());
+		}
+		
+		Matrix spreads = concatenateMatrices(rowsOfSpreads);
+		Matrix Y = concatenateMatrices(rowsOfResults);
 		Matrix X = copyMatrixOnRows(xAxis, 3);
 		System.out.println("Together;");
-		together.print(5, 5);
+		Y.print(5, 5);
 		X.print(5, 5);
+		spreads.print(5,5);
 		
 		Matrix times = new Matrix(timeTaken);
 		System.out.println("Times:");
@@ -95,13 +114,13 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		String title = "Comparison of Base Learning";
 		String internalComment = loop1 + "-" + loop2 + ",Data:" + numberOfTrajectories;
-		OutputData.outputData(workingFolder + "BaseLearningTests" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", X.getArrayCopy(), together.getArrayCopy(), title, internalComment);
+		OutputData.outputData(workingFolder + "BaseLearningTests" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error", X.getArrayCopy(), Y.getArrayCopy(), spreads.getArrayCopy(),title, internalComment);
 	
 		String timeTitle = "Time taken for different base sizes";
 		String internalCommentTime = "No comment";
 		
-		new Matrix(baseSizes).print(5, 5);
-		OutputData.outputData(workingFolder + "Timing tests", "Base Size", "Time in ms", baseSizes , times.getArrayCopy(), timeTitle, internalCommentTime);
+		//new Matrix(baseSizes).print(5, 5);
+		//OutputData.outputData(workingFolder + "Timing tests", "Base Size", "Time in ms", baseSizes , times.getArrayCopy(), timeTitle, internalCommentTime);
 	
 	}
 		
@@ -228,7 +247,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		for (int i = 0; i < spreads.length; i++) {
 			for (int j = 0; j < spreads[0].length; j++) {
-				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+				spreads[i][j] = Math.sqrt((1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2));
 			}
 		}
 		Matrix SPREADS = new Matrix(spreads);
@@ -344,7 +363,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		for (int i = 0; i < spreads.length; i++) {
 			for (int j = 0; j < spreads[0].length; j++) {
-				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+				spreads[i][j] = Math.sqrt((1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2));
 			}
 		}
 		Matrix SPREADS = new Matrix(spreads);
@@ -353,7 +372,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
-		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
+		//OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
 		return new OutputDataPair(Eavg, new Matrix(xaxis), SPREADS);
 	}
 	
@@ -451,7 +470,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Eavg = Eavg.times(1.0/repetitions);
 		for (int i = 0; i < spreads.length; i++) {
 			for (int j = 0; j < spreads[0].length; j++) {
-				spreads[i][j] = (1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2);
+				spreads[i][j] = Math.sqrt((1.0/repetitions)*spreads[i][j] - Math.pow(Eavg.get(i, j),2));
 			}
 		}
 		Matrix SPREADS = new Matrix(spreads);
@@ -460,7 +479,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		
 		String title = "Wall Color Predictions";
 		String internalComment = "Lighter Curves --> Less Base System";
-		OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
+		//OutputData.outputData(workingFolder + "errorModelSizesBase" + "," + amountOfData + "," + + loop1 + ":" + loop2, "Model Size", "Error norm2()", xaxis, Eavg.getArrayCopy(), title, internalComment);
 		return new OutputDataPair(Eavg, new Matrix(xaxis), SPREADS);
 	}
 	

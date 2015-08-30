@@ -20,8 +20,8 @@ public class FlowControl {
 		}*/
 		//String f = "ErrorStorage";
 
-		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
 		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
@@ -30,15 +30,15 @@ public class FlowControl {
 		//ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now 
 		
 		int repetitions = 1;
-		int stretchFactor = 5;
-		int hSize = 700;
+		int stretchFactor = 10;
+		int hSize = 600;
 		int basisSize = 300;
 		int fixedModelSize = 50;
 		int keyLocation = 10;
 		
 		//int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
 		
-		int[] modelSizes = new int[]{10,15,17,20,23,25}; //JUMPS
+		int[] modelSizes = new int[]{15,20,25,27,30,33,35,40,45,50}; //JUMPS
 
 		String workingFolder = "keySearchPacMan/";
 	
@@ -69,12 +69,12 @@ public class FlowControl {
 		int repetitions = 10;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
-		int loop1 = 28;
-		int loop2 = 14;
-		int hSize = 500;
+		int loop1 = 47;
+		int loop2 = 27;
+		int hSize = 600;
 		int basisSize = 150;
 		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		int[] modelSizes = new int[]{5,7,10,12,15,17,20};
+		int[] modelSizes = new int[]{10,12,15,17,20,25,30,35,40,45,50};
 		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
@@ -83,7 +83,7 @@ public class FlowControl {
 		System.out.println("Generating data:");
 		System.out.println("");
 		FlowControl.createFolder(workingFolder);
-		double selfTransitionProbability = 0.10;
+		double selfTransitionProbability = 0.00;
 		rawHMM r = rawHMM.makeLabyrinth(workingFolder, loop1, loop2, selfTransitionProbability, hSize, .5, .5);
 		r.generateData(trajectorySizes, repetitions, false);
 		

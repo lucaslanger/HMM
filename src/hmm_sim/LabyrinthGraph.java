@@ -154,7 +154,7 @@ public class LabyrinthGraph extends Environment{
 				 {0,2},
 				 {3,5},
 				 {4,13},
-				 {5,13},
+				 {0,5,13},
 				 {6,15},
 				 {0,7},
 				 {8,16},
@@ -165,15 +165,15 @@ public class LabyrinthGraph extends Environment{
 				 {11,13},
 				 {0,3,4},
 				 {11,15,16},
-				 {5,14},
-				 {7,8}
+				 {0,5,14},
+				 {0,7,8}
 		 };
 		 int[][] edges = new int[][]{
 				 {},
 				 {0,1},
 				 {1,1},
 				 {2,3},
-				 {1,2},
+				 {0,1,2},
 				 {1,2},
 				 {0,1},
 				 {2,1},
@@ -184,8 +184,8 @@ public class LabyrinthGraph extends Environment{
 				 {1,1},
 				 {0,1,2},
 				 {1,1,2},
-				 {2,3},
-				 {2,1}
+				 {0,2,3},
+				 {0,2,1}
 		 };
 		 
 		 LabyrinthGraph.stretchEdges(edges, stretchFactor);

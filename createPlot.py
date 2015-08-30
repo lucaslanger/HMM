@@ -76,7 +76,7 @@ def getDataFromFile(datafile):
 def takeLogOfArray(a):
 	return [math.log(i) for i in a]
 
-def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizontalPlotSize=-1):
+def drawPlots(folder, names, colors, alpha_scaling, xlim1,xlim2,ylim1,ylim2,  verticalPlotSize=-1, horizontalPlotSize=-1):
 	l = len(names)	
 
 	if horizontalPlotSize == -1:
@@ -87,7 +87,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 
 	fig = plt.figure()
 
-	lineNames = ['Naive','BaseSystem']#,'']
+	lineNames = ['Naive','BaseSystem','Heuristic Base System']#,'']
 
 	for name in names:
 		n = name[0]
@@ -99,7 +99,14 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 			title = d[5]
 			internalComment = d[6]
 
-			for j in range(len(d[2])):
+			noHeuristics = True
+			tt = None
+			if noHeuristics:
+				tt = d[2][:2]
+			else:
+				tt = d[2]				
+
+			for j in range(len(tt)):
 				xdata = d[2][j]
 				ydata = d[3][j]
 				spreads = d[4][j]
@@ -117,20 +124,25 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 				a = 1.0		
 				col = colors[j%len(colors)]
 
-				t = plt.plot(xdata,ydata, col, alpha=a, linestyle='--', marker='o')[0]
-				labels.append(t)
+				#t = plt.plot(xdata,ydata, col, alpha=a, linestyle='--', marker='o')[0]
 				
-				#plt.errorbar(xdata, ydata, yerr=spreads)
+				t= plt.errorbar(xdata, ydata,yerr=spreads,alpha=a, linestyle='--', marker='o')
+				
+				labels.append(t)
 
-			plt.xlabel(d[0], fontdict= generateFont(22) )
-			plt.ylabel(d[1], fontdict= generateFont(22) )
-			plt.title(title, fontdict= generateFont(28) )
-	
+			plt.xlabel(d[0], fontdict= generateFont(14) )
+			plt.ylabel(d[1], fontdict= generateFont(14) )
+			#plt.title(title, fontdict= generateFont(16) )
+			plt.title("Double Loop Timing Predictions", fontdict= generateFont(16) )	
+
 			extra1 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
 			extra2 = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
 			labels.append(extra1)
 			labels.append(extra2)
-			legend = plt.legend(labels, ("Old PSR","Base System PSR","Trajectories:1000", "Repetitions:10"),loc='upper center', shadow=True)
+			if noHeuristics == False:
+				legend = plt.legend(labels, ("Old PSR","Base System PSR","Heuristic Base Sytem PSR","Trajectories:1000", "Repetitions:10"),loc='upper right', shadow=True)
+			else:
+				legend = plt.legend(labels, ("Old PSR","Base System PSR","Trajectories:10000", "Repetitions:10"),loc='upper right', shadow=True)
 			# Set the fontsize
 			for label in legend.get_texts():
 			    label.set_fontsize('large')
@@ -141,7 +153,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 			#
 
 			plt.grid(True,color='k')
-			plt.axis((15,30,0, 0.8))
+			plt.axis((xlim1,xlim2,ylim1, ylim2))
 
 			xcoord = xdata[int(len(xdata)*5/8 )]
 			ycoord = ydata[0]*1.5		
@@ -154,7 +166,7 @@ def drawPlots(folder, names, colors, alpha_scaling,  verticalPlotSize=-1, horizo
 			print "Trouble plotting ",n  
 
 	#plt.subplots_adjust( hspace=0.88 )
-
+	fig.savefig("myfig.png")
 	plt.show()
 
 datafile = sys.argv[1]
@@ -169,7 +181,8 @@ modelBased = [('BaseComp_Area', 'log','normal'), ("MinError_Dif_Bases", 'log','n
 #
 
 #-k
-baseComparisonKeyPredictions = [("Datasize:10000,32:16,ST:0.0",'normal','normal')]
+#baseComparisonKeyPredictions = [("Datasize:10000,47:27,ST:0.0",'normal','normal')]
+baseComparisonKeyPredictions = [('Datasize:10000PacMan','normal','normal')]
 
 multipleObservations = []
 dataSizes = [100,1000]
@@ -180,15 +193,16 @@ for d in dataSizes:
 		multipleObservations.append(('SingularValues,' + str(d) + "," + l,'normal','normal'))
 #
 
-multipleObservations = [("Timing_tests",'normal','normal')]#('BaseLearningTests,1000,27:17', 'normal','normal')]
+multipleObservations = [('BaseLearningTests,10000,27:17', 'normal','normal')]
 
 if t=='-v':	
 	drawPlots(datafile, validityTests, colorsTests, False)
 elif t=='-a':
 	drawPlots(datafile, modelBased, colorsAnalysis, True)
 elif t=='-k':
-	drawPlots(datafile, baseComparisonKeyPredictions, colorsTests, True)	#2,5 to split
+	drawPlots(datafile, baseComparisonKeyPredictions, colorsTests,True,15,80,0,0.4)	#2,5 to split
+
 elif t=='-mo':
-	drawPlots(datafile, multipleObservations, colorsTests, True, 1, 1)
+	drawPlots(datafile, multipleObservations, colorsTests,True,0,45,0,2, 1, 1)
 else:
 	print "invalid format"

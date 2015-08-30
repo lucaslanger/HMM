@@ -9,7 +9,8 @@ public class OutputData {
 	
 	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis){
 		System.out.println("USING OUTDATA VERSION OF DATA WRITING");
-		
+		System.out.println(filename);
+		System.out.println();
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");
 			
@@ -38,6 +39,9 @@ public class OutputData {
 	
 
 	public static void outputData(String filename, String xaxisLabel, String yaxisLabel, double[][] xaxis, double[][] yaxis, String plotTitle,  String internalComment){
+		System.out.println("USING OUTDATA VERSION OF DATA WRITING");
+		System.out.println(filename);
+		System.out.println();
 		try {
 			PrintWriter writer = new PrintWriter(filename, "UTF-8");
 			
