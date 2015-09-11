@@ -222,22 +222,29 @@ public class testEngine{
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
-		QueryEngine[][] fixedDataCustomBaseEngines = new QueryEngine[this.modelSizes.length][this.REPEATS];
+		int[] numOperators = new int[]{1,2,3,4,5,10};
+
+		QueryEngine[][][] fixedDataCustomBaseEngines = new QueryEngine[numOperators.length][this.modelSizes.length][this.REPEATS];
 		int numSubstrings = 300;
-		int maxBaseSize = 10;
+		//int maxBaseSize = 10;
 		
 		System.out.println("Getting operators");
 		System.out.println();
-		int[][] operators = this.ModelRetrieval.getOperators(this.REPEATS, maxBaseSize, numSubstrings);
-		
-		int[] chosenOpForSpeed = operators[0];
-		for (int i = 0; i < fixedDataCustomBaseEngines.length; i++) {
-			fixedDataCustomBaseEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(operators, this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
+		int[][][] opsPerRepeat = new int[numOperators.length][][];
+		for (int i = 0; i < opsPerRepeat.length; i++) {
+			opsPerRepeat[i] = this.ModelRetrieval.getOperators(this.REPEATS, numOperators[i], numSubstrings);
 		}
 		
-		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
-		double[][] spreads = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
-		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+2][this.modelSizes.length];
+		//int[] chosenOpForSpeed = operators[0];
+		for (int j = 0; j < opsPerRepeat.length; j++) {
+			for (int i = 0; i < this.modelSizes.length; i++) {
+				fixedDataCustomBaseEngines[j][i] = this.ModelRetrieval.getSpecificModelSizeQueryEnginesCustomBase(opsPerRepeat[j], this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
+			}
+		}
+		
+		double[][] errors = new double[this.trueQueryEngine.getMaxExponent()+numOperators.length+1][this.modelSizes.length];
+		double[][] spreads = new double[this.trueQueryEngine.getMaxExponent()+numOperators.length+1][this.modelSizes.length];
+		double[][] xAxis = new double[this.trueQueryEngine.getMaxExponent()+numOperators.length+1][this.modelSizes.length];
 		
 		double[] trueP = this.trueModel.getProbabilities();
 		
@@ -259,17 +266,22 @@ public class testEngine{
 				}
 			}
 			
-			int lastIndex = this.trueQueryEngine.getMaxExponent()+1;
-			for (int i = 0; i < this.modelSizes.length; i++) {
-				xAxis[lastIndex][i] = modelSizes[i];
-				double e = 0;
-				for (int q = 0; q < this.maxQuery; q++) {
-					double p = fixedDataCustomBaseEngines[i][r].probabilityQuery(q);
-					double dif = p - trueP[q];
-					e += Math.abs(dif);  
+			for (int t = this.trueQueryEngine.getMaxExponent()+1; t < errors.length; t++) {	
+				int nIndex = t-this.trueQueryEngine.getMaxExponent()-1;
+				System.out.println(nIndex);
+				QueryEngine[][] test = fixedDataCustomBaseEngines[nIndex];
+				System.out.println(test);
+				for (int i = 0; i < this.modelSizes.length; i++) {
+					xAxis[t][i] = modelSizes[i];
+					double e = 0;
+					for (int q = 0; q < this.maxQuery; q++) {
+						double p = fixedDataCustomBaseEngines[nIndex][i][r].probabilityQuery(q);
+						double dif = p - trueP[q];
+						e += Math.abs(dif);  
+					}
+					errors[t][i] += e;
+					spreads[t][i] += Math.pow(e, 2);
 				}
-				errors[lastIndex][i] += e;
-				spreads[lastIndex][i] += Math.pow(e, 2);
 			}
 		}
 		
@@ -295,8 +307,29 @@ public class testEngine{
 		System.out.println("Outputting data to: " + identifier);
 		
 		int L = errors.length;
-		int[] rows = new int[]{0,L-2,L-1};
+		//int[] rows = new int[]{0,L-2,L-1};
 		
+		/* Skip 2 at a time
+		int[] rows = new int[(int) (Math.floor((L-1)/2))];
+		int c = 0;
+		for (int i = 0; i < L-1; i++) {
+			if (i % 2 == 1){
+				rows[c] = i;
+				c++;
+			}
+		}
+		rows[rows.length-1] = L-1;
+		for (int i = 0; i < rows.length-1; i++) {
+			System.out.print(Math.pow(2,rows[i])+ ",");
+		}
+		System.out.println();
+		*/
+		
+		int[] rows = new int[numOperators.length];
+		for (int i = this.trueQueryEngine.getMaxExponent()+1; i < rows.length; i++) {
+			rows[i-(this.trueQueryEngine.getMaxExponent()+1)] = i;
+		}
+				
 		Matrix xT = extractRows(new Matrix(xAxis), rows);
 		Matrix yT = extractRows(ERR, rows);
 		Matrix sT = extractRows(SPREADS, rows);

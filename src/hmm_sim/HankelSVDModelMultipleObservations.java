@@ -39,29 +39,33 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 	public static void main(String[] args){
 		//HankelSVDModelMultipleObservations.initialtest();
 		String workingFolder = "keySearchPacMan/MultipleObservationPlots/";
-		int numberOfTrajectories = 10000;
+		FlowControl.createFolder("keySearchPacMan");
+		FlowControl.createFolder(workingFolder);
+		
+		int numberOfTrajectories = 1000;
+		int repetitions = 1;
+
 		int amountOfData = numberOfTrajectories;
 		int basisSize = 50;
 		int loop1 = 27;
 		int loop2 = 17;
-		boolean firstTimeGenerateData = false;
+		boolean firstTimeGenerateData = true;
 		if (firstTimeGenerateData == false){
 			System.out.println("NOT GENERATING NEW DATA!");
 		}
 		int trajectoryLength = (loop1+loop2)*3;
-		int repetitions = 10;
-		int[] modelSizes= new int[]{10,15,20,25,30,35,43};
+		int[] modelSizes= new int[]{10,15,20,25,30,35,39,43};
 		
-		int lengthOfTree = 5;
+		int lengthOfTree = 7;
 		
 		int numSubstrings = 1000;
 
-		double[][] baseSizes = new double[][]{{10}};;
+		double[][] baseSizes = new double[][]{{2,3,4,5,10,15}};;
 		OutputDataPair[] oda = new OutputDataPair[baseSizes[0].length];
 		double[][] timeTaken = new double[1][oda.length];
 		
 		
-		//OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
+		OutputDataPair t1 = HankelSVDModelMultipleObservations.doubleLoopTestTree(firstTimeGenerateData, lengthOfTree, basisSize, workingFolder, trajectoryLength, numberOfTrajectories, amountOfData, repetitions,loop1, loop2, modelSizes);
 		
 		double prevTime = System.currentTimeMillis();
 		for (int j = 0; j < oda.length; j++) {
@@ -75,34 +79,44 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 		Matrix naive = new Matrix( new double[][]{t2.getData().getArrayCopy()[0]});
 		Matrix fullPowers = new Matrix( new double[][]{t2.getData().getArrayCopy()[t2.getData().getArrayCopy().length-1]});
 		
-		//Matrix tree = t1.getData();
+		Matrix tree = t1.getData();
+		Matrix treeSD = t1.getSpreads();
 		Matrix xAxis = oda[0].getxAxis();
 		
+		boolean opComp = true;
+		
 		ArrayList<Matrix> rowsOfResults = new ArrayList<Matrix>();
-		//rowsOfResults.add(tree);
-		rowsOfResults.add(naive);
-		rowsOfResults.add(fullPowers);
+		if (!opComp){
+			rowsOfResults.add(naive);
+			rowsOfResults.add(fullPowers);
+		}
 		
 		for (OutputDataPair odp : oda) {
 			rowsOfResults.add(odp.getData());
+		}
+		if(!opComp){
+			rowsOfResults.add(tree);
 		}
 		
 		Matrix naiveSpreads = new Matrix( new double[][]{t2.getSpreads().getArrayCopy()[0]});
 		Matrix fullPowersSpreads = new Matrix( new double[][]{t2.getSpreads().getArrayCopy()[t2.getSpreads().getArrayCopy().length-1]});
 
-		
 		ArrayList<Matrix> rowsOfSpreads = new ArrayList<Matrix>();
-		//rowsOfSpreads.add(tree);
-		rowsOfSpreads.add(naiveSpreads);
-		rowsOfSpreads.add(fullPowersSpreads);
+		if (!opComp){
+			rowsOfSpreads.add(naiveSpreads);
+			rowsOfSpreads.add(fullPowersSpreads);
+		}
 		
 		for (OutputDataPair odp : oda) {
 			rowsOfSpreads.add(odp.getSpreads());
 		}
+		if (!opComp){
+			rowsOfSpreads.add(treeSD);
+		}
 		
 		Matrix spreads = concatenateMatrices(rowsOfSpreads);
 		Matrix Y = concatenateMatrices(rowsOfResults);
-		Matrix X = copyMatrixOnRows(xAxis, 3);
+		Matrix X = copyMatrixOnRows(xAxis, Y.getArray().length);
 		System.out.println("Together;");
 		Y.print(5, 5);
 		X.print(5, 5);
@@ -236,7 +250,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			Matrix E = new Matrix(errors);
 			if (Eavg == null){
-				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
+				//h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
 				Eavg = E;
 			}
 			else{
@@ -352,7 +366,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			Matrix E = new Matrix(errors);
 			if (Eavg == null){
-				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
+				//h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
 				Eavg = E;
 			}
 			else{
@@ -460,7 +474,7 @@ public class HankelSVDModelMultipleObservations extends HankelSVDModelParent {
 			
 			Matrix E = new Matrix(errors);
 			if (Eavg == null){
-				h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
+				//h.plotSingularValues(workingFolder, loop1, loop2, amountOfData);	//Plot the first set of singular Values -- HACKY
 				Eavg = E;
 			}
 			else{

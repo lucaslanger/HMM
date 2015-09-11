@@ -10,8 +10,9 @@ import java.io.ObjectOutputStream;
 public class FlowControl {
 	
 	public static void main(String[] args){
-		int[] trajectorySizes = new int[]{10000};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
-		int dataSizeForFixedPlots = 10000;
+		int dS = 10000;
+		int[] trajectorySizes = new int[]{dS};//5,50,100,200,500,1000,2000,4000,8000,16000,32000,64000,128000,256000};
+		int dataSizeForFixedPlots = dS;
 		int base = 2; // Haven't tested for bases other than 2 ... no guarantees
 	
 		/*for (int i : trajectorySizes) {
@@ -20,8 +21,8 @@ public class FlowControl {
 		}*/
 		//String f = "ErrorStorage";
 
-		//FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
-		FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
+		FlowControl.testLoops(trajectorySizes, dataSizeForFixedPlots, base);
+		//FlowControl.testLabyrinths(trajectorySizes, dataSizeForFixedPlots,  base);
 
 		//FlowControl.computeKeySearchStuff(trajectorySizes, dataSizeForFixedPlots, base, f, "Over-Base");
 	}
@@ -29,8 +30,8 @@ public class FlowControl {
 	public static void testLabyrinths(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
 		//ADD REPEITIONS TO MODELSIZEEFFECTOVERBASE, not using it right now 
 		
-		int repetitions = 1;
-		int stretchFactor = 10;
+		int repetitions = 10;
+		int stretchFactor = 1;
 		int hSize = 600;
 		int basisSize = 300;
 		int fixedModelSize = 50;
@@ -38,7 +39,7 @@ public class FlowControl {
 		
 		//int[] modelSizes = new int[]{32,33,34,35, 40, 60, 80};
 		
-		int[] modelSizes = new int[]{15,20,25,27,30,33,35,40,45,50}; //JUMPS
+		int[] modelSizes = new int[]{2,4,6,8,10,12,14,16,18,20,25,30,35,40}; //JUMPS
 
 		String workingFolder = "keySearchPacMan/";
 	
@@ -66,15 +67,15 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 10;
+		int repetitions = 1;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
-		int loop1 = 47;
-		int loop2 = 27;
+		int loop1 = 64;
+		int loop2 = 16;
 		int hSize = 600;
 		int basisSize = 150;
-		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18};
-		int[] modelSizes = new int[]{10,12,15,17,20,25,30,35,40,45,50};
+		//int[] modelSizes = new int[]{2,3,4,6,8,10,11,12,13,15,18,25};
+		int[] modelSizes = new int[]{10,12,15,17,20,25,30,35,40,45,50,55,60,65};
 		//int[] modelSizes = new int[]{30,32,34,35,40,45,50};
 		//Bug of having all errors exactly the same seems to occur when taken model size is really large e.g 50 was tried
 		
