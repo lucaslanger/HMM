@@ -222,7 +222,8 @@ public class testEngine{
 			fixedDataSizeModelEngines[i] = this.ModelRetrieval.getSpecificModelSizeQueryEngines(this.REPEATS, this.modelSizes[i]).get(fixedDataSize);
 		}
 		
-		int[] numOperators = new int[]{1,2,3,4,5,10};
+		int[] numOperators = new int[]{1,5,10,15,20,25};
+		//int[] numOperators = new int[]{1,2,5};
 
 		QueryEngine[][][] fixedDataCustomBaseEngines = new QueryEngine[numOperators.length][this.modelSizes.length][this.REPEATS];
 		int numSubstrings = 300;
@@ -268,9 +269,7 @@ public class testEngine{
 			
 			for (int t = this.trueQueryEngine.getMaxExponent()+1; t < errors.length; t++) {	
 				int nIndex = t-this.trueQueryEngine.getMaxExponent()-1;
-				System.out.println(nIndex);
-				QueryEngine[][] test = fixedDataCustomBaseEngines[nIndex];
-				System.out.println(test);
+			
 				for (int i = 0; i < this.modelSizes.length; i++) {
 					xAxis[t][i] = modelSizes[i];
 					double e = 0;
@@ -285,21 +284,20 @@ public class testEngine{
 			}
 		}
 		
-		Matrix ERR = new Matrix(errors).times(1.0/this.REPEATS);
-		//ERR.print(5, 5);
+		Matrix ERR = new Matrix(errors);
+		ERR = ERR.times(1.0/this.REPEATS);
 		errors = ERR.getArrayCopy();
 		
-		Matrix ERRSQUARE = new Matrix(spreads).times(1.0/this.REPEATS);
-		spreads = ERRSQUARE.getArrayCopy();
-		
-		for (int j = 0; j < this.trueQueryEngine.getMaxExponent()+2; j++) {
+		for (int j = 0; j < errors.length; j++) {
 			for (int i = 0; i < this.modelSizes.length; i++) {
-				spreads[j][i] = Math.sqrt(spreads[j][i] - Math.pow(errors[j][i],2));
+				spreads[j][i] = Math.sqrt( (spreads[j][i]/this.REPEATS) - Math.pow((errors[j][i]),2) );
 			}
 		}
 		
 		Matrix SPREADS = new Matrix(spreads);
-		SPREADS.print(5, 5);
+	
+		//ERR.print(5,5);
+		//SPREADS.print(5, 5);
 		
 		//System.out.println(pltFolder + "BaseImprovementOverModelSizesDatasize:" + Integer.toString(fixedDataSize));
 		String title = "Double Loop Timing Predictions";
@@ -325,8 +323,15 @@ public class testEngine{
 		System.out.println();
 		*/
 		
+		/* ALL OF THEM
+		int[] rows = new int[errors.length];
+		for (int i = 0; i < rows.length; i++) {
+			rows[i] = i;
+		}
+		*/
+		
 		int[] rows = new int[numOperators.length];
-		for (int i = this.trueQueryEngine.getMaxExponent()+1; i < rows.length; i++) {
+		for (int i = this.trueQueryEngine.getMaxExponent()+1; i < rows.length+this.trueQueryEngine.getMaxExponent()+1; i++) {
 			rows[i-(this.trueQueryEngine.getMaxExponent()+1)] = i;
 		}
 				
@@ -335,6 +340,8 @@ public class testEngine{
 		Matrix sT = extractRows(SPREADS, rows);
 		
 		yT.print(5, 5);
+		sT.print(5, 5);
+			
 		System.out.println(pltFolder + identifier);
 		OutputData.outputData(pltFolder + identifier, "Model Size", "Error", xT.getArrayCopy(), yT.getArrayCopy(), sT.getArrayCopy(), title, internalComment);
 	}

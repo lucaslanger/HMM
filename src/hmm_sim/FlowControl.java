@@ -67,7 +67,7 @@ public class FlowControl {
 	}
 	
 	public static void testLoops(int[] trajectorySizes, int dataSizeForFixedPlots, int base){
-		int repetitions = 1;
+		int repetitions = 10;
 		//IF YOU HAVE A BUG WITH READING FILES, DELETE THE FOLDER AND RERUN~~~!!!
 
 		int loop1 = 64;
